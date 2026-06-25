@@ -3,6 +3,55 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
+
+// Fix Leaflet-Draw "type is not defined" ReferenceError in ES modules/strict mode
+const defaultPrecision = {
+  km: 2,
+  ha: 2,
+  m: 0,
+  mi: 2,
+  ac: 2,
+  yd: 0,
+  ft: 0,
+  nm: 2
+};
+
+if (L.GeometryUtil) {
+  L.GeometryUtil.readableArea = function (area: number, isMetric?: any, precision?: any): string {
+    const p = L.Util.extend({}, defaultPrecision, precision);
+    let areaStr: string;
+
+    if (isMetric) {
+      let units = ['ha', 'm'];
+      const type = typeof isMetric;
+      if (type === 'string') {
+        units = [isMetric];
+      } else if (type !== 'boolean') {
+        units = isMetric;
+      }
+
+      if (area >= 1000000 && units.indexOf('km') !== -1) {
+        areaStr = L.GeometryUtil.formattedNumber((area * 0.000001) as any, p.km) + ' km²';
+      } else if (area >= 10000 && units.indexOf('ha') !== -1) {
+        areaStr = L.GeometryUtil.formattedNumber((area * 0.0001) as any, p.ha) + ' ha';
+      } else {
+        areaStr = L.GeometryUtil.formattedNumber(area as any, p.m) + ' m²';
+      }
+    } else {
+      const areaYards = area / 0.836127;
+      if (areaYards >= 3097600) {
+        areaStr = L.GeometryUtil.formattedNumber((areaYards / 3097600) as any, p.mi) + ' mi²';
+      } else if (areaYards >= 4840) {
+        areaStr = L.GeometryUtil.formattedNumber((areaYards / 4840) as any, p.ac) + ' acres';
+      } else {
+        areaStr = L.GeometryUtil.formattedNumber(areaYards as any, p.yd) + ' yd²';
+      }
+    }
+
+    return areaStr;
+  };
+}
+
 import OptimizerWorker from './workers/optimizer.worker?worker';
 
 // Fix Leaflet's default icon paths for Vite
@@ -60,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize Map
   const map = L.map('map-container').setView([-23.55052, -46.633308], 13); // Default to São Paulo
+  (window as any).map = map;
   
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

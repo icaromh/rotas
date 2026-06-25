@@ -28,6 +28,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 }
 
 async function fetchOverpass(bounds: any, mode: 'bike' | 'walk') {
+  console.log(`[Worker] Step 1: Iniciando fetch do Overpass API para modo: ${mode}`);
   const { south, west, north, east } = bounds;
   let wayFilter = '';
   
@@ -47,16 +48,20 @@ async function fetchOverpass(bounds: any, mode: 'bike' | 'walk') {
     out skel qt;
   `;
 
+  console.log('[Worker] Query enviada para Overpass API:', query);
   const response = await fetch('https://overpass-api.de/api/interpreter', {
     method: 'POST',
     body: query
   });
 
   if (!response.ok) throw new Error('Falha ao obter dados do Overpass API');
-  return await response.json();
+  const data = await response.json();
+  console.log(`[Worker] Dados recebidos do Overpass. Elementos: ${data.elements?.length || 0}`);
+  return data;
 }
 
 function buildGraph(overpassData: any): MultiDirectedGraph {
+  console.log('[Worker] Step 2: Construindo o Grafo Direcionado inicial');
   const g = new MultiDirectedGraph();
   const nodes = new Map<number, {lat: number, lon: number}>();
   
@@ -98,11 +103,14 @@ function buildGraph(overpassData: any): MultiDirectedGraph {
       }
     }
   }
+  console.log(`[Worker] Grafo construído com ${g.order} nós e ${g.size} arestas.`);
   return g;
 }
 
 function extractLargestSCC(g: MultiDirectedGraph): MultiDirectedGraph {
+  console.log('[Worker] Step 3: Extraindo o maior Componente Fortemente Conectado (SCC)');
   const sccs = stronglyConnectedComponents(g);
+  console.log(`[Worker] Encontrados ${sccs.length} componentes conectados.`);
   let largest: string[] = [];
   for (const scc of sccs) {
     if (scc.length > largest.length) largest = scc;
@@ -119,6 +127,7 @@ function extractLargestSCC(g: MultiDirectedGraph): MultiDirectedGraph {
     }
   });
   
+  console.log(`[Worker] Grafo fortemente conectado reduzido para ${largestGraph.order} nós e ${largestGraph.size} arestas.`);
   return largestGraph;
 }
 
@@ -172,6 +181,7 @@ function dijkstraShortestPaths(g: MultiDirectedGraph, startNode: string) {
 }
 
 function balanceGraph(g: MultiDirectedGraph) {
+  console.log('[Worker] Step 4: Balanceando o Grafo (Directed Chinese Postman Problem)');
   const excessNodes: { id: string; amount: number }[] = [];
   const deficitNodes: { id: string; amount: number }[] = [];
 
@@ -184,7 +194,12 @@ function balanceGraph(g: MultiDirectedGraph) {
     else if (demand < 0) deficitNodes.push({ id: node, amount: -demand });
   });
 
-  if (excessNodes.length === 0 && deficitNodes.length === 0) return;
+  console.log(`[Worker] Encontrados ${excessNodes.length} nós em excesso e ${deficitNodes.length} nós em déficit.`);
+
+  if (excessNodes.length === 0 && deficitNodes.length === 0) {
+    console.log('[Worker] O grafo já está balanceado!');
+    return;
+  }
 
   const model: any = {
     optimize: "cost",
@@ -234,9 +249,12 @@ function balanceGraph(g: MultiDirectedGraph) {
     pathsMap.set(excess.id, deficitPaths);
   }
 
+  console.log('[Worker] Modelo de LP montado. Resolvendo Fluxo de Custo Mínimo...');
   const result = solver.Solve(model) as Record<string, number>;
+  console.log(`[Worker] LP resolvido. Custo ótimo: ${result.result}`);
   
   // Add duplicate edges based on LP result
+  let duplicateEdgesCount = 0;
   for (const key of Object.keys(result)) {
     if (key.startsWith('flow_') && result[key] > 0) {
       const parts = key.split('_');
@@ -260,13 +278,16 @@ function balanceGraph(g: MultiDirectedGraph) {
           
           const edgeAttributes = g.getEdgeAttributes(minEdge);
           g.addDirectedEdge(u, v, { ...edgeAttributes, isDuplicate: true });
+          duplicateEdgesCount++;
         }
       }
     }
   }
+  console.log(`[Worker] Foram adicionadas ${duplicateEdgesCount} arestas artificiais (repetidas) para balanceamento.`);
 }
 
 function hierholzer(g: MultiDirectedGraph): string[] {
+  console.log('[Worker] Step 5: Iniciando algoritmo de Hierholzer para extrair o Circuito Euleriano');
   if (g.order === 0) return [];
   
   const circuit: string[] = [];
@@ -296,10 +317,12 @@ function hierholzer(g: MultiDirectedGraph): string[] {
     }
   }
   
+  console.log(`[Worker] Circuito final gerado com ${circuit.length} nós no caminho.`);
   return circuit.reverse();
 }
 
 self.onmessage = async (e: MessageEvent<RouteRequest>) => {
+  console.log('[Worker] Recebida solicitação de geração de rota:', e.data);
   try {
     const { bounds, mode } = e.data;
     
@@ -350,6 +373,7 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
       finalPath.push({ lat: posV.lat, lng: posV.lon });
     }
     
+    console.log(`[Worker] Rota finalizada. Distância total apurada: ${(totalDistanceMeters / 1000).toFixed(2)} km`);
     self.postMessage({
       type: 'success',
       path: finalPath,
@@ -357,6 +381,7 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     });
     
   } catch (err: any) {
+    console.error('[Worker] Erro crítico no pipeline:', err);
     self.postMessage({ type: 'error', message: err.message || 'Erro desconhecido no processamento.' });
   }
 };
