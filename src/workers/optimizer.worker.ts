@@ -1,5 +1,3 @@
-import { MultiDirectedGraph } from 'graphology';
-import { stronglyConnectedComponents } from 'graphology-components';
 import solver from 'javascript-lp-solver';
 
 console.log('[Worker] Worker module carregado e inicializado com sucesso.');
@@ -14,6 +12,185 @@ export interface RouteResponse {
   path?: { lat: number; lng: number }[];
   distance?: number;
   message?: string;
+}
+
+// Custom Vanilla TS Graph Engine
+class CustomMultiGraph {
+  private _nodes: Map<string, any>;
+  private _outEdges: Map<string, Map<string, any[]>>; // source -> target -> edges[]
+  private _inDegrees: Map<string, number>;
+  private _outDegrees: Map<string, number>;
+  private _edgeCounter: number = 0;
+
+  constructor() {
+    this._nodes = new Map();
+    this._outEdges = new Map();
+    this._inDegrees = new Map();
+    this._outDegrees = new Map();
+  }
+
+  get order() { return this._nodes.size; }
+  
+  get size() {
+    let count = 0;
+    for (const targets of this._outEdges.values()) {
+      for (const edges of targets.values()) {
+        count += edges.length;
+      }
+    }
+    return count;
+  }
+
+  addNode(id: string | number, attributes: any = {}) {
+    const strId = String(id);
+    if (!this._nodes.has(strId)) {
+      this._nodes.set(strId, attributes);
+      this._outEdges.set(strId, new Map());
+      this._inDegrees.set(strId, 0);
+      this._outDegrees.set(strId, 0);
+    }
+  }
+
+  hasNode(id: string | number) {
+    return this._nodes.has(String(id));
+  }
+
+  getNodeAttributes(id: string | number) {
+    return this._nodes.get(String(id));
+  }
+
+  nodes() {
+    return Array.from(this._nodes.keys());
+  }
+
+  addDirectedEdge(source: string | number, target: string | number, attributes: any = {}) {
+    const s = String(source);
+    const t = String(target);
+    if (!this.hasNode(s)) this.addNode(s);
+    if (!this.hasNode(t)) this.addNode(t);
+
+    const edge = { id: String(this._edgeCounter++), source: s, target: t, attributes };
+    
+    if (!this._outEdges.get(s)!.has(t)) {
+      this._outEdges.get(s)!.set(t, []);
+    }
+    this._outEdges.get(s)!.get(t)!.push(edge);
+
+    this._outDegrees.set(s, this._outDegrees.get(s)! + 1);
+    this._inDegrees.set(t, this._inDegrees.get(t)! + 1);
+  }
+
+  hasDirectedEdge(source: string | number, target: string | number) {
+    const s = String(source);
+    const t = String(target);
+    return this._outEdges.has(s) && this._outEdges.get(s)!.has(t) && this._outEdges.get(s)!.get(t)!.length > 0;
+  }
+
+  forEachDirectedEdge(callback: (edgeId: string, attributes: any, source: string, target: string) => void) {
+    for (const [source, targets] of this._outEdges.entries()) {
+      for (const [target, edges] of targets.entries()) {
+        for (const edge of edges) {
+          callback(edge.id, edge.attributes, source, target);
+        }
+      }
+    }
+  }
+
+  forEachNode(callback: (nodeId: string) => void) {
+    for (const node of this._nodes.keys()) {
+      callback(node);
+    }
+  }
+
+  forEachOutNeighbor(node: string | number, callback: (neighbor: string) => void) {
+    const s = String(node);
+    const targets = this._outEdges.get(s);
+    if (targets) {
+      for (const target of targets.keys()) {
+        callback(target);
+      }
+    }
+  }
+
+  outEdges(source: string | number, target: string | number) {
+    const s = String(source);
+    const t = String(target);
+    const targets = this._outEdges.get(s);
+    return targets && targets.has(t) ? targets.get(t)! : [];
+  }
+
+  inDegree(node: string | number) {
+    return this._inDegrees.get(String(node)) || 0;
+  }
+
+  outDegree(node: string | number) {
+    return this._outDegrees.get(String(node)) || 0;
+  }
+}
+
+// Tarjan's SCC Algorithm
+function extractLargestSCC(g: CustomMultiGraph): CustomMultiGraph {
+  console.log('[Worker] Step 3: Extraindo o maior Componente Fortemente Conectado (SCC)');
+  let index = 0;
+  const stack: string[] = [];
+  const indices = new Map<string, number>();
+  const lowlinks = new Map<string, number>();
+  const onStack = new Set<string>();
+  const sccs: string[][] = [];
+
+  function strongConnect(v: string) {
+    indices.set(v, index);
+    lowlinks.set(v, index);
+    index++;
+    stack.push(v);
+    onStack.add(v);
+
+    g.forEachOutNeighbor(v, (w) => {
+      if (!indices.has(w)) {
+        strongConnect(w);
+        lowlinks.set(v, Math.min(lowlinks.get(v)!, lowlinks.get(w)!));
+      } else if (onStack.has(w)) {
+        lowlinks.set(v, Math.min(lowlinks.get(v)!, indices.get(w)!));
+      }
+    });
+
+    if (lowlinks.get(v) === indices.get(v)) {
+      const scc: string[] = [];
+      let w: string;
+      do {
+        w = stack.pop()!;
+        onStack.delete(w);
+        scc.push(w);
+      } while (w !== v);
+      sccs.push(scc);
+    }
+  }
+
+  g.forEachNode((v) => {
+    if (!indices.has(v)) {
+      strongConnect(v);
+    }
+  });
+
+  console.log(`[Worker] Encontrados ${sccs.length} componentes conectados.`);
+  let largest: string[] = [];
+  for (const scc of sccs) {
+    if (scc.length > largest.length) largest = scc;
+  }
+  
+  const largestGraph = new CustomMultiGraph();
+  for (const node of largest) {
+    largestGraph.addNode(node, g.getNodeAttributes(node));
+  }
+  
+  g.forEachDirectedEdge((_edgeId, attributes, source, target) => {
+    if (largestGraph.hasNode(source) && largestGraph.hasNode(target)) {
+      largestGraph.addDirectedEdge(source, target, attributes);
+    }
+  });
+  
+  console.log(`[Worker] Grafo fortemente conectado reduzido para ${largestGraph.order} nós e ${largestGraph.size} arestas.`);
+  return largestGraph;
 }
 
 // Haversine distance in meters
@@ -62,9 +239,9 @@ async function fetchOverpass(bounds: any, mode: 'bike' | 'walk') {
   return data;
 }
 
-function buildGraph(overpassData: any): MultiDirectedGraph {
+function buildGraph(overpassData: any): CustomMultiGraph {
   console.log('[Worker] Step 2: Construindo o Grafo Direcionado inicial');
-  const g = new MultiDirectedGraph();
+  const g = new CustomMultiGraph();
   const nodes = new Map<number, {lat: number, lon: number}>();
   
   for (const element of overpassData.elements) {
@@ -109,31 +286,7 @@ function buildGraph(overpassData: any): MultiDirectedGraph {
   return g;
 }
 
-function extractLargestSCC(g: MultiDirectedGraph): MultiDirectedGraph {
-  console.log('[Worker] Step 3: Extraindo o maior Componente Fortemente Conectado (SCC)');
-  const sccs = stronglyConnectedComponents(g);
-  console.log(`[Worker] Encontrados ${sccs.length} componentes conectados.`);
-  let largest: string[] = [];
-  for (const scc of sccs) {
-    if (scc.length > largest.length) largest = scc;
-  }
-  
-  const largestGraph = new MultiDirectedGraph();
-  for (const node of largest) {
-    largestGraph.addNode(node, g.getNodeAttributes(node));
-  }
-  
-  g.forEachDirectedEdge((_edge, attributes, source, target) => {
-    if (largestGraph.hasNode(source) && largestGraph.hasNode(target)) {
-      largestGraph.addDirectedEdge(source, target, attributes);
-    }
-  });
-  
-  console.log(`[Worker] Grafo fortemente conectado reduzido para ${largestGraph.order} nós e ${largestGraph.size} arestas.`);
-  return largestGraph;
-}
-
-function dijkstraShortestPaths(g: MultiDirectedGraph, startNode: string) {
+function dijkstraShortestPaths(g: CustomMultiGraph, startNode: string) {
   const distances = new Map<string, number>();
   const previous = new Map<string, string>();
   const unvisited = new Set<string>();
@@ -166,7 +319,7 @@ function dijkstraShortestPaths(g: MultiDirectedGraph, startNode: string) {
       // find min edge
       let edgeWeight = Infinity;
       for (const e of edges) {
-        const w = g.getEdgeAttribute(e, 'distance');
+        const w = e.attributes.distance;
         if (w < edgeWeight) edgeWeight = w;
       }
       
@@ -182,7 +335,7 @@ function dijkstraShortestPaths(g: MultiDirectedGraph, startNode: string) {
   return { distances, previous };
 }
 
-function balanceGraph(g: MultiDirectedGraph) {
+function balanceGraph(g: CustomMultiGraph) {
   console.log('[Worker] Step 4: Balanceando o Grafo (Directed Chinese Postman Problem)');
   const excessNodes: { id: string; amount: number }[] = [];
   const deficitNodes: { id: string; amount: number }[] = [];
@@ -272,14 +425,13 @@ function balanceGraph(g: MultiDirectedGraph) {
           // Get the shortest edge between u and v to duplicate
           const edges = g.outEdges(u, v);
           let minEdge = edges[0];
-          let minWt = g.getEdgeAttribute(minEdge, 'distance');
+          let minWt = minEdge.attributes.distance;
           for (let j=1; j<edges.length; j++) {
-            const w = g.getEdgeAttribute(edges[j], 'distance');
+            const w = edges[j].attributes.distance;
             if (w < minWt) { minWt = w; minEdge = edges[j]; }
           }
           
-          const edgeAttributes = g.getEdgeAttributes(minEdge);
-          g.addDirectedEdge(u, v, { ...edgeAttributes, isDuplicate: true });
+          g.addDirectedEdge(u, v, { ...minEdge.attributes, isDuplicate: true });
           duplicateEdgesCount++;
         }
       }
@@ -288,19 +440,17 @@ function balanceGraph(g: MultiDirectedGraph) {
   console.log(`[Worker] Foram adicionadas ${duplicateEdgesCount} arestas artificiais (repetidas) para balanceamento.`);
 }
 
-function hierholzer(g: MultiDirectedGraph): string[] {
+function hierholzer(g: CustomMultiGraph): string[] {
   console.log('[Worker] Step 5: Iniciando algoritmo de Hierholzer para extrair o Circuito Euleriano');
   if (g.order === 0) return [];
   
   const circuit: string[] = [];
   const currentPath: string[] = [];
   
-  // We need to keep track of available edges since graphology allows multi-edges but standard iterators might be tricky if we modify during iteration
-  // Let's create an adjacency list with counts/references
   const adj = new Map<string, string[]>();
   g.forEachNode((node) => adj.set(node, []));
   
-  g.forEachDirectedEdge((_edge, _attr, source, target) => {
+  g.forEachDirectedEdge((_edgeId, _attr, source, target) => {
     adj.get(source)!.push(target);
   });
   
@@ -367,7 +517,7 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
       // Find edge length
       const edges = graph.outEdges(u, v);
       if (edges.length > 0) {
-          const dist = graph.getEdgeAttribute(edges[0], 'distance');
+          const dist = edges[0].attributes.distance;
           totalDistanceMeters += dist;
       }
       

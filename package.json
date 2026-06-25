@@ -19,8 +19,6 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",
-    "graphology": "^0.26.0",
-    "graphology-components": "^1.5.4",
     "javascript-lp-solver": "^1.0.3",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
