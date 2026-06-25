@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   generateBtn.addEventListener('click', () => {
     if (!currentBounds) {
-      alert("Por favor, desenhe um retângulo no mapa primeiro.");
+      alert("Por favor, desenhe um polígono no mapa primeiro.");
       return;
     }
     
@@ -347,18 +347,10 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     resultsPanel.classList.add('hidden');
 
-    const nw = currentBounds.getNorthWest();
-    const se = currentBounds.getSouthEast();
-
-    console.log('[Main] Enviando payload para o Worker:', { mode, bounds: { north: nw.lat, south: se.lat, west: nw.lng, east: se.lng } });
+    console.log('[Main] Enviando payload para o Worker:', currentBounds);
     worker.postMessage({
       mode: mode,
-      bounds: {
-        north: nw.lat,
-        south: se.lat,
-        west: nw.lng,
-        east: se.lng
-      }
+      polygon: currentBounds
     });
   });
 
