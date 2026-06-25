@@ -297,7 +297,7 @@ function buildBaseData(overpassData: any) {
   return { nodes, baseEdges };
 }
 
-function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[]): CustomMultiGraph {
+function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string): CustomMultiGraph {
   console.log('[Worker] Step 4: Resolvendo o Mixed Chinese Postman Problem com LP Solver');
   
   const sccEdges = baseEdges.filter(e => sccGraph.hasNode(e.u) && sccGraph.hasNode(e.v));
@@ -326,16 +326,18 @@ function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: Custo
     };
     model.ints[`fwd_${e.id}`] = 1;
 
-    // Reverse variable (volta), only if not one-way
-    if (!e.isOneway) {
-      model.variables[`rev_${e.id}`] = {
-        cost: e.dist,
-        [`req_${e.id}`]: 1,
-        [`bal_${e.v}`]: -1,
-        [`bal_${e.u}`]: 1
-      };
-      model.ints[`rev_${e.id}`] = 1;
-    }
+    // Reverse variable (volta).
+    // ALWAYS added to guarantee the graph is strongly connected even when the boundary cuts off the return street.
+    // If it's a one-way street, we apply a massive penalty so the solver only uses it if strictly trapped.
+    const penalty = (e.isOneway && mode === 'bike') ? 20 : 1;
+    
+    model.variables[`rev_${e.id}`] = {
+      cost: e.dist * penalty,
+      [`req_${e.id}`]: 1,
+      [`bal_${e.v}`]: -1,
+      [`bal_${e.u}`]: 1
+    };
+    model.ints[`rev_${e.id}`] = 1;
   });
 
   console.log('[Worker] Enviando modelo matemático para o Solver LP. Isso pode levar alguns segundos...');
@@ -417,15 +419,13 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
       return;
     }
 
-    // Prepare graph for SCC extraction (all possible directed edges)
+    // Prepare graph for SCC extraction (treat as undirected to ensure connectivity inside the drawn polygon)
     const sccCheckGraph = new CustomMultiGraph();
     baseEdges.forEach(edge => {
       sccCheckGraph.addNode(edge.u, nodes.get(Number(edge.u)));
       sccCheckGraph.addNode(edge.v, nodes.get(Number(edge.v)));
       sccCheckGraph.addDirectedEdge(edge.u, edge.v, {});
-      if (!edge.isOneway) {
-        sccCheckGraph.addDirectedEdge(edge.v, edge.u, {});
-      }
+      sccCheckGraph.addDirectedEdge(edge.v, edge.u, {});
     });
     
     // 3. Extract SCC
@@ -437,7 +437,7 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     }
     
     // 4. Solve MCPP using LP Solver
-    const eulerGraph = solveMCPPAndBuildEulerianGraph(nodes, sccGraph, baseEdges);
+    const eulerGraph = solveMCPPAndBuildEulerianGraph(nodes, sccGraph, baseEdges, mode);
     
     // 5. Generate Eulerian Circuit
     const circuitNodeIds = hierholzer(eulerGraph);
