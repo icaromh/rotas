@@ -100,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultDistance = document.getElementById('result-distance') as HTMLDivElement;
   const resultTime = document.getElementById('result-time') as HTMLDivElement;
   const exportBtn = document.getElementById('export-gpx-btn') as HTMLButtonElement;
-  const debugBtn = document.getElementById('debug-btn') as HTMLButtonElement;
   const previewBtn = document.getElementById('preview-btn') as HTMLButtonElement;
 
   // State
@@ -220,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         map.removeLayer(currentPolyline);
         currentPolyline = null;
       }
+      currentRawInput = null; // Clear any previous fixture data
       resultsPanel.classList.add('hidden');
 
       const layer = e.layer as L.Polygon;
@@ -286,20 +286,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  worker.onmessage = (e) => {
+  worker.onmessage = (e: MessageEvent) => {
     const data = e.data;
     
+    if (data.type === 'error') {
+      alert("Erro na geração da rota:\n" + data.message);
+      if (data.rawInput) {
+        currentRawInput = data.rawInput;
+        console.log('[Main] Fixture de debug salva mesmo com erro. Digite downloadFixture() no console para baixar.');
+      }
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        Gerar Rota Otimizada
+      `;
+      return;
+    }
+
     // Reset button
     generateBtn.disabled = false;
     generateBtn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
       Gerar Rota Otimizada
     `;
-
-    if (data.type === 'error') {
-      alert(`Erro: ${data.message}`);
-      return;
-    }
 
     if (!data.path || data.path.length === 0) {
       alert("Nenhum caminho foi gerado.");
@@ -459,19 +468,20 @@ document.addEventListener('DOMContentLoaded', () => {
     animReqId = requestAnimationFrame(animate);
   });
 
-  debugBtn.addEventListener('click', () => {
+  (window as any).downloadFixture = () => {
     if (!currentRawInput) {
-      alert("Nenhuma rota foi gerada ainda.");
+      console.warn("Nenhuma rota foi gerada ainda.");
       return;
     }
     const blob = new Blob([JSON.stringify(currentRawInput, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `test-fixture-${Date.now()}.json`;
+    a.download = `fixture-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  });
+    console.log("Fixture baixada com sucesso!");
+  };
 });

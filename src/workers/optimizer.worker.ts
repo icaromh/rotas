@@ -134,7 +134,7 @@ export class CustomMultiGraph {
 }
 
 // Tarjan's SCC Algorithm
-function extractLargestSCC(g: CustomMultiGraph): CustomMultiGraph {
+export function extractLargestSCC(g: CustomMultiGraph): CustomMultiGraph {
   console.log('[Worker] Step 3: Extraindo o maior Componente Fortemente Conectado (SCC)');
   let index = 0;
   const stack: string[] = [];
@@ -332,8 +332,7 @@ export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph
     optimize: "cost",
     opType: "min",
     constraints: {},
-    variables: {},
-    ints: {}
+    variables: {}
   };
 
   sccGraph.forEachNode(node => {
@@ -349,17 +348,13 @@ export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph
       [`bal_${e.u}`]: -1,
       [`bal_${e.v}`]: 1
     };
-    model.ints[`fwd_${e.id}`] = 1;
-
     const penalty = (e.isOneway && mode === 'bike') ? 2000 : 1;
-    
     model.variables[`rev_${e.id}`] = {
       cost: e.dist * penalty,
       [`req_${e.id}`]: 1,
       [`bal_${e.v}`]: -1,
       [`bal_${e.u}`]: 1
     };
-    model.ints[`rev_${e.id}`] = 1;
   });
 
   console.log('[Worker] Enviando modelo matemático para o Solver LP. Isso pode levar alguns segundos...');
@@ -376,15 +371,19 @@ export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph
     eulerGraph.addNode(n, nodes.get(Number(n)));
   });
 
-  sccEdges.forEach(e => {
-    const fwdCount = Math.round(result[`fwd_${e.id}`] || 0);
-    const revCount = Math.round(result[`rev_${e.id}`] || 0);
+  baseEdges.forEach(e => {
+    if (!sccGraph.hasNode(e.u) || !sccGraph.hasNode(e.v)) return;
 
+    // FWD edges
+    const fwdCount = Math.round(result[`fwd_${e.id}`] || 0);
     for (let i = 0; i < fwdCount; i++) {
-      eulerGraph.addDirectedEdge(e.u, e.v, { distance: e.dist });
+      eulerGraph.addDirectedEdge(e.u, e.v, { id: e.id, distance: e.dist });
     }
+
+    // REV edges
+    const revCount = Math.round(result[`rev_${e.id}`] || 0);
     for (let i = 0; i < revCount; i++) {
-      eulerGraph.addDirectedEdge(e.v, e.u, { distance: e.dist });
+      eulerGraph.addDirectedEdge(e.v, e.u, { id: e.id, distance: e.dist });
     }
   });
 
@@ -440,17 +439,17 @@ export function hierholzer(g: CustomMultiGraph): string[] {
 if (typeof self !== 'undefined') {
 self.onmessage = async (e: MessageEvent<RouteRequest>) => {
   console.log('[Worker] Recebida solicitação de geração de rota:', e.data);
+  const { polygon, mode } = e.data;
+  let overpassData: any = null;
   try {
-    const { polygon, mode } = e.data;
-    
     // 1. Fetch Data
-    const overpassData = await fetchOverpass(polygon, mode);
+    overpassData = await fetchOverpass(polygon, mode);
     
     // 2. Build Base Data
     const { nodes, baseEdges } = buildBaseData(overpassData, mode, polygon);
     
     if (baseEdges.length === 0) {
-      self.postMessage({ type: 'error', message: 'Nenhuma rua válida encontrada nesta região para o modo selecionado.' });
+      self.postMessage({ type: 'error', message: 'Nenhuma rua válida encontrada nesta região para o modo selecionado.', rawInput: { polygon, mode, overpassData } });
       return;
     }
 
@@ -467,7 +466,7 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     const sccGraph = extractLargestSCC(sccCheckGraph);
     
     if (sccGraph.order === 0) {
-      self.postMessage({ type: 'error', message: 'As ruas encontradas não formam uma rede conectada.' });
+      self.postMessage({ type: 'error', message: 'As ruas encontradas não formam uma rede conectada.', rawInput: { polygon, mode, overpassData } });
       return;
     }
     
@@ -514,9 +513,9 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
       }
     });
     
-  } catch (err: any) {
-    console.error('[Worker] Erro no processamento:', err);
-    self.postMessage({ type: 'error', message: err.message || String(err) });
-  }
+    } catch (err: any) {
+      console.error('[Worker] Erro no processamento:', err);
+      self.postMessage({ type: 'error', message: err.message || String(err), rawInput: { polygon, mode, overpassData } });
+    }
 };
 }

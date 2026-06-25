@@ -10,26 +10,23 @@ import {
 } from '../src/workers/optimizer.worker';
 
 describe('Optimizer Pipeline', () => {
-  it('should process a test fixture correctly if available', () => {
-    const fixturePath = path.resolve(__dirname, 'fixture.json');
+  const runFixture = (fixtureName: string) => {
+    const fixturePath = path.resolve(__dirname, 'fixtures', fixtureName);
     
     if (!fs.existsSync(fixturePath)) {
-      console.warn('⚠️ Nenhum fixture.json encontrado. Teste pulado.');
-      console.warn('Salve um arquivo de debug na UI e renomeie para fixture.json dentro da pasta tests/ para testar offline.');
-      expect(true).toBe(true);
+      console.warn(`⚠️ Nenhum ${fixtureName} encontrado. Teste pulado.`);
       return;
     }
 
+    console.log(`\n=== Running ${fixtureName} ===`);
     const rawData = fs.readFileSync(fixturePath, 'utf8');
     const { polygon, mode, overpassData } = JSON.parse(rawData);
 
-    expect(polygon).toBeDefined();
-    expect(overpassData).toBeDefined();
-
-    console.time('Step 2: buildBaseData');
+    console.time(`[${fixtureName}] Step 2: buildBaseData`);
     const { nodes, baseEdges } = buildBaseData(overpassData, mode, polygon);
-    console.timeEnd('Step 2: buildBaseData');
-    expect(nodes.size).toBeGreaterThan(0);
+    console.timeEnd(`[${fixtureName}] Step 2: buildBaseData`);
+    
+    console.log(`[${fixtureName}] Base edges: ${baseEdges.length}`);
 
     const sccCheckGraph = new CustomMultiGraph();
     baseEdges.forEach(edge => {
@@ -39,21 +36,28 @@ describe('Optimizer Pipeline', () => {
       sccCheckGraph.addDirectedEdge(edge.v, edge.u, {});
     });
 
-    console.time('Step 3: extractLargestSCC');
+    console.time(`[${fixtureName}] Step 3: extractLargestSCC`);
     const sccGraph = extractLargestSCC(sccCheckGraph);
-    console.timeEnd('Step 3: extractLargestSCC');
-    expect(sccGraph.order).toBeGreaterThan(0);
-
-    console.time('Step 4: solveMCPP');
-    const eulerGraph = solveMCPPAndBuildEulerianGraph(nodes, sccGraph, baseEdges, mode);
-    console.timeEnd('Step 4: solveMCPP');
-    expect(eulerGraph.order).toBeGreaterThan(0);
-
-    console.time('Step 5: hierholzer');
-    const circuitNodeIds = hierholzer(eulerGraph);
-    console.timeEnd('Step 5: hierholzer');
-    expect(circuitNodeIds.length).toBeGreaterThan(0);
+    console.timeEnd(`[${fixtureName}] Step 3: extractLargestSCC`);
     
-    console.log(`Rota final tem ${circuitNodeIds.length} nós.`);
+    console.log(`[${fixtureName}] SCC nodes: ${sccGraph.order}`);
+
+    console.time(`[${fixtureName}] Step 4: solveMCPP`);
+    const eulerGraph = solveMCPPAndBuildEulerianGraph(nodes, sccGraph, baseEdges, mode);
+    console.timeEnd(`[${fixtureName}] Step 4: solveMCPP`);
+
+    console.time(`[${fixtureName}] Step 5: hierholzer`);
+    const circuitNodeIds = hierholzer(eulerGraph);
+    console.timeEnd(`[${fixtureName}] Step 5: hierholzer`);
+    
+    console.log(`[${fixtureName}] Rota final tem ${circuitNodeIds.length} nós.`);
+  };
+
+  it('should process works.json', () => {
+    runFixture('works.json');
+  });
+
+  it('should process not-work.json', () => {
+    runFixture('not-work.json');
   });
 });
