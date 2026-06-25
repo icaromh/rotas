@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }).addTo(map);
 
   const drawnItems = new L.FeatureGroup();
-  map.addTo(drawnItems);
+  drawnItems.addTo(map);
   
   const drawControl = new L.Control.Draw({
     draw: {

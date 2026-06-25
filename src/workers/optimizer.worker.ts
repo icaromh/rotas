@@ -1,5 +1,5 @@
 import { MultiDirectedGraph } from 'graphology';
-import stronglyConnectedComponents from 'graphology-components/strongly-connected';
+import { stronglyConnectedComponents } from 'graphology-components';
 import solver from 'javascript-lp-solver';
 
 export interface RouteRequest {
@@ -103,7 +103,7 @@ function buildGraph(overpassData: any): MultiDirectedGraph {
 
 function extractLargestSCC(g: MultiDirectedGraph): MultiDirectedGraph {
   const sccs = stronglyConnectedComponents(g);
-  let largest = [];
+  let largest: string[] = [];
   for (const scc of sccs) {
     if (scc.length > largest.length) largest = scc;
   }
@@ -113,7 +113,7 @@ function extractLargestSCC(g: MultiDirectedGraph): MultiDirectedGraph {
     largestGraph.addNode(node, g.getNodeAttributes(node));
   }
   
-  g.forEachDirectedEdge((edge, attributes, source, target) => {
+  g.forEachDirectedEdge((_edge, attributes, source, target) => {
     if (largestGraph.hasNode(source) && largestGraph.hasNode(target)) {
       largestGraph.addDirectedEdge(source, target, attributes);
     }
@@ -234,7 +234,7 @@ function balanceGraph(g: MultiDirectedGraph) {
     pathsMap.set(excess.id, deficitPaths);
   }
 
-  const result = solver.Solve(model);
+  const result = solver.Solve(model) as Record<string, number>;
   
   // Add duplicate edges based on LP result
   for (const key of Object.keys(result)) {
@@ -277,7 +277,7 @@ function hierholzer(g: MultiDirectedGraph): string[] {
   const adj = new Map<string, string[]>();
   g.forEachNode((node) => adj.set(node, []));
   
-  g.forEachDirectedEdge((edge, attr, source, target) => {
+  g.forEachDirectedEdge((_edge, _attr, source, target) => {
     adj.get(source)!.push(target);
   });
   
