@@ -5,10 +5,33 @@
 
 export interface Env {}
 
+const ALLOWED_ORIGINS = [
+  'https://rotas-dusky.vercel.app'
+];
+
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  
+  // Allow localhost (any port)
+  if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+    return true;
+  }
+  
+  // Allow explicit domains
+  return ALLOWED_ORIGINS.includes(origin);
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const origin = request.headers.get('Origin');
+    
+    // If there is an Origin header but it's not allowed, reject immediately
+    if (origin && !isAllowedOrigin(origin)) {
+      return new Response('Forbidden: CORS policy does not allow this origin.', { status: 403 });
+    }
+
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin || '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
