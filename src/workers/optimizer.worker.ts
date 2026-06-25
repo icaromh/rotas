@@ -244,16 +244,37 @@ export async function fetchOverpass(polygon: {lat: number, lng: number}[], mode:
     out skel qt;
   `;
 
-  console.log('[Worker] Query enviada para Overpass API:', query);
-  const response = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: query
-  });
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://lz4.overpass-api.de/api/interpreter',
+    'https://z.overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter'
+  ];
 
-  if (!response.ok) throw new Error('Falha ao obter dados do Overpass API');
-  const data = await response.json();
-  console.log(`[Worker] Dados recebidos do Overpass. Elementos: ${data.elements?.length || 0}`);
-  return data;
+  console.log('[Worker] Query enviada para Overpass API:', query);
+
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`[Worker] Tentando endpoint: ${endpoint}`);
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: query
+      });
+
+      if (!response.ok) {
+        console.warn(`[Worker] Endpoint ${endpoint} retornou erro: ${response.status}`);
+        continue;
+      }
+      
+      const data = await response.json();
+      console.log(`[Worker] Dados recebidos do Overpass (${endpoint}). Elementos: ${data.elements?.length || 0}`);
+      return data;
+    } catch (err) {
+      console.warn(`[Worker] Falha no endpoint ${endpoint} (pode ser CORS/Timeout):`, err);
+    }
+  }
+
+  throw new Error('Falha ao obter dados do Overpass API. Todos os servidores falharam ou bloquearam por CORS. Tente novamente mais tarde.');
 }
 
 export interface BaseEdge {
