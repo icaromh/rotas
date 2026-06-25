@@ -256,10 +256,17 @@ export async function fetchOverpass(polygon: {lat: number, lng: number}[], mode:
   for (const endpoint of endpoints) {
     try {
       console.log(`[Worker] Tentando endpoint: ${endpoint}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds max per endpoint
+      
       const response = await fetch(endpoint, {
         method: 'POST',
-        body: query
+        body: query,
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.warn(`[Worker] Endpoint ${endpoint} retornou erro: ${response.status}`);
