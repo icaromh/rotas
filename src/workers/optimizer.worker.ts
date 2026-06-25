@@ -401,7 +401,19 @@ function hierholzer(g: CustomMultiGraph): string[] {
     adj.get(source)!.push(target);
   });
   
-  const startNode = g.nodes()[0];
+  let startNode = g.nodes()[0];
+  for (const n of g.nodes()) {
+    if (adj.get(n)!.length > 0) {
+      startNode = n;
+      break;
+    }
+  }
+  
+  if (adj.get(startNode)!.length === 0) {
+    // Grafo não tem arestas
+    return [];
+  }
+
   currentPath.push(startNode);
   let curr = startNode;
   
