@@ -100,11 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultDistance = document.getElementById('result-distance') as HTMLDivElement;
   const resultTime = document.getElementById('result-time') as HTMLDivElement;
   const exportBtn = document.getElementById('export-gpx-btn') as HTMLButtonElement;
+  const previewBtn = document.getElementById('preview-btn') as HTMLButtonElement;
 
   // State
   let currentBounds: L.LatLngBounds | null = null;
   let currentPolyline: L.Polyline | null = null;
   let currentPathData: {lat: number, lng: number}[] = [];
+  
+  // Animation State
+  let animPolyline: L.Polyline | null = null;
+  let animMarker: L.CircleMarker | null = null;
+  let animReqId: number | null = null;
   console.log('[Main] Instanciando Web Worker...');
   const worker = new OptimizerWorker();
   
@@ -368,5 +374,79 @@ document.addEventListener('DOMContentLoaded', () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  });
+
+  previewBtn.addEventListener('click', () => {
+    if (currentPathData.length === 0) return;
+    
+    // Check if playing
+    if (animReqId !== null) {
+      // Stop animation
+      cancelAnimationFrame(animReqId);
+      animReqId = null;
+      if (animPolyline) map.removeLayer(animPolyline);
+      if (animMarker) map.removeLayer(animMarker);
+      if (currentPolyline) currentPolyline.setStyle({ opacity: 0.8 });
+      previewBtn.innerHTML = `
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Animar Rota
+      `;
+      return;
+    }
+
+    // Start animation
+    previewBtn.innerHTML = `
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      Parar Animação
+    `;
+
+    if (currentPolyline) currentPolyline.setStyle({ opacity: 0.2 });
+    
+    if (animPolyline) map.removeLayer(animPolyline);
+    if (animMarker) map.removeLayer(animMarker);
+    
+    animPolyline = L.polyline([], {
+      color: '#ef4444',
+      weight: 5,
+      opacity: 1,
+      lineJoin: 'round'
+    }).addTo(map);
+    
+    animMarker = L.circleMarker(currentPathData[0], {
+      color: '#b91c1c',
+      fillColor: '#ef4444',
+      fillOpacity: 1,
+      radius: 6,
+      weight: 2
+    }).addTo(map);
+
+    let startTime: number | null = null;
+    const duration = 10000; // 10 seconds for full route
+    const totalPoints = currentPathData.length;
+
+    function animate(timestamp: number) {
+      if (!startTime) startTime = timestamp;
+      const progress = (timestamp - startTime) / duration;
+      
+      if (progress >= 1) {
+        animPolyline!.setLatLngs(currentPathData);
+        animReqId = null;
+        previewBtn.innerHTML = `
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Animar Rota
+        `;
+        if (currentPolyline) currentPolyline.setStyle({ opacity: 0.8 });
+        if (animMarker) map.removeLayer(animMarker);
+        return;
+      }
+      
+      const targetIndex = Math.floor(progress * totalPoints);
+      animPolyline!.setLatLngs(currentPathData.slice(0, targetIndex + 1));
+      animMarker!.setLatLng(currentPathData[targetIndex]);
+      
+      animReqId = requestAnimationFrame(animate);
+    }
+    
+    animReqId = requestAnimationFrame(animate);
   });
 });
