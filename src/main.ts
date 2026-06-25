@@ -100,12 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultDistance = document.getElementById('result-distance') as HTMLDivElement;
   const resultTime = document.getElementById('result-time') as HTMLDivElement;
   const exportBtn = document.getElementById('export-gpx-btn') as HTMLButtonElement;
+  const debugBtn = document.getElementById('debug-btn') as HTMLButtonElement;
   const previewBtn = document.getElementById('preview-btn') as HTMLButtonElement;
 
   // State
   let currentBounds: L.LatLngBounds | null = null;
   let currentPolyline: L.Polyline | null = null;
   let currentPathData: {lat: number, lng: number}[] = [];
+  let currentRawInput: any = null;
   
   // Animation State
   let animPolyline: L.Polyline | null = null;
@@ -299,6 +301,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (!data.path || data.path.length === 0) {
+      alert("Nenhum caminho foi gerado.");
+      return;
+    }
+    currentPathData = data.path;
+    currentRawInput = data.rawInput;
+
     if (data.type === 'success' && data.path) {
       currentPathData = data.path;
       const distanceKm = data.distance as number;
@@ -448,5 +457,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     animReqId = requestAnimationFrame(animate);
+  });
+
+  debugBtn.addEventListener('click', () => {
+    if (!currentRawInput) {
+      alert("Nenhuma rota foi gerada ainda.");
+      return;
+    }
+    const blob = new Blob([JSON.stringify(currentRawInput, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `test-fixture-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
 });

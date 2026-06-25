@@ -12,10 +12,15 @@ export interface RouteResponse {
   path?: { lat: number; lng: number }[];
   distance?: number;
   message?: string;
+  rawInput?: {
+    polygon: { lat: number; lng: number }[];
+    mode: string;
+    overpassData: any;
+  };
 }
 
 // Custom Vanilla TS Graph Engine
-class CustomMultiGraph {
+export class CustomMultiGraph {
   private _nodes: Map<string, any>;
   private _outEdges: Map<string, Map<string, any[]>>; // source -> target -> edges[]
   private _inDegrees: Map<string, number>;
@@ -206,7 +211,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
   return R * c;
 }
 
-async function fetchOverpass(polygon: {lat: number, lng: number}[], mode: 'bike' | 'walk') {
+export async function fetchOverpass(polygon: {lat: number, lng: number}[], mode: 'bike' | 'walk') {
   console.log(`[Worker] Step 1: Iniciando fetch do Overpass API para modo: ${mode}`);
   
   // Calculate bounding box and add buffer
@@ -251,7 +256,7 @@ async function fetchOverpass(polygon: {lat: number, lng: number}[], mode: 'bike'
   return data;
 }
 
-interface BaseEdge {
+export interface BaseEdge {
   id: string;
   u: string;
   v: string;
@@ -260,7 +265,7 @@ interface BaseEdge {
   isTarget: boolean;
 }
 
-function isPointInPolygon(point: {lat: number, lng: number}, vs: {lat: number, lng: number}[]) {
+export function isPointInPolygon(point: {lat: number, lng: number}, vs: {lat: number, lng: number}[]) {
   let x = point.lng, y = point.lat;
   let inside = false;
   for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
@@ -272,7 +277,7 @@ function isPointInPolygon(point: {lat: number, lng: number}, vs: {lat: number, l
   return inside;
 }
 
-function buildBaseData(overpassData: any, mode: string, polygon: {lat: number, lng: number}[]) {
+export function buildBaseData(overpassData: any, mode: string, polygon: {lat: number, lng: number}[]) {
   console.log('[Worker] Step 2: Extraindo ruas e interseções base');
   const nodes = new Map<number, {lat: number, lon: number}>();
   
@@ -318,7 +323,7 @@ function buildBaseData(overpassData: any, mode: string, polygon: {lat: number, l
   return { nodes, baseEdges };
 }
 
-function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string): CustomMultiGraph {
+export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string): CustomMultiGraph {
   console.log('[Worker] Step 4: Resolvendo o Mixed Chinese Postman Problem com LP Solver');
   
   const sccEdges = baseEdges.filter(e => sccGraph.hasNode(e.u) && sccGraph.hasNode(e.v));
@@ -387,7 +392,7 @@ function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: Custo
   return eulerGraph;
 }
 
-function hierholzer(g: CustomMultiGraph): string[] {
+export function hierholzer(g: CustomMultiGraph): string[] {
   console.log('[Worker] Step 5: Iniciando algoritmo de Hierholzer para extrair o Circuito Euleriano');
   if (g.order === 0) return [];
   
@@ -432,6 +437,7 @@ function hierholzer(g: CustomMultiGraph): string[] {
   return circuit.reverse();
 }
 
+if (typeof self !== 'undefined') {
 self.onmessage = async (e: MessageEvent<RouteRequest>) => {
   console.log('[Worker] Recebida solicitação de geração de rota:', e.data);
   try {
@@ -497,14 +503,20 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     }
     
     console.log(`[Worker] Rota finalizada. Distância total apurada: ${(totalDistanceMeters / 1000).toFixed(2)} km`);
-    self.postMessage({
-      type: 'success',
-      path: finalPath,
-      distance: totalDistanceMeters / 1000 // Convert to km
+    self.postMessage({ 
+      type: 'success', 
+      path: finalPath, 
+      distance: totalDistanceMeters / 1000,
+      rawInput: {
+        polygon,
+        mode,
+        overpassData
+      }
     });
     
   } catch (err: any) {
-    console.error('[Worker] Erro crítico no pipeline:', err);
-    self.postMessage({ type: 'error', message: err.message || 'Erro desconhecido no processamento.' });
+    console.error('[Worker] Erro no processamento:', err);
+    self.postMessage({ type: 'error', message: err.message || String(err) });
   }
 };
+}
