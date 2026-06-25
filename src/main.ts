@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
+import OptimizerWorker from './workers/optimizer.worker?worker';
 
 // Fix Leaflet's default icon paths for Vite
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -23,6 +24,22 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 const MAX_AREA_KM2 = 4;
 
+function generateGPX(path: {lat: number, lng: number}[]): string {
+  let gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Otimizador GPS" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Rota Otimizada</name>
+    <trkseg>
+`;
+  for (const pt of path) {
+    gpx += `      <trkpt lat="${pt.lat}" lon="${pt.lng}"></trkpt>\n`;
+  }
+  gpx += `    </trkseg>
+  </trk>
+</gpx>`;
+  return gpx;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const modeRadios = document.querySelectorAll<HTMLInputElement>('input[name="mode"]');
   const speedLabel = document.getElementById('speed-label') as HTMLLabelElement;
@@ -30,9 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarToggle = document.getElementById('sidebar-toggle') as HTMLButtonElement;
   const sidebar = document.getElementById('sidebar') as HTMLElement;
   const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
+  const resultsPanel = document.getElementById('results-panel') as HTMLDivElement;
+  const resultDistance = document.getElementById('result-distance') as HTMLDivElement;
+  const resultTime = document.getElementById('result-time') as HTMLDivElement;
+  const exportBtn = document.getElementById('export-gpx-btn') as HTMLButtonElement;
 
   // State
   let currentBounds: L.LatLngBounds | null = null;
+  let currentPolyline: L.Polyline | null = null;
+  let currentPathData: {lat: number, lng: number}[] = [];
+  const worker = new OptimizerWorker();
 
   // Initialize Map
   const map = L.map('map-container').setView([-23.55052, -46.633308], 13); // Default to São Paulo
@@ -41,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(map);
 
-  // Initialize Draw Control
   const drawnItems = new L.FeatureGroup();
   map.addTo(drawnItems);
   
@@ -77,13 +100,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   map.on(L.Draw.Event.CREATED, (e: any) => {
-    drawnItems.clearLayers(); // Only allow one rectangle
+    drawnItems.clearLayers();
+    if (currentPolyline) {
+      map.removeLayer(currentPolyline);
+      currentPolyline = null;
+    }
+    resultsPanel.classList.add('hidden');
+    
     const layer = e.layer;
     const bounds = layer.getBounds();
     const area = getAreaInKm2(bounds);
     
     if (area > MAX_AREA_KM2) {
-      alert(`O quadrante selecionado possui ${area.toFixed(2)} km², excedendo o limite máximo de ${MAX_AREA_KM2} km² para processamento no navegador. Por favor, desenhe uma área menor.`);
+      alert(`O quadrante possui ${area.toFixed(2)} km², excedendo o limite de ${MAX_AREA_KM2} km². Desenhe uma área menor.`);
       return;
     }
 
@@ -96,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const bounds = layer.getBounds();
       const area = getAreaInKm2(bounds);
       if (area > MAX_AREA_KM2) {
-        alert(`O quadrante editado possui ${area.toFixed(2)} km², excedendo o limite de ${MAX_AREA_KM2} km². A seleção foi cancelada.`);
+        alert(`O quadrante editado possui ${area.toFixed(2)} km², excedendo o limite. Seleção cancelada.`);
         drawnItems.clearLayers();
         currentBounds = null;
       } else {
@@ -107,14 +136,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   map.on(L.Draw.Event.DELETED, () => {
     currentBounds = null;
+    if (currentPolyline) {
+      map.removeLayer(currentPolyline);
+      currentPolyline = null;
+    }
+    resultsPanel.classList.add('hidden');
   });
 
-  // Toggle Sidebar on Mobile
   sidebarToggle.addEventListener('click', () => {
     sidebar.classList.toggle('-translate-x-full');
   });
 
-  // Handle Mode Change (Bike vs Walk)
   modeRadios.forEach(radio => {
     radio.addEventListener('change', (e) => {
       const target = e.target as HTMLInputElement;
@@ -125,12 +157,66 @@ document.addEventListener('DOMContentLoaded', () => {
         speedInput.max = '100';
       } else {
         speedLabel.textContent = 'Pace (min/km)';
-        speedInput.value = '10'; // Default walking pace
+        speedInput.value = '10';
         speedInput.min = '1';
         speedInput.max = '30';
       }
     });
   });
+
+  worker.onmessage = (e) => {
+    const data = e.data;
+    
+    // Reset button
+    generateBtn.disabled = false;
+    generateBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      Gerar Rota Otimizada
+    `;
+
+    if (data.type === 'error') {
+      alert(`Erro: ${data.message}`);
+      return;
+    }
+
+    if (data.type === 'success' && data.path) {
+      currentPathData = data.path;
+      const distanceKm = data.distance as number;
+
+      if (currentPolyline) map.removeLayer(currentPolyline);
+      
+      currentPolyline = L.polyline(data.path, {
+        color: '#ef4444',
+        weight: 4,
+        opacity: 0.8,
+        lineJoin: 'round'
+      }).addTo(map);
+      
+      map.fitBounds(currentPolyline.getBounds());
+
+      // Update UI
+      resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
+      
+      const mode = (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value;
+      const speedVal = parseFloat(speedInput.value);
+      
+      let totalMinutes = 0;
+      if (mode === 'bike') {
+        // speedVal is km/h
+        const hours = distanceKm / speedVal;
+        totalMinutes = hours * 60;
+      } else {
+        // speedVal is min/km
+        totalMinutes = distanceKm * speedVal;
+      }
+      
+      const h = Math.floor(totalMinutes / 60);
+      const m = Math.round(totalMinutes % 60);
+      resultTime.textContent = h > 0 ? `${h}h ${m}m` : `${m} min`;
+      
+      resultsPanel.classList.remove('hidden');
+    }
+  };
 
   generateBtn.addEventListener('click', () => {
     if (!currentBounds) {
@@ -138,8 +224,42 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    console.log('Gerar rota para bounds:', currentBounds.toBBoxString());
-    console.log('Modo:', (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value);
-    console.log('Velocidade/Pace:', speedInput.value);
+    const mode = (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value;
+    
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+      Processando...
+    `;
+    resultsPanel.classList.add('hidden');
+
+    const nw = currentBounds.getNorthWest();
+    const se = currentBounds.getSouthEast();
+
+    worker.postMessage({
+      mode: mode,
+      bounds: {
+        north: nw.lat,
+        south: se.lat,
+        west: nw.lng,
+        east: se.lng
+      }
+    });
+  });
+
+  exportBtn.addEventListener('click', () => {
+    if (currentPathData.length === 0) return;
+    
+    const gpxString = generateGPX(currentPathData);
+    const blob = new Blob([gpxString], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rota-otimizada-${Date.now()}.gpx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
 });
