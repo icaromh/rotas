@@ -245,10 +245,7 @@ export async function fetchOverpass(polygon: {lat: number, lng: number}[], mode:
   `;
 
   const endpoints = [
-    'https://overpass-api.de/api/interpreter',
-    'https://lz4.overpass-api.de/api/interpreter',
-    'https://z.overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter'
+    'https://rotas-overpass-proxy.icaro-mh.workers.dev/'
   ];
 
   console.log('[Worker] Query enviada para Overpass API:', query);
