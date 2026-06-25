@@ -3,7 +3,7 @@ import solver from 'javascript-lp-solver';
 console.log('[Worker] Worker module carregado e inicializado com sucesso.');
 
 export interface RouteRequest {
-  bounds: { north: number; south: number; east: number; west: number };
+  polygon: { lat: number; lng: number }[];
   mode: 'bike' | 'walk';
 }
 
@@ -206,9 +206,10 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
   return R * c;
 }
 
-async function fetchOverpass(bounds: any, mode: 'bike' | 'walk') {
+async function fetchOverpass(polygon: {lat: number, lng: number}[], mode: 'bike' | 'walk') {
   console.log(`[Worker] Step 1: Iniciando fetch do Overpass API para modo: ${mode}`);
-  const { south, west, north, east } = bounds;
+  
+  const polyStr = polygon.map(p => `${p.lat} ${p.lng}`).join(' ');
   
   // Aggressive filter to eliminate sidewalks, cycleways, and service alleys.
   // This drastically simplifies the map, collapsing complex avenues into single primary routes.
@@ -217,7 +218,7 @@ async function fetchOverpass(bounds: any, mode: 'bike' | 'walk') {
   const query = `
     [out:json][timeout:25];
     (
-      way${wayFilter}(${south},${west},${north},${east});
+      way${wayFilter}(poly:"${polyStr}");
     );
     out body;
     >;
@@ -403,10 +404,10 @@ function hierholzer(g: CustomMultiGraph): string[] {
 self.onmessage = async (e: MessageEvent<RouteRequest>) => {
   console.log('[Worker] Recebida solicitação de geração de rota:', e.data);
   try {
-    const { bounds, mode } = e.data;
+    const { polygon, mode } = e.data;
     
     // 1. Fetch Data
-    const overpassData = await fetchOverpass(bounds, mode);
+    const overpassData = await fetchOverpass(polygon, mode);
     
     // 2. Build Base Data
     const { nodes, baseEdges } = buildBaseData(overpassData);

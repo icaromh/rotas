@@ -175,69 +175,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const drawnItems = new L.FeatureGroup();
   drawnItems.addTo(map);
-  
+
   const drawControl = new L.Control.Draw({
     draw: {
       polyline: false,
-      polygon: false,
-      circle: false,
-      marker: false,
-      circlemarker: false,
-      rectangle: {
+      polygon: {
+        allowIntersection: false,
+        drawError: {
+          color: '#e1e100', // Color the shape will turn when intersects
+          message: '<strong>Ops!<strong> Você não pode cruzar as linhas do polígono!'
+        },
         shapeOptions: {
           color: '#3b82f6',
           weight: 2,
-          fillOpacity: 0.1
+          fillOpacity: 0.2
         }
-      }
+      },
+      circle: false,
+      marker: false,
+      circlemarker: false,
+      rectangle: false
     },
     edit: {
       featureGroup: drawnItems,
       remove: true
     }
   });
+
   map.addControl(drawControl);
 
-  function getAreaInKm2(bounds: L.LatLngBounds): number {
-    const nw = bounds.getNorthWest();
-    const ne = bounds.getNorthEast();
-    const sw = bounds.getSouthWest();
-    const widthKm = nw.distanceTo(ne) / 1000;
-    const heightKm = nw.distanceTo(sw) / 1000;
-    return widthKm * heightKm;
-  }
-
   map.on(L.Draw.Event.CREATED, (e: any) => {
-    drawnItems.clearLayers();
-    if (currentPolyline) {
-      map.removeLayer(currentPolyline);
-      currentPolyline = null;
-    }
-    resultsPanel.classList.add('hidden');
-    
-    const layer = e.layer;
-    const bounds = layer.getBounds();
-    const area = getAreaInKm2(bounds);
-    
-    if (area > MAX_AREA_KM2) {
-      alert(`O quadrante possui ${area.toFixed(2)} km², excedendo o limite de ${MAX_AREA_KM2} km². Desenhe uma área menor.`);
-      return;
-    }
+    const layerType = e.layerType;
+    if (layerType === 'polygon') {
+      drawnItems.clearLayers();
+      if (currentPolyline) {
+        map.removeLayer(currentPolyline);
+        currentPolyline = null;
+      }
+      resultsPanel.classList.add('hidden');
 
-    currentBounds = bounds;
-    drawnItems.addLayer(layer);
+      const layer = e.layer as L.Polygon;
+      const latlngs = layer.getLatLngs()[0] as L.LatLng[];
+      
+      // Calculate area of the polygon using Leaflet GeometryUtil
+      const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
+      const areaKm2 = areaM2 / 1_000_000;
+
+      if (areaKm2 > MAX_AREA_KM2) {
+        alert(`O polígono possui ${areaKm2.toFixed(2)} km², excedendo o limite de ${MAX_AREA_KM2} km². Desenhe uma área menor.`);
+        return;
+      }
+
+      drawnItems.addLayer(layer);
+      
+      // Store the polygon coordinates instead of bounds
+      currentBounds = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng })) as any;
+    }
   });
 
   map.on(L.Draw.Event.EDITED, (e: any) => {
     e.layers.eachLayer((layer: any) => {
-      const bounds = layer.getBounds();
-      const area = getAreaInKm2(bounds);
-      if (area > MAX_AREA_KM2) {
-        alert(`O quadrante editado possui ${area.toFixed(2)} km², excedendo o limite. Seleção cancelada.`);
+      const latlngs = layer.getLatLngs()[0] as L.LatLng[];
+      const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
+      const areaKm2 = areaM2 / 1_000_000;
+      if (areaKm2 > MAX_AREA_KM2) {
+        alert(`O polígono editado possui ${areaKm2.toFixed(2)} km², excedendo o limite. Seleção cancelada.`);
         drawnItems.clearLayers();
         currentBounds = null;
       } else {
-        currentBounds = bounds;
+        currentBounds = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng })) as any;
       }
     });
   });
