@@ -209,13 +209,10 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 async function fetchOverpass(bounds: any, mode: 'bike' | 'walk') {
   console.log(`[Worker] Step 1: Iniciando fetch do Overpass API para modo: ${mode}`);
   const { south, west, north, east } = bounds;
-  let wayFilter = '';
   
-  if (mode === 'bike') {
-    wayFilter = `["highway"]["highway"!~"motorway|motorway_link|trunk|trunk_link|steps|pedestrian"]["bicycle"!="no"]`;
-  } else {
-    wayFilter = `["highway"]["highway"!~"motorway|motorway_link|trunk|trunk_link"]["foot"!="no"]`;
-  }
+  // Aggressive filter to eliminate sidewalks, cycleways, and service alleys.
+  // This drastically simplifies the map, collapsing complex avenues into single primary routes.
+  const wayFilter = `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"]`;
 
   const query = `
     [out:json][timeout:25];
@@ -239,9 +236,18 @@ async function fetchOverpass(bounds: any, mode: 'bike' | 'walk') {
   return data;
 }
 
-function buildGraph(overpassData: any): CustomMultiGraph {
-  console.log('[Worker] Step 2: Construindo o Grafo Direcionado inicial');
-  const g = new CustomMultiGraph();
+interface BaseEdge {
+  id: string;
+  u: string;
+  v: string;
+  dist: number;
+  isOneway: boolean;
+  pathFwd: {lat: number, lon: number}[];
+  pathRev: {lat: number, lon: number}[];
+}
+
+function buildBaseData(overpassData: any) {
+  console.log('[Worker] Step 2: Extraindo ruas e interseções base');
   const nodes = new Map<number, {lat: number, lon: number}>();
   
   for (const element of overpassData.elements) {
@@ -250,112 +256,51 @@ function buildGraph(overpassData: any): CustomMultiGraph {
     }
   }
 
+  const baseEdges: BaseEdge[] = [];
+  let edgeCounter = 0;
+
   for (const element of overpassData.elements) {
     if (element.type === 'way' && element.nodes) {
-      const isOneway = element.tags?.oneway === 'yes' || element.tags?.oneway === '1';
+      const isOneway = element.tags?.oneway === 'yes' || element.tags?.oneway === '1' || element.tags?.oneway === '-1';
+      const reverseCoords = element.tags?.oneway === '-1';
       
-      for (let i = 0; i < element.nodes.length - 1; i++) {
-        const u = element.nodes[i];
-        const v = element.nodes[i + 1];
+      let wayNodes = element.nodes;
+      if (reverseCoords) {
+        wayNodes = [...element.nodes].reverse();
+      }
+      
+      for (let i = 0; i < wayNodes.length - 1; i++) {
+        const u = wayNodes[i];
+        const v = wayNodes[i + 1];
         
         if (!nodes.has(u) || !nodes.has(v)) continue;
         
         const posU = nodes.get(u)!;
         const posV = nodes.get(v)!;
-        
-        if (!g.hasNode(u)) g.addNode(u, posU);
-        if (!g.hasNode(v)) g.addNode(v, posV);
-        
         const dist = haversine(posU.lat, posU.lon, posV.lat, posV.lon);
         
-        // Add directed edge u -> v
-        if (!g.hasDirectedEdge(u, v)) {
-            g.addDirectedEdge(u, v, { distance: dist, originalPath: [posU, posV] });
-        }
-        
-        // Add v -> u if not oneway
-        if (!isOneway) {
-          if (!g.hasDirectedEdge(v, u)) {
-            g.addDirectedEdge(v, u, { distance: dist, originalPath: [posV, posU] });
-          }
-        }
+        baseEdges.push({
+          id: `e${edgeCounter++}`,
+          u: String(u),
+          v: String(v),
+          dist,
+          isOneway: isOneway, // if true, only u -> v is allowed
+          pathFwd: [posU, posV],
+          pathRev: [posV, posU]
+        });
       }
     }
   }
-  console.log(`[Worker] Grafo construído com ${g.order} nós e ${g.size} arestas.`);
-  return g;
+  
+  console.log(`[Worker] Base gerada com ${baseEdges.length} segmentos de rua.`);
+  return { nodes, baseEdges };
 }
 
-function dijkstraShortestPaths(g: CustomMultiGraph, startNode: string) {
-  const distances = new Map<string, number>();
-  const previous = new Map<string, string>();
-  const unvisited = new Set<string>();
-
-  g.forEachNode((node) => {
-    distances.set(node, Infinity);
-    unvisited.add(node);
-  });
-  distances.set(startNode, 0);
-
-  while (unvisited.size > 0) {
-    let closestNode: string | null = null;
-    let minDistance = Infinity;
-
-    for (const node of unvisited) {
-      const dist = distances.get(node)!;
-      if (dist < minDistance) {
-        minDistance = dist;
-        closestNode = node;
-      }
-    }
-
-    if (!closestNode || minDistance === Infinity) break;
-    unvisited.delete(closestNode);
-
-    g.forEachOutNeighbor(closestNode, (neighbor) => {
-      if (!unvisited.has(neighbor)) return;
-      
-      const edges = g.outEdges(closestNode, neighbor);
-      // find min edge
-      let edgeWeight = Infinity;
-      for (const e of edges) {
-        const w = e.attributes.distance;
-        if (w < edgeWeight) edgeWeight = w;
-      }
-      
-      const alt = minDistance + edgeWeight;
-      
-      if (alt < distances.get(neighbor)!) {
-        distances.set(neighbor, alt);
-        previous.set(neighbor, closestNode);
-      }
-    });
-  }
-
-  return { distances, previous };
-}
-
-function balanceGraph(g: CustomMultiGraph) {
-  console.log('[Worker] Step 4: Balanceando o Grafo (Directed Chinese Postman Problem)');
-  const excessNodes: { id: string; amount: number }[] = [];
-  const deficitNodes: { id: string; amount: number }[] = [];
-
-  g.forEachNode((node) => {
-    const inDeg = g.inDegree(node);
-    const outDeg = g.outDegree(node);
-    const demand = inDeg - outDeg;
-    
-    if (demand > 0) excessNodes.push({ id: node, amount: demand });
-    else if (demand < 0) deficitNodes.push({ id: node, amount: -demand });
-  });
-
-  console.log(`[Worker] Encontrados ${excessNodes.length} nós em excesso e ${deficitNodes.length} nós em déficit.`);
-
-  if (excessNodes.length === 0 && deficitNodes.length === 0) {
-    console.log('[Worker] O grafo já está balanceado!');
-    return;
-  }
-
+function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[]): CustomMultiGraph {
+  console.log('[Worker] Step 4: Resolvendo o Mixed Chinese Postman Problem com LP Solver');
+  
+  const sccEdges = baseEdges.filter(e => sccGraph.hasNode(e.u) && sccGraph.hasNode(e.v));
+  
   const model: any = {
     optimize: "cost",
     opType: "min",
@@ -364,80 +309,62 @@ function balanceGraph(g: CustomMultiGraph) {
     ints: {}
   };
 
-  for (const excess of excessNodes) {
-    model.constraints[`excess_${excess.id}`] = { equal: excess.amount };
-  }
-  for (const deficit of deficitNodes) {
-    model.constraints[`deficit_${deficit.id}`] = { equal: deficit.amount };
-  }
+  sccGraph.forEachNode(node => {
+    model.constraints[`bal_${node}`] = { equal: 0 };
+  });
 
-  // Find shortest paths from all excess to all deficit
-  const pathsMap = new Map<string, Map<string, string[]>>(); // excess -> deficit -> path
+  sccEdges.forEach(e => {
+    model.constraints[`req_${e.id}`] = { min: 1 };
+    
+    // Forward variable (ida)
+    model.variables[`fwd_${e.id}`] = {
+      cost: e.dist,
+      [`req_${e.id}`]: 1,
+      [`bal_${e.u}`]: -1,
+      [`bal_${e.v}`]: 1
+    };
+    model.ints[`fwd_${e.id}`] = 1;
 
-  for (const excess of excessNodes) {
-    const { distances, previous } = dijkstraShortestPaths(g, excess.id);
-    const deficitPaths = new Map<string, string[]>();
-
-    for (const deficit of deficitNodes) {
-      const dist = distances.get(deficit.id);
-      if (dist !== undefined && dist < Infinity) {
-        // Construct path
-        const path: string[] = [];
-        let curr = deficit.id;
-        while (curr !== excess.id) {
-          path.unshift(curr);
-          curr = previous.get(curr)!;
-        }
-        path.unshift(excess.id);
-        deficitPaths.set(deficit.id, path);
-
-        // Add to LP model
-        const varName = `flow_${excess.id}_${deficit.id}`;
-        model.variables[varName] = {
-          cost: dist,
-          [`excess_${excess.id}`]: 1,
-          [`deficit_${deficit.id}`]: 1
-        };
-        model.ints[varName] = 1;
-      }
+    // Reverse variable (volta), only if not one-way
+    if (!e.isOneway) {
+      model.variables[`rev_${e.id}`] = {
+        cost: e.dist,
+        [`req_${e.id}`]: 1,
+        [`bal_${e.v}`]: -1,
+        [`bal_${e.u}`]: 1
+      };
+      model.ints[`rev_${e.id}`] = 1;
     }
-    pathsMap.set(excess.id, deficitPaths);
-  }
+  });
 
-  console.log('[Worker] Modelo de LP montado. Resolvendo Fluxo de Custo Mínimo...');
+  console.log('[Worker] Enviando modelo matemático para o Solver LP. Isso pode levar alguns segundos...');
   const result = solver.Solve(model) as Record<string, number>;
-  console.log(`[Worker] LP resolvido. Custo ótimo: ${result.result}`);
   
-  // Add duplicate edges based on LP result
-  let duplicateEdgesCount = 0;
-  for (const key of Object.keys(result)) {
-    if (key.startsWith('flow_') && result[key] > 0) {
-      const parts = key.split('_');
-      const excessId = parts[1];
-      const deficitId = parts[2];
-      const flowCount = Math.round(result[key]);
-      
-      const path = pathsMap.get(excessId)!.get(deficitId)!;
-      for (let f = 0; f < flowCount; f++) {
-        for (let i = 0; i < path.length - 1; i++) {
-          const u = path[i];
-          const v = path[i+1];
-          // Get the shortest edge between u and v to duplicate
-          const edges = g.outEdges(u, v);
-          let minEdge = edges[0];
-          let minWt = minEdge.attributes.distance;
-          for (let j=1; j<edges.length; j++) {
-            const w = edges[j].attributes.distance;
-            if (w < minWt) { minWt = w; minEdge = edges[j]; }
-          }
-          
-          g.addDirectedEdge(u, v, { ...minEdge.attributes, isDuplicate: true });
-          duplicateEdgesCount++;
-        }
-      }
-    }
+  if (!result.feasible) {
+    throw new Error('A malha viária selecionada é matematicamente insolúvel (não há rotas conectadas suficientes).');
   }
-  console.log(`[Worker] Foram adicionadas ${duplicateEdgesCount} arestas artificiais (repetidas) para balanceamento.`);
+  
+  console.log(`[Worker] Solver finalizado com sucesso! Custo ótimo (distância): ${(result.result / 1000).toFixed(2)} km`);
+
+  const eulerGraph = new CustomMultiGraph();
+  sccGraph.forEachNode(n => {
+    eulerGraph.addNode(n, nodes.get(Number(n)));
+  });
+
+  sccEdges.forEach(e => {
+    const fwdCount = Math.round(result[`fwd_${e.id}`] || 0);
+    const revCount = Math.round(result[`rev_${e.id}`] || 0);
+
+    for (let i = 0; i < fwdCount; i++) {
+      eulerGraph.addDirectedEdge(e.u, e.v, { distance: e.dist, originalPath: e.pathFwd });
+    }
+    for (let i = 0; i < revCount; i++) {
+      eulerGraph.addDirectedEdge(e.v, e.u, { distance: e.dist, originalPath: e.pathRev });
+    }
+  });
+
+  console.log(`[Worker] Grafo Euleriano construído com ${eulerGraph.order} nós e ${eulerGraph.size} arestas para a rota contínua.`);
+  return eulerGraph;
 }
 
 function hierholzer(g: CustomMultiGraph): string[] {
@@ -481,27 +408,38 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     // 1. Fetch Data
     const overpassData = await fetchOverpass(bounds, mode);
     
-    // 2. Build Graph
-    let graph = buildGraph(overpassData);
+    // 2. Build Base Data
+    const { nodes, baseEdges } = buildBaseData(overpassData);
     
-    if (graph.order === 0) {
+    if (baseEdges.length === 0) {
       self.postMessage({ type: 'error', message: 'Nenhuma rua válida encontrada nesta região para o modo selecionado.' });
       return;
     }
+
+    // Prepare graph for SCC extraction (all possible directed edges)
+    const sccCheckGraph = new CustomMultiGraph();
+    baseEdges.forEach(edge => {
+      sccCheckGraph.addNode(edge.u, nodes.get(Number(edge.u)));
+      sccCheckGraph.addNode(edge.v, nodes.get(Number(edge.v)));
+      sccCheckGraph.addDirectedEdge(edge.u, edge.v, {});
+      if (!edge.isOneway) {
+        sccCheckGraph.addDirectedEdge(edge.v, edge.u, {});
+      }
+    });
     
     // 3. Extract SCC
-    graph = extractLargestSCC(graph);
+    const sccGraph = extractLargestSCC(sccCheckGraph);
     
-    if (graph.order === 0) {
+    if (sccGraph.order === 0) {
       self.postMessage({ type: 'error', message: 'As ruas encontradas não formam uma rede conectada.' });
       return;
     }
     
-    // 4. Balance Graph
-    balanceGraph(graph);
+    // 4. Solve MCPP using LP Solver
+    const eulerGraph = solveMCPPAndBuildEulerianGraph(nodes, sccGraph, baseEdges);
     
     // 5. Generate Eulerian Circuit
-    const circuitNodeIds = hierholzer(graph);
+    const circuitNodeIds = hierholzer(eulerGraph);
     
     // Calculate total distance and format path
     let totalDistanceMeters = 0;
@@ -510,19 +448,22 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     for (let i = 0; i < circuitNodeIds.length - 1; i++) {
       const u = circuitNodeIds[i];
       const v = circuitNodeIds[i+1];
-      const posU = graph.getNodeAttributes(u);
+      const posU = eulerGraph.getNodeAttributes(u);
       
       if (i === 0) finalPath.push({ lat: posU.lat, lng: posU.lon });
       
       // Find edge length
-      const edges = graph.outEdges(u, v);
+      const edges = eulerGraph.outEdges(u, v);
       if (edges.length > 0) {
           const dist = edges[0].attributes.distance;
           totalDistanceMeters += dist;
       }
       
-      const posV = graph.getNodeAttributes(v);
+      const posV = eulerGraph.getNodeAttributes(v);
       finalPath.push({ lat: posV.lat, lng: posV.lon });
+      
+      // Remove used edge for multi-edge traversal tracking (hierholzer returns node path, not edge path, so we manually consume one edge to get the right distance sum)
+      edges.shift(); 
     }
     
     console.log(`[Worker] Rota finalizada. Distância total apurada: ${(totalDistanceMeters / 1000).toFixed(2)} km`);
