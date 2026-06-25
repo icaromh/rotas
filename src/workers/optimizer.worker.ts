@@ -2,6 +2,8 @@ import { MultiDirectedGraph } from 'graphology';
 import { stronglyConnectedComponents } from 'graphology-components';
 import solver from 'javascript-lp-solver';
 
+console.log('[Worker] Worker module carregado e inicializado com sucesso.');
+
 export interface RouteRequest {
   bounds: { north: number; south: number; east: number; west: number };
   mode: 'bike' | 'walk';

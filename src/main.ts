@@ -105,7 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentBounds: L.LatLngBounds | null = null;
   let currentPolyline: L.Polyline | null = null;
   let currentPathData: {lat: number, lng: number}[] = [];
+  console.log('[Main] Instanciando Web Worker...');
   const worker = new OptimizerWorker();
+  
+  worker.onerror = (err) => {
+    console.error('[Main] Erro capturado na thread do Worker:', err);
+  };
 
   // Initialize Map
   const map = L.map('map-container').setView([-23.55052, -46.633308], 13); // Default to São Paulo
@@ -286,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nw = currentBounds.getNorthWest();
     const se = currentBounds.getSouthEast();
 
+    console.log('[Main] Enviando payload para o Worker:', { mode, bounds: { north: nw.lat, south: se.lat, west: nw.lng, east: se.lng } });
     worker.postMessage({
       mode: mode,
       bounds: {
