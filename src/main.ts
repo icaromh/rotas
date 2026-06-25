@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Initialize Map
-  const map = L.map('map-container').setView([-23.55052, -46.633308], 13); // Default to São Paulo
+  const map = L.map('map-container').setView([41.3874, 2.1686], 13); // Default to Barcelona
   (window as any).map = map;
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
