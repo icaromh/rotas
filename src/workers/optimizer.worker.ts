@@ -209,7 +209,21 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 async function fetchOverpass(polygon: {lat: number, lng: number}[], mode: 'bike' | 'walk') {
   console.log(`[Worker] Step 1: Iniciando fetch do Overpass API para modo: ${mode}`);
   
-  const polyStr = polygon.map(p => `${p.lat} ${p.lng}`).join(' ');
+  // Calculate bounding box and add buffer
+  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+  for (const p of polygon) {
+    if (p.lat < minLat) minLat = p.lat;
+    if (p.lat > maxLat) maxLat = p.lat;
+    if (p.lng < minLng) minLng = p.lng;
+    if (p.lng > maxLng) maxLng = p.lng;
+  }
+  const buffer = 0.002; // Approx 200m
+  minLat -= buffer;
+  maxLat += buffer;
+  minLng -= buffer;
+  maxLng += buffer;
+
+  const bboxStr = `${minLat},${minLng},${maxLat},${maxLng}`;
   
   // Aggressive filter to eliminate sidewalks, cycleways, and service alleys.
   // This drastically simplifies the map, collapsing complex avenues into single primary routes.
@@ -218,7 +232,7 @@ async function fetchOverpass(polygon: {lat: number, lng: number}[], mode: 'bike'
   const query = `
     [out:json][timeout:25];
     (
-      way${wayFilter}(poly:"${polyStr}");
+      way${wayFilter}(${bboxStr});
     );
     out body;
     >;
@@ -243,11 +257,22 @@ interface BaseEdge {
   v: string;
   dist: number;
   isOneway: boolean;
-  pathFwd: {lat: number, lon: number}[];
-  pathRev: {lat: number, lon: number}[];
+  isTarget: boolean;
 }
 
-function buildBaseData(overpassData: any) {
+function isPointInPolygon(point: {lat: number, lng: number}, vs: {lat: number, lng: number}[]) {
+  let x = point.lng, y = point.lat;
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    let xi = vs[i].lng, yi = vs[i].lat;
+    let xj = vs[j].lng, yj = vs[j].lat;
+    let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function buildBaseData(overpassData: any, mode: string, polygon: {lat: number, lng: number}[]) {
   console.log('[Worker] Step 2: Extraindo ruas e interseções base');
   const nodes = new Map<number, {lat: number, lon: number}>();
   
@@ -262,32 +287,28 @@ function buildBaseData(overpassData: any) {
 
   for (const element of overpassData.elements) {
     if (element.type === 'way' && element.nodes) {
-      const isOneway = element.tags?.oneway === 'yes' || element.tags?.oneway === '1' || element.tags?.oneway === '-1';
-      const reverseCoords = element.tags?.oneway === '-1';
+      const isOneway = mode === 'walk' ? false : (element.tags?.oneway === 'yes' || element.tags?.oneway === '1' || element.tags?.oneway === '-1');
       
-      let wayNodes = element.nodes;
-      if (reverseCoords) {
-        wayNodes = [...element.nodes].reverse();
-      }
-      
-      for (let i = 0; i < wayNodes.length - 1; i++) {
-        const u = wayNodes[i];
-        const v = wayNodes[i + 1];
+      for (let i = 0; i < element.nodes.length - 1; i++) {
+        const u = element.nodes[i];
+        const v = element.nodes[i + 1];
         
         if (!nodes.has(u) || !nodes.has(v)) continue;
         
         const posU = nodes.get(u)!;
         const posV = nodes.get(v)!;
         const dist = haversine(posU.lat, posU.lon, posV.lat, posV.lon);
+        const midLat = (posU.lat + posV.lat) / 2;
+        const midLng = (posU.lon + posV.lon) / 2;
+        const isTarget = isPointInPolygon({lat: midLat, lng: midLng}, polygon);
         
         baseEdges.push({
           id: `e${edgeCounter++}`,
           u: String(u),
           v: String(v),
           dist,
-          isOneway: isOneway, // if true, only u -> v is allowed
-          pathFwd: [posU, posV],
-          pathRev: [posV, posU]
+          isOneway,
+          isTarget
         });
       }
     }
@@ -315,9 +336,8 @@ function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: Custo
   });
 
   sccEdges.forEach(e => {
-    model.constraints[`req_${e.id}`] = { min: 1 };
+    model.constraints[`req_${e.id}`] = { min: e.isTarget ? 1 : 0 };
     
-    // Forward variable (ida)
     model.variables[`fwd_${e.id}`] = {
       cost: e.dist,
       [`req_${e.id}`]: 1,
@@ -326,10 +346,7 @@ function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: Custo
     };
     model.ints[`fwd_${e.id}`] = 1;
 
-    // Reverse variable (volta).
-    // ALWAYS added to guarantee the graph is strongly connected even when the boundary cuts off the return street.
-    // If it's a one-way street, we apply a massive penalty so the solver only uses it if strictly trapped.
-    const penalty = (e.isOneway && mode === 'bike') ? 20 : 1;
+    const penalty = (e.isOneway && mode === 'bike') ? 2000 : 1;
     
     model.variables[`rev_${e.id}`] = {
       cost: e.dist * penalty,
@@ -359,10 +376,10 @@ function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: Custo
     const revCount = Math.round(result[`rev_${e.id}`] || 0);
 
     for (let i = 0; i < fwdCount; i++) {
-      eulerGraph.addDirectedEdge(e.u, e.v, { distance: e.dist, originalPath: e.pathFwd });
+      eulerGraph.addDirectedEdge(e.u, e.v, { distance: e.dist });
     }
     for (let i = 0; i < revCount; i++) {
-      eulerGraph.addDirectedEdge(e.v, e.u, { distance: e.dist, originalPath: e.pathRev });
+      eulerGraph.addDirectedEdge(e.v, e.u, { distance: e.dist });
     }
   });
 
@@ -412,7 +429,7 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     const overpassData = await fetchOverpass(polygon, mode);
     
     // 2. Build Base Data
-    const { nodes, baseEdges } = buildBaseData(overpassData);
+    const { nodes, baseEdges } = buildBaseData(overpassData, mode, polygon);
     
     if (baseEdges.length === 0) {
       self.postMessage({ type: 'error', message: 'Nenhuma rua válida encontrada nesta região para o modo selecionado.' });
