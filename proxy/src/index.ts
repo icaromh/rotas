@@ -60,6 +60,8 @@ export default {
         method: 'POST',
         headers: {
           'Content-Type': request.headers.get('Content-Type') || 'application/x-www-form-urlencoded',
+          'Accept': '*/*',
+          'User-Agent': 'RotasOptimizer/1.0 (https://rotas-dusky.vercel.app/)',
         },
         body: bodyText,
       });
