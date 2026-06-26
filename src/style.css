@@ -1,10 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #3b82f6; /* Tailwind Blue 500 */
+  --color-primary: #3b82f6;
+  /* Tailwind Blue 500 */
 }
 
-html, body, #app {
+html,
+body,
+#app {
   margin: 0;
   padding: 0;
   height: 100vh;
@@ -17,7 +20,7 @@ html, body, #app {
 /* Base bar container (Zoom, Draw tools) */
 .leaflet-bar {
   border: none !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   border-radius: 24px !important;
   overflow: hidden;
   background-color: white !important;
@@ -25,10 +28,12 @@ html, body, #app {
 }
 
 /* Individual buttons inside bars */
-.leaflet-bar a, .leaflet-bar a:hover {
+.leaflet-bar a,
+.leaflet-bar a:hover {
   border: none !important;
   background-color: white !important;
-  color: #1f2937 !important; /* dark gray text */
+  color: #1f2937 !important;
+  /* dark gray text */
   width: 44px !important;
   height: 44px !important;
   line-height: 44px !important;
@@ -56,7 +61,7 @@ html, body, #app {
   border-radius: 50% !important;
   width: 44px !important;
   height: 44px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   cursor: pointer;
   background-color: white !important;
   display: flex !important;
@@ -73,15 +78,34 @@ html, body, #app {
   transform: scale(0.95);
 }
 
+.leaflet-draw-actions {
+  bottom: 0 !important;
+}
+
 /* Draw toolbar adjustments */
+.leaflet-draw-toolbar {
+  margin-top: 0 !important;
+}
+
 .leaflet-draw-toolbar a {
-  background-size: 300px 30px !important;
+  background-size: 600px 45px !important;
   /* Centering the icon sprite properly in the slightly larger button */
-  background-position-y: center !important; 
+  background-position-y: center !important;
+}
+
+.leaflet-draw-edit-remove {
+  background-position: -346px 2px !important;
+}
+
+.leaflet-draw-edit-edit {
+  background-position: -300px 2px !important;
 }
 
 /* Specific fixes for leaflet-draw icons to be centered in 44x44px */
-.leaflet-draw-draw-polygon { background-position: -31px 2px !important; }
+.leaflet-draw-draw-polygon {
+  background-position: -120px 2px !important;
+}
+
 /* --- Horizontal layout for Draw tools --- */
 .leaflet-draw.leaflet-control {
   display: flex !important;
@@ -99,10 +123,57 @@ html, body, #app {
   background: transparent !important;
   box-shadow: none !important;
   margin-bottom: 0 !important;
+  position: relative !important;
 }
 
 .leaflet-draw-toolbar.leaflet-bar a {
   border-radius: 50% !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
   border-bottom: none !important; /* Remove the divider line */
+}
+
+/* --- Fix Leaflet Draw Actions (Finish, Cancel) --- */
+.leaflet-draw-actions {
+  display: flex !important;
+  flex-direction: row;
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  margin-top: 12px !important;
+  background-color: #1f2937 !important; /* Dark theme */
+  border-radius: 12px !important;
+  padding: 4px 8px !important;
+  list-style: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+.leaflet-draw-actions li {
+  display: block;
+}
+
+.leaflet-draw-actions li a {
+  display: block !important;
+  color: white !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 6px 12px !important;
+  text-decoration: none !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s;
+  height: auto !important;
+  line-height: normal !important;
+  width: auto !important;
+  box-shadow: none !important;
+}
+
+.leaflet-draw-actions li a:hover {
+  background-color: #374151 !important;
+}
+
+/* Hide the mouse-following instruction tooltip which overlaps and looks ugly */
+.leaflet-draw-tooltip {
+  display: none !important;
 }
