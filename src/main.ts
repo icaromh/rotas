@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebar.classList.remove('hidden');
 
       // Update UI
-      resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
+      resultDistance.innerHTML = `${distanceKm.toFixed(2)} <span class="text-sm font-medium text-gray-500">km</span>`;
 
       const mode = sportSelect ? sportSelect.value : 'bike';
       const speedVal = parseFloat(speedInput.value);
@@ -427,7 +427,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const h = Math.floor(totalMinutes / 60);
       const m = Math.round(totalMinutes % 60);
-      resultTime.textContent = h > 0 ? `${h}h ${m}m` : `${m} min`;
+      
+      if (h > 0) {
+        resultTime.innerHTML = `${h}<span class="text-sm font-medium text-gray-500">h</span> ${m}<span class="text-sm font-medium text-gray-500">m</span>`;
+      } else {
+        resultTime.innerHTML = `${m} <span class="text-sm font-medium text-gray-500">min</span>`;
+      }
 
       resultsPanel.classList.remove('hidden');
     }
