@@ -187,3 +187,25 @@ body,
 .leaflet-draw-tooltip {
   display: none !important;
 }
+
+/* --- Mobile Responsiveness for Draw Tools --- */
+@media (max-width: 767px) {
+  .leaflet-draw.leaflet-control,
+  .leaflet-draw-toolbar.leaflet-bar {
+    flex-direction: column !important;
+  }
+  
+  /* Make the actions tooltip appear to the right of the buttons when stacked vertically */
+  .leaflet-draw-actions {
+    top: 0 !important;
+    left: 100% !important;
+    margin-top: 0 !important;
+    margin-left: 12px !important;
+    transform: translate(0, 0) !important;
+  }
+  
+  /* Keep sport selector size manageable */
+  #sport-select {
+    padding-right: 2rem;
+  }
+}
