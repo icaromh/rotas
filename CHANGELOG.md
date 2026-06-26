@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3
+- **Komoot-Inspired Premium Redesign**: Complete visual overhaul of the UI/UX focusing on responsiveness, aesthetics, and clarity.
+  - **Floating Map Controls**: Moved native Leaflet zoom, GPS, and draw controls to isolated top corners, maximizing map real estate.
+  - **Custom Semantic SVG Icons**: Replaced default Leaflet Draw sprites with custom inline SVGs. Adopted 'Nodes and Outlines' standard for Drawing and an 'Arrow Cursor' for Editing nodes.
+  - **Mobile Bottom Sheet**: Transformed the classic desktop sidebar into a swipeable, elegant iOS/Android style Bottom Sheet for mobile users.
+  - **Ultra-Compact Mobile Results**: Rebuilt the results panel on mobile to use an ultra-compact, two-column layout (`Distance` and `Est. time`) with dynamic styled units, hiding unnecessary setup controls (e.g. speed inputs) after generation.
+  - **Refined Selectors**: Replaced bulky sport dropdown icons with sleek right-aligned carets. Mirrored the sport selector to the mobile top Navbar for immediate access.
+  - **Bug Fix**: Fixed a critical issue where the mobile "Plan Route" button would fail to restore its original HTML/loading state after the Web Worker response.
+
 ## v1.2
 - **Route Sharing via URL (#1)**: Users can now share optimized routes natively.
   - Implemented `@mapbox/polyline` to aggressively compress GPS paths into URL-safe strings.
