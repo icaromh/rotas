@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!isSharedView) {
     const drawControl = new L.Control.Draw({
-      position: 'topright',
+      position: 'topleft',
       draw: {
         polyline: false,
         polygon: {
