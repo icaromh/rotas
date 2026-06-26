@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.2
+- **Route Sharing via URL (#1)**: Users can now share optimized routes natively.
+  - Implemented `@mapbox/polyline` to aggressively compress GPS paths into URL-safe strings.
+  - Added a "Compartilhar" (Share) button leveraging the native `Web Share API` (with fallback to clipboard).
+  - Designed an isolated "Guest View": loading a route via the `?route=` parameter automatically hides creation tools and displays only essential playback and export options.
+  - Added unit tests for decoding/encoding paths to ensure complete geographic fidelity.
+
 ## v1.1
 - **API Resilience (CORS bypass)**: Solved CORS errors from the public Overpass API by implementing an edge Cloudflare Worker proxy (`rotas-overpass-proxy.icaro-mh.workers.dev`). This ensures the app can reliably fetch OpenStreetMap data even if the upstream API throws errors that normally strip CORS headers.
 - **Proxy Security Rules**: Configured the Cloudflare proxy to strictly block external requests, only allowing traffic originating from the production domain (`rotas-dusky.vercel.app`) and local development environments. 
