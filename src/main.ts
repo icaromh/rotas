@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Initialize Map
-  const map = L.map('map-container', { zoomControl: false }).setView([41.3874, 2.1686], 13); // Default to Barcelona
+  const map = L.map('map-container', { zoomControl: false }).setView([41.3874, 2.1686], 16); // Default to Barcelona
   (window as any).map = map;
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     map.addControl(drawControl);
-    
+
     // Move the generated DOM elements into our custom Flex container
     const drawToolsContainer = document.getElementById('draw-tools-container');
     if (drawToolsContainer) {
@@ -329,8 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
     sportSelect.addEventListener('change', (e) => {
       const target = e.target as HTMLSelectElement;
       if (target.value === 'bike') {
-        speedLabel.textContent = 'Velocidade (km/h)';
-        speedInput.value = '20';
+        speedLabel.textContent = 'Speed (km/h)';
+        speedInput.value = '17';
         speedInput.min = '1';
         speedInput.max = '100';
       } else {
@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
       generateBtn.disabled = false;
       generateBtn.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        Gerar Rota Otimizada
+        Plan Route
       `;
       return;
     }
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     generateBtn.disabled = false;
     generateBtn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-      Gerar Rota Otimizada
+      Plan Route
     `;
 
     if (!data.path || data.path.length === 0) {
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobileGenerateBtn) mobileGenerateBtn.disabled = true;
     generateBtn.innerHTML = `
       <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-      Processando...
+      Planning...
     `;
     if (mobileGenerateBtn) {
       mobileGenerateBtn.innerHTML = `
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start animation
     previewBtn.innerHTML = `
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      Parar Animação
+      Stop
     `;
 
     if (currentPolyline) currentPolyline.setStyle({ opacity: 0.2 });

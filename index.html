@@ -18,16 +18,16 @@
           <svg class="w-8 h-8 text-[#4a6b46]" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2.5l-9.5 17.5h19L12 2.5zm0 4.2l6.2 11.3h-12.4L12 6.7z" />
           </svg>
-          <span class="text-2xl font-extrabold text-gray-800 tracking-tight">rotas</span>
+          <span class="text-2xl font-extrabold text-gray-800 tracking-tight">Rotas</span>
         </div>
         <div class="hidden md:flex gap-5 text-sm font-bold text-gray-700 mt-1">
-          <a href="#" class="hover:text-[#4a6b46] transition-colors">Routes</a>
+          <!-- <a href="#" class="hover:text-[#4a6b46] transition-colors">Routes</a> -->
           <a href="#" class="hover:text-[#4a6b46] transition-colors">Planner</a>
-          <a href="#" class="hover:text-[#4a6b46] transition-colors">Features</a>
+          <!-- <a href="#" class="hover:text-[#4a6b46] transition-colors">Features</a> -->
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <button
+        <!-- <button
           class="bg-[#f0ece1] text-[#4a6b46] font-bold px-4 py-2 rounded-full text-sm hover:bg-[#e5decb] transition-colors flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -39,7 +39,7 @@
         <button
           class="bg-[#4a6b46] hover:bg-[#395336] text-white font-bold px-5 py-2 rounded-full text-sm transition-colors shadow-sm">
           Login or Signup
-        </button>
+        </button> -->
       </div>
     </nav>
 
@@ -57,8 +57,9 @@
           class="w-[340px] shrink-0 max-h-[calc(100vh-120px)] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden pointer-events-auto transition-transform duration-300 transform -translate-x-[120%] md:translate-x-0 absolute md:relative left-4 md:left-0"
           id="sidebar">
           <div class="p-5 border-b border-gray-100 flex-none bg-white">
-            <h1 class="text-xl font-bold text-gray-800 tracking-tight">Planner</h1>
-            <p class="text-xs text-gray-400 mt-1">Generate routes from polygons.</p>
+            <h1 class="text-xl font-bold text-gray-800 tracking-tight">Explore Every Inch</h1>
+            <p class="text-xs text-gray-400 mt-1">Draw an area on the map and get an optimized GPX track to walk or ride
+              through every single street inside it.</p>
           </div>
 
           <div class="p-5 flex-grow overflow-y-auto flex flex-col gap-6 bg-white custom-scrollbar">
@@ -67,8 +68,8 @@
               <!-- Speed Settings -->
               <div class="space-y-2">
                 <div class="flex justify-between items-center">
-                  <label class="block text-xs font-bold text-gray-800 uppercase tracking-wide"
-                    id="speed-label">Velocidade (km/h)</label>
+                  <label class="block text-xs font-bold text-gray-800 uppercase tracking-wide" id="speed-label">Speed
+                    (km/h)</label>
                 </div>
                 <div class="relative">
                   <input type="number" id="speed-input" value="20" min="1" max="100"
@@ -80,11 +81,13 @@
             <!-- Results (Hidden initially) -->
             <div id="results-panel" class="hidden flex-col gap-3 pt-4 border-t border-gray-100">
               <div class="bg-[#f4f1ea] rounded-xl p-3 border border-[#e5e0d4] flex items-center justify-between">
-                <div class="text-[10px] text-[#4a6b46] uppercase tracking-wider font-extrabold mb-0.5">Distância</div>
+                <div class="text-[10px] text-[#4a6b46] uppercase tracking-wider font-extrabold mb-0.5">Total Distance
+                </div>
                 <div class="text-xl font-extrabold text-gray-900" id="result-distance">-- km</div>
               </div>
               <div class="mt-2 bg-[#f4f1ea] rounded-xl p-3 border border-[#e5e0d4] flex items-center justify-between">
-                <div class="text-[10px] text-[#4a6b46] uppercase tracking-wider font-extrabold mb-0.5">Tempo</div>
+                <div class="text-[10px] text-[#4a6b46] uppercase tracking-wider font-extrabold mb-0.5">Estimated Time
+                </div>
                 <div class="text-xl font-extrabold text-gray-900" id="result-time">--:--</div>
               </div>
 
@@ -97,7 +100,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Animar Rota
+                Preview Route
               </button>
               <div class="grid grid-cols-2 gap-2 mt-3">
                 <button id="export-gpx-btn"
@@ -148,29 +151,45 @@
           <div class="flex items-start gap-3 pointer-events-auto flex-wrap">
             <!-- Draw Controls Container -->
             <div id="draw-tools-container" class="flex items-start gap-3"></div>
-            
+
             <!-- Sport Dropdown -->
-            <div class="relative bg-white rounded-full shadow-lg border border-gray-200 flex items-center h-11 px-2 hover:bg-gray-50 transition-colors cursor-pointer group">
-              <svg class="w-5 h-5 ml-2 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 12-4 4-4-4"/></svg>
-              <select id="sport-select" class="appearance-none bg-transparent text-sm font-bold text-gray-800 h-full pl-2 pr-6 cursor-pointer outline-none">
-                <option value="bike">Pedal</option>
-                <option value="walk">Caminhada</option>
+            <div
+              class="relative bg-white rounded-full shadow-lg border border-gray-200 flex items-center h-11 px-2 hover:bg-gray-50 transition-colors cursor-pointer group">
+              <svg class="w-5 h-5 ml-2 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="m16 12-4 4-4-4" />
+              </svg>
+              <select id="sport-select"
+                class="appearance-none bg-transparent text-sm font-bold text-gray-800 h-full pl-2 pr-6 cursor-pointer outline-none">
+                <option value="bike">Cycling</option>
+                <option value="walk">Walking</option>
               </select>
             </div>
           </div>
 
           <!-- Right Side: Generate Button -->
           <div class="pointer-events-auto ml-3 hidden md:block">
-            <button id="generate-btn" class="bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-2.5 px-5 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-11">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-              Gerar Rota
+            <button id="generate-btn"
+              class="bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-2.5 px-5 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-11">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+              Plan Route
             </button>
           </div>
         </div>
 
         <!-- Mobile floating Generate Button -->
-        <button id="mobile-generate-btn" class="md:hidden absolute bottom-24 right-6 z-[1001] bg-[#4a6b46] text-white p-4 rounded-full shadow-2xl transition-transform active:scale-95 disabled:opacity-50">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        <button id="mobile-generate-btn"
+          class="md:hidden absolute bottom-24 right-6 z-[1001] bg-[#4a6b46] text-white p-4 rounded-full shadow-2xl transition-transform active:scale-95 disabled:opacity-50">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
         </button>
 
       </div>
