@@ -74,7 +74,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 const MAX_AREA_KM2 = 4;
 
-function generateGPX(path: {lat: number, lng: number}[]): string {
+function generateGPX(path: { lat: number, lng: number }[]): string {
   let gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Otimizador GPS" xmlns="http://www.topografix.com/GPX/1/1">
   <trk>
@@ -109,16 +109,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // State
   let currentBounds: L.LatLngBounds | null = null;
   let currentPolyline: L.Polyline | null = null;
-  let currentPathData: {lat: number, lng: number}[] = [];
+  let currentPathData: { lat: number, lng: number }[] = [];
   let currentRawInput: any = null;
-  
+
   // Animation State
   let animPolyline: L.Polyline | null = null;
   let animMarker: L.CircleMarker | null = null;
   let animReqId: number | null = null;
   console.log('[Main] Instanciando Web Worker...');
   const worker = new OptimizerWorker();
-  
+
   worker.onerror = (err) => {
     console.error('[Main] Erro capturado na thread do Worker:', err);
   };
@@ -149,13 +149,13 @@ document.addEventListener('DOMContentLoaded', () => {
       let distanceMeters = 0;
       for (let i = 0; i < decodedPath.length - 1; i++) {
         distanceMeters += L.latLng(decodedPath[i].lat, decodedPath[i].lng)
-          .distanceTo(L.latLng(decodedPath[i+1].lat, decodedPath[i+1].lng));
+          .distanceTo(L.latLng(decodedPath[i + 1].lat, decodedPath[i + 1].lng));
       }
-      
+
       const distanceKm = distanceMeters / 1000;
       resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
       resultTime.parentElement!.style.display = 'none'; // Hide estimated time as it depends on mode
-      
+
       // Update UI panels
       creatorPanel.classList.add('hidden');
       resultsPanel.classList.remove('hidden');
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
       container.style.alignItems = 'center';
       container.style.justifyContent = 'center';
       container.title = 'Minha Localização (GPS)';
-      
+
       container.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
           <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -198,9 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </svg>
       `;
 
-      container.onclick = function(e: Event){
+      container.onclick = function (e: Event) {
         e.stopPropagation();
-        map.locate({setView: true, maxZoom: 16});
+        map.locate({ setView: true, maxZoom: 16 });
       }
       return container;
     }
@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             color: '#1f2937', // dark gray almost black
             weight: 2,
             dashArray: '5, 5',
-            fillOpacity: 0
+            fillOpacity: 0.2
           }
         },
         circle: false,
@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const layer = e.layer as L.Polygon;
       const latlngs = layer.getLatLngs()[0] as L.LatLng[];
-      
+
       // Calculate area of the polygon using Leaflet GeometryUtil
       const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
       const areaKm2 = areaM2 / 1_000_000;
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       drawnItems.addLayer(layer);
-      
+
       // Store the polygon coordinates instead of bounds
       currentBounds = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng })) as any;
     }
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   worker.onmessage = (e: MessageEvent) => {
     const data = e.data;
-    
+
     if (data.type === 'error') {
       alert("Erro na geração da rota:\n" + data.message);
       if (data.rawInput) {
@@ -371,22 +371,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const distanceKm = data.distance as number;
 
       if (currentPolyline) map.removeLayer(currentPolyline);
-      
+
       currentPolyline = L.polyline(data.path, {
         color: '#ef4444',
         weight: 4,
         opacity: 0.8,
         lineJoin: 'round'
       }).addTo(map);
-      
+
       map.fitBounds(currentPolyline.getBounds());
 
       // Update UI
       resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
-      
+
       const mode = (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value;
       const speedVal = parseFloat(speedInput.value);
-      
+
       let totalMinutes = 0;
       if (mode === 'bike') {
         // speedVal is km/h
@@ -396,11 +396,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // speedVal is min/km
         totalMinutes = distanceKm * speedVal;
       }
-      
+
       const h = Math.floor(totalMinutes / 60);
       const m = Math.round(totalMinutes % 60);
       resultTime.textContent = h > 0 ? `${h}h ${m}m` : `${m} min`;
-      
+
       resultsPanel.classList.remove('hidden');
     }
   };
@@ -410,9 +410,9 @@ document.addEventListener('DOMContentLoaded', () => {
       alert("Por favor, desenhe um polígono no mapa primeiro.");
       return;
     }
-    
+
     const mode = (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value;
-    
+
     generateBtn.disabled = true;
     generateBtn.innerHTML = `
       <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -429,11 +429,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   exportBtn.addEventListener('click', () => {
     if (currentPathData.length === 0) return;
-    
+
     const gpxString = generateGPX(currentPathData);
     const blob = new Blob([gpxString], { type: 'application/gpx+xml' });
     const url = URL.createObjectURL(blob);
-    
+
     const a = document.createElement('a');
     a.href = url;
     a.download = `rota-otimizada-${Date.now()}.gpx`;
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   previewBtn.addEventListener('click', () => {
     if (currentPathData.length === 0) return;
-    
+
     // Check if playing
     if (animReqId !== null) {
       // Stop animation
@@ -468,17 +468,17 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     if (currentPolyline) currentPolyline.setStyle({ opacity: 0.2 });
-    
+
     if (animPolyline) map.removeLayer(animPolyline);
     if (animMarker) map.removeLayer(animMarker);
-    
+
     animPolyline = L.polyline([], {
       color: '#ef4444',
       weight: 5,
       opacity: 1,
       lineJoin: 'round'
     }).addTo(map);
-    
+
     animMarker = L.circleMarker(currentPathData[0], {
       color: '#b91c1c',
       fillColor: '#ef4444',
@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function animate(timestamp: number) {
       if (!startTime) startTime = timestamp;
       const progress = (timestamp - startTime) / duration;
-      
+
       if (progress >= 1) {
         animPolyline!.setLatLngs(currentPathData);
         animReqId = null;
@@ -506,20 +506,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (animMarker) map.removeLayer(animMarker);
         return;
       }
-      
+
       const targetIndex = Math.floor(progress * totalPoints);
       animPolyline!.setLatLngs(currentPathData.slice(0, targetIndex + 1));
       animMarker!.setLatLng(currentPathData[targetIndex]);
-      
+
       animReqId = requestAnimationFrame(animate);
     }
-    
+
     animReqId = requestAnimationFrame(animate);
   });
 
   shareBtn.addEventListener('click', async () => {
     if (currentPathData.length === 0) return;
-    
+
     const encoded = encodeRoute(currentPathData);
     const url = new URL(window.location.href);
     url.searchParams.set('route', encoded);
