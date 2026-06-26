@@ -155,10 +155,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const distanceKm = distanceMeters / 1000;
-      resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
+      resultDistance.innerHTML = `${distanceKm.toFixed(2)} <span class="text-sm font-medium text-gray-500">km</span>`;
       resultTime.parentElement!.style.display = 'none'; // Hide estimated time as it depends on mode
 
       // Update UI panels
+      sidebar.classList.remove('hidden');
       creatorPanel.classList.add('hidden');
       resultsPanel.classList.remove('hidden');
       sharedNotice.classList.remove('hidden');
