@@ -46,6 +46,9 @@
     <!-- Main Map Area -->
     <div class="flex-1 relative w-full h-full bg-gray-200 overflow-hidden">
 
+      <!-- Map element -->
+      <div class="absolute inset-0 z-0 pointer-events-auto" id="map-container"></div>
+
       <!-- UI Flex Wrapper for Floating Elements -->
       <div class="absolute inset-0 pointer-events-none p-4 md:p-6 z-[1000] flex items-start gap-4">
 
@@ -171,9 +174,6 @@
         </button>
 
       </div>
-
-      <!-- Map element -->
-      <div class="absolute inset-0 z-0 pointer-events-auto" id="map-container"></div>
 
       <!-- Mobile toggle button -->
       <button id="sidebar-toggle"

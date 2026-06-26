@@ -325,9 +325,9 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebar.classList.toggle('-translate-x-full');
   });
 
-  modeRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
+  if (sportSelect) {
+    sportSelect.addEventListener('change', (e) => {
+      const target = e.target as HTMLSelectElement;
       if (target.value === 'bike') {
         speedLabel.textContent = 'Velocidade (km/h)';
         speedInput.value = '20';
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
         speedInput.max = '30';
       }
     });
-  });
+  }
 
   worker.onmessage = (e: MessageEvent) => {
     const data = e.data;
