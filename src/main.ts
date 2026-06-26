@@ -165,6 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
       sharedNotice.classList.remove('hidden');
       shareBtn.classList.add('hidden'); // No need to share an already shared route
 
+      // Optimize layout for shared view: put Preview and GPX on same row
+      const actionGrid = exportBtn.parentElement!;
+      actionGrid.insertBefore(previewBtn, exportBtn);
+      previewBtn.classList.remove('w-full', 'mt-2', 'py-2.5', 'px-4');
+      previewBtn.classList.add('py-2', 'px-3', 'text-sm');
+
       // Draw the polyline
       const latlngs = decodedPath.map(p => [p.lat, p.lng] as [number, number]);
       currentPolyline = L.polyline(latlngs, {
