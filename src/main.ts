@@ -74,7 +74,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 const MAX_AREA_KM2 = 4;
 
-function generateGPX(path: {lat: number, lng: number}[]): string {
+function generateGPX(path: { lat: number, lng: number }[]): string {
   let gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Otimizador GPS" xmlns="http://www.topografix.com/GPX/1/1">
   <trk>
@@ -91,12 +91,13 @@ function generateGPX(path: {lat: number, lng: number}[]): string {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const modeRadios = document.querySelectorAll<HTMLInputElement>('input[name="mode"]');
+  const sportSelect = document.getElementById('sport-select') as HTMLSelectElement;
+  const sportSelectMobile = document.getElementById('sport-select-mobile') as HTMLSelectElement;
   const speedLabel = document.getElementById('speed-label') as HTMLLabelElement;
   const speedInput = document.getElementById('speed-input') as HTMLInputElement;
-  const sidebarToggle = document.getElementById('sidebar-toggle') as HTMLButtonElement;
   const sidebar = document.getElementById('sidebar') as HTMLElement;
   const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
+  const mobileGenerateBtn = document.getElementById('mobile-generate-btn') as HTMLButtonElement;
   const resultsPanel = document.getElementById('results-panel') as HTMLDivElement;
   const resultDistance = document.getElementById('result-distance') as HTMLDivElement;
   const resultTime = document.getElementById('result-time') as HTMLDivElement;
@@ -109,23 +110,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // State
   let currentBounds: L.LatLngBounds | null = null;
   let currentPolyline: L.Polyline | null = null;
-  let currentPathData: {lat: number, lng: number}[] = [];
+  let currentPathData: { lat: number, lng: number }[] = [];
   let currentRawInput: any = null;
-  
+
   // Animation State
   let animPolyline: L.Polyline | null = null;
   let animMarker: L.CircleMarker | null = null;
   let animReqId: number | null = null;
   console.log('[Main] Instanciando Web Worker...');
   const worker = new OptimizerWorker();
-  
+
   worker.onerror = (err) => {
     console.error('[Main] Erro capturado na thread do Worker:', err);
   };
 
   // Initialize Map
-  const map = L.map('map-container').setView([41.3874, 2.1686], 13); // Default to Barcelona
+  const isMobile = window.innerWidth < 768;
+  const map = L.map('map-container', { zoomControl: false }).setView([41.3874, 2.1686], 16); // Default to Barcelona
   (window as any).map = map;
+  L.control.zoom({ position: isMobile ? 'topright' : 'bottomright' }).addTo(map);
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -148,13 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
       let distanceMeters = 0;
       for (let i = 0; i < decodedPath.length - 1; i++) {
         distanceMeters += L.latLng(decodedPath[i].lat, decodedPath[i].lng)
-          .distanceTo(L.latLng(decodedPath[i+1].lat, decodedPath[i+1].lng));
+          .distanceTo(L.latLng(decodedPath[i + 1].lat, decodedPath[i + 1].lng));
       }
-      
+
       const distanceKm = distanceMeters / 1000;
       resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
       resultTime.parentElement!.style.display = 'none'; // Hide estimated time as it depends on mode
-      
+
       // Update UI panels
       creatorPanel.classList.add('hidden');
       resultsPanel.classList.remove('hidden');
@@ -176,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // GPS Locate Control
   const LocateControl = L.Control.extend({
-    options: { position: 'topleft' },
+    options: { position: isMobile ? 'topright' : 'bottomright' },
     onAdd: function (map: L.Map) {
       const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
       container.style.backgroundColor = 'white';
@@ -187,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       container.style.alignItems = 'center';
       container.style.justifyContent = 'center';
       container.title = 'Minha Localização (GPS)';
-      
+
       container.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
           <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -197,9 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </svg>
       `;
 
-      container.onclick = function(e: Event){
+      container.onclick = function (e: Event) {
         e.stopPropagation();
-        map.locate({setView: true, maxZoom: 16});
+        map.locate({ setView: true, maxZoom: 16 });
       }
       return container;
     }
@@ -230,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!isSharedView) {
     const drawControl = new L.Control.Draw({
+      position: 'topleft',
       draw: {
         polyline: false,
         polygon: {
@@ -239,8 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
             message: '<strong>Ops!<strong> Você não pode cruzar as linhas do polígono!'
           },
           shapeOptions: {
-            color: '#3b82f6',
-            weight: 3,
+            color: '#1f2937', // dark gray almost black
+            weight: 2,
+            dashArray: '5, 5',
             fillOpacity: 0.2
           }
         },
@@ -255,6 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     map.addControl(drawControl);
+
+    // Move the generated DOM elements into our custom Flex container
+    const drawToolsContainer = document.getElementById('draw-tools-container');
+    if (drawToolsContainer) {
+      drawToolsContainer.appendChild(drawControl.getContainer() as Node);
+    }
   }
 
   map.on(L.Draw.Event.CREATED, (e: any) => {
@@ -270,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const layer = e.layer as L.Polygon;
       const latlngs = layer.getLatLngs()[0] as L.LatLng[];
-      
+
       // Calculate area of the polygon using Leaflet GeometryUtil
       const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
       const areaKm2 = areaM2 / 1_000_000;
@@ -281,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       drawnItems.addLayer(layer);
-      
+
       // Store the polygon coordinates instead of bounds
       currentBounds = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng })) as any;
     }
@@ -309,32 +320,35 @@ document.addEventListener('DOMContentLoaded', () => {
       currentPolyline = null;
     }
     resultsPanel.classList.add('hidden');
+    sidebar.classList.add('hidden');
   });
 
-  sidebarToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('-translate-x-full');
-  });
+  function syncSportSelect(value: string) {
+    if (sportSelect) sportSelect.value = value;
+    if (sportSelectMobile) sportSelectMobile.value = value;
+    if (value === 'bike') {
+      speedLabel.textContent = 'Speed (km/h)';
+      speedInput.value = '17';
+      speedInput.min = '1';
+      speedInput.max = '100';
+    } else {
+      speedLabel.textContent = 'Pace (min/km)';
+      speedInput.value = '10';
+      speedInput.min = '1';
+      speedInput.max = '30';
+    }
+  }
 
-  modeRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      if (target.value === 'bike') {
-        speedLabel.textContent = 'Velocidade (km/h)';
-        speedInput.value = '20';
-        speedInput.min = '1';
-        speedInput.max = '100';
-      } else {
-        speedLabel.textContent = 'Pace (min/km)';
-        speedInput.value = '10';
-        speedInput.min = '1';
-        speedInput.max = '30';
-      }
-    });
-  });
+  if (sportSelect) {
+    sportSelect.addEventListener('change', (e) => syncSportSelect((e.target as HTMLSelectElement).value));
+  }
+  if (sportSelectMobile) {
+    sportSelectMobile.addEventListener('change', (e) => syncSportSelect((e.target as HTMLSelectElement).value));
+  }
 
   worker.onmessage = (e: MessageEvent) => {
     const data = e.data;
-    
+
     if (data.type === 'error') {
       alert("Erro na geração da rota:\n" + data.message);
       if (data.rawInput) {
@@ -344,8 +358,15 @@ document.addEventListener('DOMContentLoaded', () => {
       generateBtn.disabled = false;
       generateBtn.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        Gerar Rota Otimizada
+        Plan Route
       `;
+      if (mobileGenerateBtn) {
+        mobileGenerateBtn.disabled = false;
+        mobileGenerateBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          Plan Route
+        `;
+      }
       return;
     }
 
@@ -353,8 +374,15 @@ document.addEventListener('DOMContentLoaded', () => {
     generateBtn.disabled = false;
     generateBtn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-      Gerar Rota Otimizada
+      Plan Route
     `;
+    if (mobileGenerateBtn) {
+      mobileGenerateBtn.disabled = false;
+      mobileGenerateBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        Plan Route
+      `;
+    }
 
     if (!data.path || data.path.length === 0) {
       alert("Nenhum caminho foi gerado.");
@@ -368,22 +396,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const distanceKm = data.distance as number;
 
       if (currentPolyline) map.removeLayer(currentPolyline);
-      
+
       currentPolyline = L.polyline(data.path, {
         color: '#ef4444',
         weight: 4,
         opacity: 0.8,
         lineJoin: 'round'
       }).addTo(map);
-      
+
       map.fitBounds(currentPolyline.getBounds());
 
+      // Show sidebar on mobile when route is ready
+      sidebar.classList.remove('hidden');
+
       // Update UI
-      resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
-      
-      const mode = (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value;
+      resultDistance.innerHTML = `${distanceKm.toFixed(2)} <span class="text-sm font-medium text-gray-500">km</span>`;
+
+      const mode = sportSelect ? sportSelect.value : 'bike';
       const speedVal = parseFloat(speedInput.value);
-      
+
       let totalMinutes = 0;
       if (mode === 'bike') {
         // speedVal is km/h
@@ -393,28 +424,46 @@ document.addEventListener('DOMContentLoaded', () => {
         // speedVal is min/km
         totalMinutes = distanceKm * speedVal;
       }
-      
+
       const h = Math.floor(totalMinutes / 60);
       const m = Math.round(totalMinutes % 60);
-      resultTime.textContent = h > 0 ? `${h}h ${m}m` : `${m} min`;
       
+      if (h > 0) {
+        resultTime.innerHTML = `${h}<span class="text-sm font-medium text-gray-500">h</span> ${m}<span class="text-sm font-medium text-gray-500">m</span>`;
+      } else {
+        resultTime.innerHTML = `${m} <span class="text-sm font-medium text-gray-500">min</span>`;
+      }
+
       resultsPanel.classList.remove('hidden');
     }
   };
+
+  if (mobileGenerateBtn) {
+    mobileGenerateBtn.addEventListener('click', () => {
+      generateBtn.click(); // Proxy the click to the main button
+    });
+  }
 
   generateBtn.addEventListener('click', () => {
     if (!currentBounds) {
       alert("Por favor, desenhe um polígono no mapa primeiro.");
       return;
     }
-    
-    const mode = (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value;
-    
+
+    const mode = sportSelect ? sportSelect.value : 'bike';
+
     generateBtn.disabled = true;
+    if (mobileGenerateBtn) mobileGenerateBtn.disabled = true;
     generateBtn.innerHTML = `
       <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-      Processando...
+      Planning...
     `;
+    if (mobileGenerateBtn) {
+      mobileGenerateBtn.innerHTML = `
+        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        Planning...
+      `;
+    }
     resultsPanel.classList.add('hidden');
 
     console.log('[Main] Enviando payload para o Worker:', currentBounds);
@@ -426,11 +475,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   exportBtn.addEventListener('click', () => {
     if (currentPathData.length === 0) return;
-    
+
     const gpxString = generateGPX(currentPathData);
     const blob = new Blob([gpxString], { type: 'application/gpx+xml' });
     const url = URL.createObjectURL(blob);
-    
+
     const a = document.createElement('a');
     a.href = url;
     a.download = `rota-otimizada-${Date.now()}.gpx`;
@@ -442,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   previewBtn.addEventListener('click', () => {
     if (currentPathData.length === 0) return;
-    
+
     // Check if playing
     if (animReqId !== null) {
       // Stop animation
@@ -461,21 +510,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start animation
     previewBtn.innerHTML = `
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      Parar Animação
+      Stop
     `;
 
     if (currentPolyline) currentPolyline.setStyle({ opacity: 0.2 });
-    
+
     if (animPolyline) map.removeLayer(animPolyline);
     if (animMarker) map.removeLayer(animMarker);
-    
+
     animPolyline = L.polyline([], {
       color: '#ef4444',
       weight: 5,
       opacity: 1,
       lineJoin: 'round'
     }).addTo(map);
-    
+
     animMarker = L.circleMarker(currentPathData[0], {
       color: '#b91c1c',
       fillColor: '#ef4444',
@@ -491,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function animate(timestamp: number) {
       if (!startTime) startTime = timestamp;
       const progress = (timestamp - startTime) / duration;
-      
+
       if (progress >= 1) {
         animPolyline!.setLatLngs(currentPathData);
         animReqId = null;
@@ -503,20 +552,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (animMarker) map.removeLayer(animMarker);
         return;
       }
-      
+
       const targetIndex = Math.floor(progress * totalPoints);
       animPolyline!.setLatLngs(currentPathData.slice(0, targetIndex + 1));
       animMarker!.setLatLng(currentPathData[targetIndex]);
-      
+
       animReqId = requestAnimationFrame(animate);
     }
-    
+
     animReqId = requestAnimationFrame(animate);
   });
 
   shareBtn.addEventListener('click', async () => {
     if (currentPathData.length === 0) return;
-    
+
     const encoded = encodeRoute(currentPathData);
     const url = new URL(window.location.href);
     url.searchParams.set('route', encoded);
@@ -525,8 +574,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Rota Otimizada - GPS',
-          text: 'Veja esta rota gerada no Otimizador de Quadrantes GPS!',
+          title: 'Planned route',
+          text: 'See more in Rotas',
           url: shareUrl,
         });
         console.log('Rota compartilhada com sucesso!');
