@@ -11,3 +11,77 @@ html, body, #app {
   width: 100vw;
   overflow: hidden;
 }
+
+/* --- Leaflet Custom Controls (Komoot Style) --- */
+
+/* Base bar container (Zoom, Draw tools) */
+.leaflet-bar {
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  border-radius: 24px !important;
+  overflow: hidden;
+  background-color: white !important;
+  margin-bottom: 12px !important;
+}
+
+/* Individual buttons inside bars */
+.leaflet-bar a, .leaflet-bar a:hover {
+  border: none !important;
+  background-color: white !important;
+  color: #1f2937 !important; /* dark gray text */
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  font-size: 18px !important;
+  font-weight: bold;
+  transition: background-color 0.2s ease, transform 0.1s;
+}
+
+.leaflet-bar a:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.leaflet-bar a:active {
+  background-color: #e5e7eb !important;
+  transform: scale(0.95);
+}
+
+/* Add a subtle divider between grouped buttons (like + and - zoom) */
+.leaflet-bar a:not(:last-child) {
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+/* The standalone custom Locate GPS button */
+.leaflet-control-custom {
+  border-radius: 50% !important;
+  width: 44px !important;
+  height: 44px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  cursor: pointer;
+  background-color: white !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, transform 0.1s;
+}
+
+.leaflet-control-custom:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.leaflet-control-custom:active {
+  transform: scale(0.95);
+}
+
+/* Draw toolbar adjustments */
+.leaflet-draw-toolbar a {
+  background-size: 300px 30px !important;
+  /* Centering the icon sprite properly in the slightly larger button */
+  background-position-y: center !important; 
+}
+
+/* Specific fixes for leaflet-draw icons to be centered in 44x44px */
+.leaflet-draw-draw-polygon { background-position: -31px 2px !important; }
+.leaflet-draw-edit-edit { background-position: -150px 2px !important; }
+.leaflet-draw-edit-remove { background-position: -210px 2px !important; }
+
