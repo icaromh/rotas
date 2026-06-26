@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
+import { encodeRoute, decodeRoute } from './utils/routeSharing';
 
 // Fix Leaflet-Draw "type is not defined" ReferenceError in ES modules/strict mode
 const defaultPrecision = {
@@ -101,6 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultTime = document.getElementById('result-time') as HTMLDivElement;
   const exportBtn = document.getElementById('export-gpx-btn') as HTMLButtonElement;
   const previewBtn = document.getElementById('preview-btn') as HTMLButtonElement;
+  const shareBtn = document.getElementById('share-btn') as HTMLButtonElement;
+  const creatorPanel = document.getElementById('creator-panel') as HTMLDivElement;
+  const sharedNotice = document.getElementById('shared-notice') as HTMLDivElement;
 
   // State
   let currentBounds: L.LatLngBounds | null = null;
@@ -128,6 +132,47 @@ document.addEventListener('DOMContentLoaded', () => {
     subdomains: 'abcd',
     maxZoom: 20
   }).addTo(map);
+
+  // Check URL for Shared Route
+  const urlParams = new URLSearchParams(window.location.search);
+  const sharedRouteParam = urlParams.get('route');
+  let isSharedView = false;
+
+  if (sharedRouteParam) {
+    const decodedPath = decodeRoute(sharedRouteParam);
+    if (decodedPath && decodedPath.length > 0) {
+      isSharedView = true;
+      currentPathData = decodedPath;
+
+      // Calculate total distance for UI
+      let distanceMeters = 0;
+      for (let i = 0; i < decodedPath.length - 1; i++) {
+        distanceMeters += L.latLng(decodedPath[i].lat, decodedPath[i].lng)
+          .distanceTo(L.latLng(decodedPath[i+1].lat, decodedPath[i+1].lng));
+      }
+      
+      const distanceKm = distanceMeters / 1000;
+      resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
+      resultTime.parentElement!.style.display = 'none'; // Hide estimated time as it depends on mode
+      
+      // Update UI panels
+      creatorPanel.classList.add('hidden');
+      resultsPanel.classList.remove('hidden');
+      sharedNotice.classList.remove('hidden');
+      shareBtn.classList.add('hidden'); // No need to share an already shared route
+
+      // Draw the polyline
+      const latlngs = decodedPath.map(p => [p.lat, p.lng] as [number, number]);
+      currentPolyline = L.polyline(latlngs, {
+        color: '#10b981', // green-500
+        weight: 6,
+        opacity: 0.8,
+        lineJoin: 'round'
+      }).addTo(map);
+
+      map.fitBounds(currentPolyline.getBounds(), { padding: [50, 50] });
+    }
+  }
 
   // GPS Locate Control
   const LocateControl = L.Control.extend({
@@ -181,35 +226,36 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const drawnItems = new L.FeatureGroup();
-  drawnItems.addTo(map);
+  map.addLayer(drawnItems);
 
-  const drawControl = new L.Control.Draw({
-    draw: {
-      polyline: false,
-      polygon: {
-        allowIntersection: false,
-        drawError: {
-          color: '#e1e100', // Color the shape will turn when intersects
-          message: '<strong>Ops!<strong> Você não pode cruzar as linhas do polígono!'
+  if (!isSharedView) {
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polyline: false,
+        polygon: {
+          allowIntersection: false,
+          drawError: {
+            color: '#e1e100', // Color the shape will turn when intersects
+            message: '<strong>Ops!<strong> Você não pode cruzar as linhas do polígono!'
+          },
+          shapeOptions: {
+            color: '#3b82f6',
+            weight: 3,
+            fillOpacity: 0.2
+          }
         },
-        shapeOptions: {
-          color: '#3b82f6',
-          weight: 2,
-          fillOpacity: 0.2
-        }
+        circle: false,
+        rectangle: false,
+        circlemarker: false,
+        marker: false
       },
-      circle: false,
-      marker: false,
-      circlemarker: false,
-      rectangle: false
-    },
-    edit: {
-      featureGroup: drawnItems,
-      remove: true
-    }
-  });
-
-  map.addControl(drawControl);
+      edit: {
+        featureGroup: drawnItems,
+        remove: true
+      }
+    });
+    map.addControl(drawControl);
+  }
 
   map.on(L.Draw.Event.CREATED, (e: any) => {
     const layerType = e.layerType;
@@ -466,6 +512,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     animReqId = requestAnimationFrame(animate);
+  });
+
+  shareBtn.addEventListener('click', async () => {
+    if (currentPathData.length === 0) return;
+    
+    const encoded = encodeRoute(currentPathData);
+    const url = new URL(window.location.href);
+    url.searchParams.set('route', encoded);
+    const shareUrl = url.toString();
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Rota Otimizada - GPS',
+          text: 'Veja esta rota gerada no Otimizador de Quadrantes GPS!',
+          url: shareUrl,
+        });
+        console.log('Rota compartilhada com sucesso!');
+      } catch (err) {
+        console.log('Compartilhamento cancelado ou falhou.', err);
+      }
+    } else {
+      // Fallback para clipboard
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('Link da rota copiado para a área de transferência!');
+      }).catch(err => {
+        console.error('Falha ao copiar link:', err);
+        alert('Não foi possível copiar o link. Tente copiar a URL manualmente após adicionar ?route=...');
+      });
+    }
   });
 
   (window as any).downloadFixture = () => {
