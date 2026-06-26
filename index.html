@@ -30,17 +30,14 @@
       </div>
       <div class="flex items-center gap-3">
         <!-- Mobile Sport Dropdown -->
-        <div class="relative md:hidden bg-[#f0ece1] rounded-full flex items-center h-9 px-1 cursor-pointer group">
-          <svg class="w-4 h-4 ml-2 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="m16 12-4 4-4-4" />
-          </svg>
-          <select id="sport-select-mobile"
-            class="appearance-none bg-transparent text-xs font-bold text-[#4a6b46] h-full pl-1 pr-5 cursor-pointer outline-none">
+        <div class="relative md:hidden bg-[#f0ece1] rounded-full flex items-center h-9 pl-3 pr-2 cursor-pointer group">
+          <select id="sport-select-mobile" class="appearance-none bg-transparent text-xs font-extrabold text-[#4a6b46] h-full pr-5 cursor-pointer outline-none">
             <option value="bike">Cycling</option>
             <option value="walk">Walking</option>
           </select>
+          <svg class="w-3.5 h-3.5 text-[#4a6b46] absolute right-2.5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
         </div>
 
         <!-- Mobile Generate Button -->
@@ -186,17 +183,15 @@
 
             <!-- Sport Dropdown -->
             <div
-              class="hidden relative bg-white rounded-full shadow-lg border border-gray-200 md:flex items-center h-11 px-2 hover:bg-gray-50 transition-colors cursor-pointer group">
-              <svg class="w-5 h-5 ml-2 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <path d="m16 12-4 4-4-4" />
-              </svg>
+              class="hidden relative bg-white rounded-full shadow-lg border border-gray-200 md:flex items-center h-11 pl-4 pr-3 hover:bg-gray-50 transition-colors cursor-pointer group">
               <select id="sport-select"
-                class="appearance-none bg-transparent text-sm font-bold text-gray-800 h-full pl-2 pr-6 cursor-pointer outline-none">
+                class="appearance-none bg-transparent text-sm font-extrabold text-gray-800 h-full pr-6 cursor-pointer outline-none">
                 <option value="bike">Cycling</option>
                 <option value="walk">Walking</option>
               </select>
+              <svg class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
             </div>
           </div>
 
