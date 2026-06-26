@@ -125,9 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Initialize Map
+  const isMobile = window.innerWidth < 768;
   const map = L.map('map-container', { zoomControl: false }).setView([41.3874, 2.1686], 16); // Default to Barcelona
   (window as any).map = map;
-  L.control.zoom({ position: 'topright' }).addTo(map);
+  L.control.zoom({ position: isMobile ? 'topright' : 'bottomright' }).addTo(map);
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -178,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // GPS Locate Control
   const LocateControl = L.Control.extend({
-    options: { position: 'topright' },
+    options: { position: isMobile ? 'topright' : 'bottomright' },
     onAdd: function (map: L.Map) {
       const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
       container.style.backgroundColor = 'white';
@@ -411,6 +412,12 @@ document.addEventListener('DOMContentLoaded', () => {
       resultsPanel.classList.remove('hidden');
     }
   };
+
+  if (mobileGenerateBtn) {
+    mobileGenerateBtn.addEventListener('click', () => {
+      generateBtn.click(); // Proxy the click to the main button
+    });
+  }
 
   generateBtn.addEventListener('click', () => {
     if (!currentBounds) {
