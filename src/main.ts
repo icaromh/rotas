@@ -91,12 +91,13 @@ function generateGPX(path: { lat: number, lng: number }[]): string {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const modeRadios = document.querySelectorAll<HTMLInputElement>('input[name="mode"]');
+  const sportSelect = document.getElementById('sport-select') as HTMLSelectElement;
   const speedLabel = document.getElementById('speed-label') as HTMLLabelElement;
   const speedInput = document.getElementById('speed-input') as HTMLInputElement;
   const sidebarToggle = document.getElementById('sidebar-toggle') as HTMLButtonElement;
   const sidebar = document.getElementById('sidebar') as HTMLElement;
   const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
+  const mobileGenerateBtn = document.getElementById('mobile-generate-btn') as HTMLButtonElement;
   const resultsPanel = document.getElementById('results-panel') as HTMLDivElement;
   const resultDistance = document.getElementById('result-distance') as HTMLDivElement;
   const resultTime = document.getElementById('result-time') as HTMLDivElement;
@@ -390,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update UI
       resultDistance.textContent = `${distanceKm.toFixed(2)} km`;
 
-      const mode = (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value;
+      const mode = sportSelect ? sportSelect.value : 'bike';
       const speedVal = parseFloat(speedInput.value);
 
       let totalMinutes = 0;
@@ -417,13 +418,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const mode = (document.querySelector('input[name="mode"]:checked') as HTMLInputElement).value;
+    const mode = sportSelect ? sportSelect.value : 'bike';
 
     generateBtn.disabled = true;
+    if (mobileGenerateBtn) mobileGenerateBtn.disabled = true;
     generateBtn.innerHTML = `
       <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
       Processando...
     `;
+    if (mobileGenerateBtn) {
+      mobileGenerateBtn.innerHTML = `
+        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+      `;
+    }
     resultsPanel.classList.add('hidden');
 
     console.log('[Main] Enviando payload para o Worker:', currentBounds);
