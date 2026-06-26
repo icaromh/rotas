@@ -241,9 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
             message: '<strong>Ops!<strong> Você não pode cruzar as linhas do polígono!'
           },
           shapeOptions: {
-            color: '#3b82f6',
-            weight: 3,
-            fillOpacity: 0.2
+            color: '#1f2937', // dark gray almost black
+            weight: 2,
+            dashArray: '5, 5',
+            fillOpacity: 0
           }
         },
         circle: false,
