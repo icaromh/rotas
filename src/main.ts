@@ -92,8 +92,10 @@ function generateGPX(path: { lat: number, lng: number }[]): string {
 
 document.addEventListener('DOMContentLoaded', () => {
   const sportSelect = document.getElementById('sport-select') as HTMLSelectElement;
+  const sportSelectMobile = document.getElementById('sport-select-mobile') as HTMLSelectElement;
   const speedLabel = document.getElementById('speed-label') as HTMLLabelElement;
   const speedInput = document.getElementById('speed-input') as HTMLInputElement;
+  const sidebar = document.getElementById('sidebar') as HTMLElement;
   const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
   const mobileGenerateBtn = document.getElementById('mobile-generate-btn') as HTMLButtonElement;
   const resultsPanel = document.getElementById('results-panel') as HTMLDivElement;
@@ -318,23 +320,30 @@ document.addEventListener('DOMContentLoaded', () => {
       currentPolyline = null;
     }
     resultsPanel.classList.add('hidden');
+    sidebar.classList.add('hidden');
   });
 
+  function syncSportSelect(value: string) {
+    if (sportSelect) sportSelect.value = value;
+    if (sportSelectMobile) sportSelectMobile.value = value;
+    if (value === 'bike') {
+      speedLabel.textContent = 'Speed (km/h)';
+      speedInput.value = '17';
+      speedInput.min = '1';
+      speedInput.max = '100';
+    } else {
+      speedLabel.textContent = 'Pace (min/km)';
+      speedInput.value = '10';
+      speedInput.min = '1';
+      speedInput.max = '30';
+    }
+  }
+
   if (sportSelect) {
-    sportSelect.addEventListener('change', (e) => {
-      const target = e.target as HTMLSelectElement;
-      if (target.value === 'bike') {
-        speedLabel.textContent = 'Speed (km/h)';
-        speedInput.value = '17';
-        speedInput.min = '1';
-        speedInput.max = '100';
-      } else {
-        speedLabel.textContent = 'Pace (min/km)';
-        speedInput.value = '10';
-        speedInput.min = '1';
-        speedInput.max = '30';
-      }
-    });
+    sportSelect.addEventListener('change', (e) => syncSportSelect((e.target as HTMLSelectElement).value));
+  }
+  if (sportSelectMobile) {
+    sportSelectMobile.addEventListener('change', (e) => syncSportSelect((e.target as HTMLSelectElement).value));
   }
 
   worker.onmessage = (e: MessageEvent) => {
@@ -382,6 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }).addTo(map);
 
       map.fitBounds(currentPolyline.getBounds());
+
+      // Show sidebar on mobile when route is ready
+      sidebar.classList.remove('hidden');
 
       // Update UI
       resultDistance.textContent = `${distanceKm.toFixed(2)} km`;

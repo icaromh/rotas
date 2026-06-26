@@ -27,6 +27,15 @@
         </div>
       </div>
       <div class="flex items-center gap-3">
+        <!-- Mobile Sport Dropdown -->
+        <div class="relative md:hidden bg-[#f0ece1] rounded-full flex items-center h-9 px-1 cursor-pointer group">
+          <svg class="w-4 h-4 ml-2 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 12-4 4-4-4"/></svg>
+          <select id="sport-select-mobile" class="appearance-none bg-transparent text-xs font-bold text-[#4a6b46] h-full pl-1 pr-5 cursor-pointer outline-none">
+            <option value="bike">Cycling</option>
+            <option value="walk">Walking</option>
+          </select>
+        </div>
+
         <!-- Mobile Generate Button -->
         <button id="mobile-generate-btn"
           class="md:hidden bg-[#4a6b46] text-white font-bold px-4 py-2 rounded-full text-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center gap-2 shadow-sm">
@@ -64,7 +73,7 @@
 
         <!-- Floating Panel -->
         <aside id="sidebar"
-          class="fixed bottom-6 inset-x-4 md:inset-auto md:relative md:w-80 bg-white shadow-2xl md:shadow-xl flex flex-col pointer-events-auto h-auto max-h-[50vh] md:max-h-none md:h-full rounded-3xl md:rounded-none md:rounded-r-3xl z-[1002] md:z-50">
+          class="hidden fixed bottom-6 inset-x-4 md:inset-auto md:relative md:w-80 bg-white shadow-2xl md:shadow-xl flex flex-col pointer-events-auto h-auto max-h-[50vh] md:max-h-none md:h-full rounded-3xl md:rounded-none md:rounded-r-3xl z-[1002] md:z-50">
           
           <!-- Header -->
           <div class="p-5 bg-white border-b border-gray-100 rounded-t-3xl md:rounded-none md:rounded-tr-3xl shrink-0">
@@ -165,7 +174,7 @@
 
             <!-- Sport Dropdown -->
             <div
-              class="relative bg-white rounded-full shadow-lg border border-gray-200 flex items-center h-11 px-2 hover:bg-gray-50 transition-colors cursor-pointer group">
+              class="hidden relative bg-white rounded-full shadow-lg border border-gray-200 md:flex items-center h-11 px-2 hover:bg-gray-50 transition-colors cursor-pointer group">
               <svg class="w-5 h-5 ml-2 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10" />
