@@ -94,8 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const sportSelect = document.getElementById('sport-select') as HTMLSelectElement;
   const speedLabel = document.getElementById('speed-label') as HTMLLabelElement;
   const speedInput = document.getElementById('speed-input') as HTMLInputElement;
-  const sidebarToggle = document.getElementById('sidebar-toggle') as HTMLButtonElement;
-  const sidebar = document.getElementById('sidebar') as HTMLElement;
   const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
   const mobileGenerateBtn = document.getElementById('mobile-generate-btn') as HTMLButtonElement;
   const resultsPanel = document.getElementById('results-panel') as HTMLDivElement;
@@ -320,10 +318,6 @@ document.addEventListener('DOMContentLoaded', () => {
       currentPolyline = null;
     }
     resultsPanel.classList.add('hidden');
-  });
-
-  sidebarToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('-translate-x-full');
   });
 
   if (sportSelect) {
