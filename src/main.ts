@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Map
   const map = L.map('map-container', { zoomControl: false }).setView([41.3874, 2.1686], 16); // Default to Barcelona
   (window as any).map = map;
-  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.control.zoom({ position: 'topright' }).addTo(map);
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // GPS Locate Control
   const LocateControl = L.Control.extend({
-    options: { position: 'bottomright' },
+    options: { position: 'topright' },
     onAdd: function (map: L.Map) {
       const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
       container.style.backgroundColor = 'white';
