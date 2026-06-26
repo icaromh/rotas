@@ -82,23 +82,7 @@ html, body, #app {
 
 /* Specific fixes for leaflet-draw icons to be centered in 44x44px */
 .leaflet-draw-draw-polygon { background-position: -31px 2px !important; }
-.leaflet-draw-edit-edit { background-position: -150px 2px !important; }
-.leaflet-draw-edit-remove { background-position: -210px 2px !important; }
-
-/* --- Horizontal layout for Draw tools next to floating panel --- */
-@media (min-width: 768px) {
-  .leaflet-top.leaflet-left {
-    margin-left: 380px !important;
-    margin-top: 24px !important;
-  }
-}
-@media (max-width: 767px) {
-  .leaflet-top.leaflet-left {
-    margin-left: 16px !important;
-    margin-top: 24px !important;
-  }
-}
-
+/* --- Horizontal layout for Draw tools --- */
 .leaflet-draw.leaflet-control {
   display: flex !important;
   flex-direction: row !important;
@@ -114,6 +98,7 @@ html, body, #app {
   gap: 12px !important;
   background: transparent !important;
   box-shadow: none !important;
+  margin-bottom: 0 !important;
 }
 
 .leaflet-draw-toolbar.leaflet-bar a {

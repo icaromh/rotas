@@ -258,6 +258,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     map.addControl(drawControl);
+    
+    // Move the generated DOM elements into our custom Flex container
+    const drawToolsContainer = document.getElementById('draw-tools-container');
+    if (drawToolsContainer) {
+      drawToolsContainer.appendChild(drawControl.getContainer() as Node);
+    }
   }
 
   map.on(L.Draw.Event.CREATED, (e: any) => {
