@@ -119,6 +119,66 @@ document.addEventListener('DOMContentLoaded', () => {
   let animPolyline: L.Polyline | null = null;
   let animMarker: L.CircleMarker | null = null;
   let animReqId: number | null = null;
+  let isDoneMode = false;
+
+  const desktopTools = document.getElementById('desktop-tools');
+
+  function setDoneMode(done: boolean) {
+    isDoneMode = done;
+    
+    // Ensure button is always enabled when we switch modes
+    const mainBtn = document.getElementById('generate-btn') as HTMLButtonElement;
+    const mobBtn = document.getElementById('mobile-generate-btn') as HTMLButtonElement;
+    if (mainBtn) mainBtn.disabled = false;
+    if (mobBtn) mobBtn.disabled = false;
+
+    if (done) {
+      desktopTools?.classList.add('hidden');
+      creatorPanel?.classList.add('hidden');
+      
+      const refreshIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>`;
+      
+      generateBtn.innerHTML = `${refreshIcon} New Plan`;
+      if (mobileGenerateBtn) mobileGenerateBtn.innerHTML = `${refreshIcon} New Plan`;
+    } else {
+      desktopTools?.classList.remove('hidden');
+      creatorPanel?.classList.remove('hidden');
+      
+      const planIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>`;
+      
+      generateBtn.innerHTML = `${planIcon} Plan Route`;
+      if (mobileGenerateBtn) mobileGenerateBtn.innerHTML = `${planIcon} Plan Route`;
+      
+      // Clear Map State
+      drawnItems.clearLayers();
+      if (currentPolyline) {
+        map.removeLayer(currentPolyline);
+        currentPolyline = null;
+      }
+      currentBounds = null;
+      currentPathData = [];
+      resultsPanel.classList.add('hidden');
+      
+      const neighborhoodTitle = document.getElementById('neighborhood-title');
+      if(neighborhoodTitle) {
+        neighborhoodTitle.classList.add('hidden');
+        neighborhoodTitle.innerText = '';
+      }
+      
+      // Stop Animation
+      if (animReqId !== null) {
+        cancelAnimationFrame(animReqId);
+        animReqId = null;
+        if (animPolyline) map.removeLayer(animPolyline);
+        if (animMarker) map.removeLayer(animMarker);
+        previewBtn.innerHTML = `
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Preview
+        `;
+      }
+    }
+  }
+
   console.log('[Main] Instanciando Web Worker...');
   const worker = new OptimizerWorker();
 
@@ -579,19 +639,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Reset button
-    generateBtn.disabled = false;
-    generateBtn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-      Plan Route
-    `;
-    if (mobileGenerateBtn) {
-      mobileGenerateBtn.disabled = false;
-      mobileGenerateBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        Plan Route
-      `;
-    }
+    // Reset button implicitly via done mode
+    setDoneMode(true);
 
     if (!data.path || data.path.length === 0) {
       alert("Nenhum caminho foi gerado.");
@@ -664,6 +713,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   generateBtn.addEventListener('click', () => {
+    if (isDoneMode) {
+      setDoneMode(false);
+      return;
+    }
+
     if (!currentBounds) {
       alert("Por favor, desenhe um polígono no mapa primeiro.");
       return;
