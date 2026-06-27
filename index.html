@@ -30,13 +30,17 @@
       </div>
       <div class="flex items-center gap-3">
         <!-- Mobile Sport Dropdown -->
-        <div id="mobile-sport-dropdown" class="relative md:hidden bg-[#f0ece1] rounded-full flex items-center h-9 pl-3 pr-2 cursor-pointer group transition-opacity duration-300">
-          <select id="sport-select-mobile" class="appearance-none bg-transparent text-xs font-extrabold text-[#4a6b46] h-full pr-5 cursor-pointer outline-none">
+        <div id="mobile-sport-dropdown"
+          class="relative md:hidden bg-[#f0ece1] rounded-full flex items-center h-9 pl-3 pr-2 cursor-pointer group transition-opacity duration-300">
+          <select id="sport-select-mobile"
+            class="appearance-none bg-transparent text-xs font-extrabold text-[#4a6b46] h-full pr-5 cursor-pointer outline-none">
             <option value="bike">Cycling</option>
             <option value="walk">Walking</option>
           </select>
-          <svg class="w-3.5 h-3.5 text-[#4a6b46] absolute right-2.5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m6 9 6 6 6-6"/>
+          <svg class="w-3.5 h-3.5 text-[#4a6b46] absolute right-2.5 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6" />
           </svg>
         </div>
 
@@ -77,20 +81,19 @@
 
         <!-- Floating Panel -->
         <aside id="sidebar"
-          class="hidden fixed bottom-6 inset-x-4 md:inset-auto md:relative md:w-80 bg-white shadow-2xl md:shadow-xl flex flex-col pointer-events-auto h-auto max-h-[50vh] md:max-h-none md:h-full rounded-3xl md:rounded-none md:rounded-r-3xl z-[1002] md:z-50">
+          class="hidden fixed bottom-6 inset-x-4 md:inset-auto md:relative md:w-80 bg-white shadow-2xl md:shadow-xl flex flex-col pointer-events-auto h-auto max-h-[50vh] md:max-h-none md:h-full rounded-3xl overflow-hidden z-[1002] md:z-50">
 
           <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto md:hidden shrink-0 mt-4 mb-1"></div>
 
-          <div id="creator-panel">
-            <!-- Header -->
-            <div class="hidden md:block p-5 bg-white border-b border-gray-100 rounded-t-3xl md:rounded-none md:rounded-tr-3xl shrink-0">
-              <h1 class="text-xl font-bold text-gray-800 tracking-tight">Explore Every Inch</h1>
-              <p class="text-xs text-gray-400 mt-1 hidden md:block">Draw an area on the map and get an optimized GPX track
-                to walk or ride
-                through every single street inside it.</p>
-            </div>
+          <!-- Header - always visible, both in creator and shared view -->
+          <div class="hidden md:block p-5 bg-white border-b border-gray-100 shrink-0">
+            <h1 class="text-xl font-bold text-gray-800 tracking-tight">Explore Every Inch</h1>
+            <p class="text-xs text-gray-400 mt-1">Draw an area on the map and get an optimized GPX track to walk or ride
+              through every single street inside it.</p>
+          </div>
 
-            <div class="p-4 md:p-5 flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] rounded-b-3xl md:rounded-none md:rounded-br-3xl hidden md:flex">
+          <div id="creator-panel">
+            <div class="p-4 md:p-5 flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] hidden md:flex">
               <!-- Speed Settings -->
               <div class="space-y-2">
                 <div class="flex justify-between items-center">
@@ -105,28 +108,36 @@
             </div>
           </div>
 
-          <div class="p-4 md:p-5 flex-grow overflow-y-auto flex flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] custom-scrollbar rounded-b-3xl md:rounded-none md:rounded-br-3xl">
+          <div
+            class="p-4 md:p-5 flex-grow overflow-y-auto flex flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] custom-scrollbar">
 
             <!-- Results (Hidden initially) -->
-            <div id="results-panel" class="hidden flex-col gap-4 md:pt-4 md:border-t border-gray-100">
+            <div id="results-panel" class="hidden flex-col gap-4 md:pt-4 md:border-t border-gray-100 flex-grow">
               <h2 id="neighborhood-title" class="hidden flex justify-center items-center gap-2 mt-2 mb-1">
                 <span id="neighborhood-name" class="text-xl font-extrabold text-gray-900"></span>
-                <span id="sport-tag" class="hidden bg-[#4a6b46] text-white text-[10px] px-2 py-1 rounded-md uppercase tracking-wider font-extrabold"></span>
+                <span id="sport-tag"
+                  class="hidden bg-[#4a6b46] text-white text-[10px] px-2 py-1 rounded-md uppercase tracking-wider font-extrabold"></span>
               </h2>
               <div class="flex justify-around items-center pt-2 pb-1">
                 <div class="flex flex-col items-center text-center">
                   <div class="text-2xl font-extrabold text-gray-900" id="result-distance">-- km</div>
                   <div class="text-[12px] text-gray-500 font-medium mt-1">Distance</div>
                 </div>
-                
+
                 <div class="flex flex-col items-center text-center">
                   <div class="text-2xl font-extrabold text-gray-900" id="result-time">--:--</div>
                   <div class="text-[12px] text-gray-500 font-medium mt-1">Est. time</div>
                 </div>
               </div>
+            </div>
 
+          </div>
+
+          <!-- Actions footer — always pinned to bottom of sidebar -->
+          <div id="actions-footer" class="hidden shrink-0 flex flex-col gap-3 p-4 md:p-5 bg-white md:bg-[#f8f7f5] border-t border-gray-100">
+            <div class="grid grid-cols-2 gap-2">
               <button id="preview-btn"
-                class="w-full mt-2 bg-[#f0ece1] hover:bg-[#e6dfcf] text-[#4a6b46] font-bold py-2.5 px-4 rounded-full shadow-sm transition-colors flex justify-center items-center gap-2">
+                class="col-span-2 bg-[#f0ece1] hover:bg-[#e6dfcf] text-[#4a6b46] font-bold py-2.5 px-4 rounded-full shadow-sm transition-colors flex justify-center items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
@@ -136,45 +147,43 @@
                 </svg>
                 Preview
               </button>
-              <div class="grid grid-cols-2 gap-2 mt-3">
-                <button id="export-gpx-btn"
-                  class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-3 rounded-full shadow transition-colors flex justify-center items-center gap-2 text-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" x2="12" y1="15" y2="3" />
-                  </svg>
-                  GPX
-                </button>
-                <button id="share-btn"
-                  class="w-full bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-2 px-3 rounded-full shadow transition-colors flex justify-center items-center gap-2 text-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="18" cy="5" r="3" />
-                    <circle cx="6" cy="12" r="3" />
-                    <circle cx="18" cy="19" r="3" />
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                  </svg>
-                  Share
-                </button>
-              </div>
-
-              <div id="shared-notice"
-                class="hidden mt-2 bg-[#f0ece1] border border-[#e5e0d4] text-[#4a6b46] rounded-xl p-3 text-sm">
-                <p class="font-medium text-gray-700">Viewing an external route. <a href="/"
-                    class="text-[#4a6b46] hover:underline font-bold">Start over</a>.</p>
-              </div>
+              <button id="export-gpx-btn"
+                class="col-span-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-3 rounded-full shadow transition-colors flex justify-center items-center gap-2 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                GPX
+              </button>
+              <button id="share-btn"
+                class="col-span-1 bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-2 px-3 rounded-full shadow transition-colors flex justify-center items-center gap-2 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+                Share
+              </button>
             </div>
 
+            <div id="shared-notice" class="hidden">
+              <p class="text-sm font-medium text-gray-700">Viewing an external route. <a href="/"
+                  class="text-[#4a6b46] hover:underline font-bold">Start over</a>.</p>
+            </div>
           </div>
+
         </aside>
 
         <!-- Top Toolbar (Draw + Selectors + Generate) -->
         <div class="flex-1 flex justify-between items-start pointer-events-none">
           <!-- Left Side: Tools + Dropdown -->
-          <div id="desktop-tools" class="flex flex-col md:flex-row items-start gap-3 pointer-events-auto transition-all">
+          <div id="desktop-tools"
+            class="flex flex-col md:flex-row items-start gap-3 pointer-events-auto transition-all">
             <!-- Draw Controls Container -->
             <div id="draw-tools-container" class="flex items-start gap-3"></div>
 
@@ -186,8 +195,10 @@
                 <option value="bike">Cycling</option>
                 <option value="walk">Walking</option>
               </select>
-              <svg class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m6 9 6 6 6-6"/>
+              <svg class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6" />
               </svg>
             </div>
           </div>

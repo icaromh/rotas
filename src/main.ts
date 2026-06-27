@@ -94,8 +94,8 @@ function generateGPX(path: { lat: number, lng: number }[]): string {
 document.addEventListener('DOMContentLoaded', () => {
   const sportSelect = document.getElementById('sport-select') as HTMLSelectElement;
   const sportSelectMobile = document.getElementById('sport-select-mobile') as HTMLSelectElement;
-  const speedLabel = document.getElementById('speed-label') as HTMLLabelElement;
-  const speedInput = document.getElementById('speed-input') as HTMLInputElement;
+  const SPEED_BIKE = 17;  // km/h
+  const PACE_WALK = 10;   // min/km
   const sidebar = document.getElementById('sidebar') as HTMLElement;
   const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
   const mobileGenerateBtn = document.getElementById('mobile-generate-btn') as HTMLButtonElement;
@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const shareBtn = document.getElementById('share-btn') as HTMLButtonElement;
   const creatorPanel = document.getElementById('creator-panel') as HTMLDivElement;
   const sharedNotice = document.getElementById('shared-notice') as HTMLDivElement;
+  const actionsFooter = document.getElementById('actions-footer') as HTMLDivElement;
 
   // State
   let currentBounds: any = null; // Used to hold L.LatLngBounds or an array of LatLng objects
@@ -161,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentBounds = null;
       currentPathData = [];
       resultsPanel.classList.add('hidden');
+      actionsFooter.classList.add('hidden');
       
       const neighborhoodTitle = document.getElementById('neighborhood-title');
       if(neighborhoodTitle) {
@@ -258,11 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Optimize layout for shared view: put Preview and GPX on same row
-      const actionGrid = exportBtn.parentElement!;
-      actionGrid.insertBefore(previewBtn, exportBtn);
-      previewBtn.classList.remove('w-full', 'mt-2', 'py-2.5', 'px-4');
-      previewBtn.classList.add('py-2', 'px-3', 'text-sm');
+      // Show actions footer
+      actionsFooter.classList.remove('hidden');
 
       // Draw the polyline
       const latlngs = decodedPath.map(p => [p.lat, p.lng] as [number, number]);
@@ -483,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 currentRawInput = null;
                 resultsPanel.classList.add('hidden');
+                actionsFooter.classList.add('hidden');
 
                 const name = feature?.properties?.name || feature?.properties?.tags?.name || feature?.properties?.['name:en'] || null;
                 currentNeighborhoodName = name;
@@ -539,6 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       currentRawInput = null; // Clear any previous fixture data
       resultsPanel.classList.add('hidden');
+      actionsFooter.classList.add('hidden');
 
       const layer = e.layer as L.Polygon;
       const latlngs = layer.getLatLngs()[0] as L.LatLng[];
@@ -581,23 +582,13 @@ document.addEventListener('DOMContentLoaded', () => {
       currentPolyline = null;
     }
     resultsPanel.classList.add('hidden');
+    actionsFooter.classList.add('hidden');
     sidebar.classList.add('hidden');
   });
 
   function syncSportSelect(value: string) {
     if (sportSelect) sportSelect.value = value;
     if (sportSelectMobile) sportSelectMobile.value = value;
-    if (value === 'bike') {
-      speedLabel.textContent = 'Speed (km/h)';
-      speedInput.value = '17';
-      speedInput.min = '1';
-      speedInput.max = '100';
-    } else {
-      speedLabel.textContent = 'Pace (min/km)';
-      speedInput.value = '10';
-      speedInput.min = '1';
-      speedInput.max = '30';
-    }
   }
 
   if (sportSelect) {
@@ -664,16 +655,12 @@ document.addEventListener('DOMContentLoaded', () => {
       resultDistance.innerHTML = `${distanceKm.toFixed(2)} <span class="text-sm font-medium text-gray-500">km</span>`;
 
       const mode = sportSelect ? sportSelect.value : 'bike';
-      const speedVal = parseFloat(speedInput.value);
 
       let totalMinutes = 0;
       if (mode === 'bike') {
-        // speedVal is km/h
-        const hours = distanceKm / speedVal;
-        totalMinutes = hours * 60;
+        totalMinutes = (distanceKm / SPEED_BIKE) * 60;
       } else {
-        // speedVal is min/km
-        totalMinutes = distanceKm * speedVal;
+        totalMinutes = distanceKm * PACE_WALK;
       }
 
       const h = Math.floor(totalMinutes / 60);
@@ -705,6 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       resultsPanel.classList.remove('hidden');
+      actionsFooter.classList.remove('hidden');
     }
   };
 
@@ -716,6 +704,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   generateBtn.addEventListener('click', () => {
     if (isDoneMode) {
+      if (isSharedView) {
+        window.location.href = '/';
+        return;
+      }
       setDoneMode(false);
       return;
     }
@@ -740,6 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
     resultsPanel.classList.add('hidden');
+    actionsFooter.classList.add('hidden');
 
     console.log('[Main] Enviando payload para o Worker:', currentBounds);
     worker.postMessage({
