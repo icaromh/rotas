@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.7
+- **Build CSS Fix**: Corrected the CSS import order in `main.ts` — `style.css` is now imported after `leaflet.css` and `leaflet-draw.css`, ensuring custom overrides (like `.leaflet-draw-toolbar { margin-top: 0 }`) always win in the production bundle.
+
 ## v1.4.6
 - **Shared View Layout Fix**: Fixed the Preview and GPX buttons alignment in shared view so that they sit side-by-side on the same row.
 - **Shared View Estimated Time**: Render the estimated time dynamically in the shared view by calculating it from the shared distance and mode parameters using fixed constants.
