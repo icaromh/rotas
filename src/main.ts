@@ -738,6 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Settings Logic
   const settingsBtn = document.getElementById('settings-btn') as HTMLButtonElement;
+  const mobileSettingsBtn = document.getElementById('mobile-settings-btn') as HTMLButtonElement;
   const preferencesModal = document.getElementById('preferences-modal') as HTMLDialogElement;
   const closePreferencesBtn = document.getElementById('close-preferences') as HTMLButtonElement;
   const savePreferencesBtn = document.getElementById('save-preferences') as HTMLButtonElement;
@@ -750,17 +751,23 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentBufferMeters = 20;
   let currentSafety = 'any';
 
+  const openSettings = () => {
+    preferencesModal.showModal();
+    // Update visibility based on current sport
+    const sport = sportSelect ? sportSelect.value : 'bike';
+    if (sport === 'walk') {
+      safetyPreferenceContainer.classList.add('hidden');
+    } else {
+      safetyPreferenceContainer.classList.remove('hidden');
+    }
+  };
+
   if (settingsBtn) {
-    settingsBtn.addEventListener('click', () => {
-      preferencesModal.showModal();
-      // Update visibility based on current sport
-      const sport = sportSelect ? sportSelect.value : 'bike';
-      if (sport === 'walk') {
-        safetyPreferenceContainer.classList.add('hidden');
-      } else {
-        safetyPreferenceContainer.classList.remove('hidden');
-      }
-    });
+    settingsBtn.addEventListener('click', openSettings);
+  }
+  
+  if (mobileSettingsBtn) {
+    mobileSettingsBtn.addEventListener('click', openSettings);
   }
 
   if (closePreferencesBtn) {
