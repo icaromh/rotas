@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
       magicWandBtn.style.display = 'flex';
       magicWandBtn.style.alignItems = 'center';
       magicWandBtn.style.justifyContent = 'center';
-      
+
       const defaultWandIcon = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/>
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
         </svg>
       `;
-      
+
       magicWandBtn.innerHTML = defaultWandIcon;
       drawToolsContainer.appendChild(magicWandControl);
 
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         isLoadingNeighborhoods = true;
         magicWandBtn.innerHTML = loadingSpinner;
-        
+
         try {
           const bounds = map.getBounds();
           const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
             body: 'data=' + encodeURIComponent(query)
           });
           const data = await res.json();
-          
+
           if (!data.elements || data.elements.length === 0) {
             alert('No neighborhoods found in this area. Try moving or zooming out the map.');
             return;
@@ -380,9 +380,45 @@ document.addEventListener('DOMContentLoaded', () => {
               fillOpacity: 0.2,
               dashArray: '5, 5'
             },
+            pointToLayer: (_feature, latlng) => {
+              // Custom map pin for any points (nodes) returned
+              const pinHtml = `
+                <div class="relative flex items-center justify-center w-8 h-8 drop-shadow-md" style="margin-left: -16px; margin-top: -32px;">
+                  <svg viewBox="0 0 32 40" class="w-8 h-10 drop-shadow-sm" style="filter: drop-shadow(0 4px 4px rgba(0,0,0,0.25));">
+                    <path d="M16 0C7.163 0 0 7.163 0 16c0 11.2 16 24 16 24s16-12.8 16-24C32 7.163 24.837 0 16 0z" fill="white"/>
+                    <circle cx="16" cy="15" r="11" fill="#f0ece1"/>
+                  </svg>
+                  <div class="absolute text-gray-900 pointer-events-none" style="top: 7px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                  </div>
+                </div>
+              `;
+              const icon = L.divIcon({
+                className: 'custom-poi-pin',
+                html: pinHtml,
+                iconSize: [0, 0], // Sizing is handled by the inner div
+                iconAnchor: [0, 0] 
+              });
+              return L.marker(latlng, { icon });
+            },
             onEachFeature: (feature, layer) => {
+              const name = feature?.properties?.name || feature?.properties?.tags?.name || feature?.properties?.['name:en'] || null;
+              
+              if (name) {
+                layer.bindTooltip(name, {
+                  className: 'custom-black-tooltip',
+                  sticky: true,
+                  direction: 'top',
+                  offset: [0, -10]
+                });
+              }
+
               layer.on('mouseover', function () {
-                (layer as L.Path).setStyle({ fillOpacity: 0.5, weight: 3 });
+                if (layer instanceof L.Path) {
+                  layer.setStyle({ fillOpacity: 0.5, weight: 3 });
+                }
               });
               layer.on('mouseout', function () {
                 activeNeighborhoodLayer!.resetStyle(layer as L.Path);
@@ -406,16 +442,16 @@ document.addEventListener('DOMContentLoaded', () => {
                   dashArray: '5, 5',
                   fillOpacity: 0.2
                 });
-                
+
                 // Extract coordinates for LP Solver
                 let latlngs: any[] = clickedLayer.getLatLngs();
                 // If MultiPolygon, drill down to the longest array
                 while (latlngs.length > 0 && Array.isArray(latlngs[0])) {
                   latlngs = latlngs.reduce((prev, current) => (prev.length > current.length) ? prev : current);
                 }
-                
+
                 currentBounds = latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng }));
-                
+
                 // In order to make it editable by Leaflet Draw, we wrap the extracted flat latlngs in a new L.Polygon
                 const newPolygon = L.polygon(latlngs, clickedLayer.options);
                 drawnItems.addLayer(newPolygon);
@@ -600,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const h = Math.floor(totalMinutes / 60);
       const m = Math.round(totalMinutes % 60);
-      
+
       if (h > 0) {
         resultTime.innerHTML = `${h}<span class="text-sm font-medium text-gray-500">h</span> ${m}<span class="text-sm font-medium text-gray-500">m</span>`;
       } else {
@@ -685,7 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentPolyline) currentPolyline.setStyle({ opacity: 0.8 });
       previewBtn.innerHTML = `
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        Animar Rota
+        Preview
       `;
       return;
     }
@@ -729,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
         animReqId = null;
         previewBtn.innerHTML = `
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          Animar Rota
+          Preview
         `;
         if (currentPolyline) currentPolyline.setStyle({ opacity: 0.8 });
         if (animMarker) map.removeLayer(animMarker);

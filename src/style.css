@@ -236,3 +236,37 @@ body,
   background-size: 18px !important;
   background-repeat: no-repeat !important;
 }
+
+/* --- Custom Black Tooltip --- */
+.custom-black-tooltip {
+  background-color: #212121 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 20px !important;
+  padding: 6px 14px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+  white-space: nowrap !important;
+}
+
+.leaflet-tooltip-top.custom-black-tooltip:before {
+  border-top-color: #212121 !important;
+}
+.leaflet-tooltip-bottom.custom-black-tooltip:before {
+  border-bottom-color: #212121 !important;
+}
+.leaflet-tooltip-left.custom-black-tooltip:before {
+  border-left-color: #212121 !important;
+}
+.leaflet-tooltip-right.custom-black-tooltip:before {
+  border-right-color: #212121 !important;
+}
+
+/* --- Round Leaflet Draw Edit Handles --- */
+.leaflet-editing-icon {
+  border-radius: 50% !important;
+  border: 2px solid #1f2937 !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
