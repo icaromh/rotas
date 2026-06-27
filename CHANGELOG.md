@@ -11,7 +11,8 @@
 - **Done Mode & UI Reset**: After successfully generating a route, the interface elegantly enters a "Done" state: all draw and setup controls disappear to maximize map visibility, and the action button transforms into a "New Plan" button. Clicking "New Plan" instantly resets all states, clears the map, and brings back the creative tools.
 - **Mathematical Solver Robustness**: Refactored the core Tarjan's Strongly Connected Components algorithm inside the Web Worker from a recursive approach to an iterative call-stack. This definitively prevents the notorious "Maximum call stack size exceeded" crash on massive neighborhoods.
 - **Heuristic MCPP Fallback (OOM Prevention)**: Introduced a custom Greedy Shortest-Path Heuristic solver (using Dijkstra's) that automatically activates when graphs exceed 1.000 edges. This bypasses the LP Solver's dense matrix builder, entirely preventing the "Array buffer allocation failed" (Out of Memory) crashes when analyzing gigantic areas.
-- **Brand Consistency**: Upgraded the generic navigation text to use the custom SVG `logo.svg` from the assets folder directly in the app's top navigation bar, and replaced the default Vite favicon with `favicon.svg`.
+- **Sport Type Tag & URL State**: The selected sport type (Ride or Walk) is now encoded into the shared URL (`?mode=...`) and beautifully displayed as an uppercase colored badge right next to the neighborhood's name in the results title.
+- **Mobile UI Polish**: Fixed an issue where the mobile sport selector dropdown remained visibly duplicated in the top navigation during Done/Preview mode.
 
 ## v1.3
 - **Komoot-Inspired Premium Redesign**: Complete visual overhaul of the UI/UX focusing on responsiveness, aesthetics, and clarity.

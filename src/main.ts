@@ -135,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (done) {
       desktopTools?.classList.add('hidden');
       creatorPanel?.classList.add('hidden');
+      document.getElementById('mobile-sport-dropdown')?.classList.add('hidden');
       
       const refreshIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>`;
       
@@ -143,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       desktopTools?.classList.remove('hidden');
       creatorPanel?.classList.remove('hidden');
+      document.getElementById('mobile-sport-dropdown')?.classList.remove('hidden');
       
       const planIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>`;
       
@@ -202,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const sharedRouteParam = urlParams.get('route');
   const sharedNameParam = urlParams.get('name');
+  const sharedModeParam = urlParams.get('mode');
   let isSharedView = false;
 
   if (sharedRouteParam) {
@@ -241,9 +244,18 @@ document.addEventListener('DOMContentLoaded', () => {
           `;
         }
         const neighborhoodTitle = document.getElementById('neighborhood-title');
-        if (neighborhoodTitle) {
-          neighborhoodTitle.textContent = sharedNameParam;
+        const neighborhoodName = document.getElementById('neighborhood-name');
+        if (neighborhoodTitle && neighborhoodName) {
+          neighborhoodName.textContent = sharedNameParam;
           neighborhoodTitle.classList.remove('hidden');
+          
+          if (sharedModeParam) {
+            const sportTag = document.getElementById('sport-tag');
+            if (sportTag) {
+              sportTag.textContent = sharedModeParam === 'bike' ? 'Ride' : 'Walk';
+              sportTag.classList.remove('hidden');
+            }
+          }
         }
       }
 
@@ -673,14 +685,23 @@ document.addEventListener('DOMContentLoaded', () => {
         resultTime.innerHTML = `${m} <span class="text-sm font-medium text-gray-500">min</span>`;
       }
 
-      const neighborhoodTitle = document.getElementById('neighborhood-title');
-      if (neighborhoodTitle) {
-        if (currentNeighborhoodName) {
-          neighborhoodTitle.textContent = currentNeighborhoodName;
+      if (currentNeighborhoodName) {
+        const neighborhoodTitle = document.getElementById('neighborhood-title');
+        const neighborhoodName = document.getElementById('neighborhood-name');
+        if (neighborhoodTitle && neighborhoodName) {
+          neighborhoodName.textContent = currentNeighborhoodName;
           neighborhoodTitle.classList.remove('hidden');
-        } else {
-          neighborhoodTitle.classList.add('hidden');
+          
+          const mode = sportSelect ? sportSelect.value : 'bike';
+          const sportTag = document.getElementById('sport-tag');
+          if (sportTag) {
+            sportTag.textContent = mode === 'bike' ? 'Ride' : 'Walk';
+            sportTag.classList.remove('hidden');
+          }
         }
+      } else {
+        const neighborhoodTitle = document.getElementById('neighborhood-title');
+        if (neighborhoodTitle) neighborhoodTitle.classList.add('hidden');
       }
 
       resultsPanel.classList.remove('hidden');
@@ -826,8 +847,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let text = 'See more in Rotas';
     if (currentNeighborhoodName) {
-      url.searchParams.set('name', currentNeighborhoodName);
       const mode = sportSelect ? sportSelect.value : 'bike';
+      url.searchParams.set('name', currentNeighborhoodName);
+      url.searchParams.set('mode', mode);
       const action = mode === 'bike' ? 'Ride' : 'Walk';
       text = `${action} through ${currentNeighborhoodName}`;
     }
