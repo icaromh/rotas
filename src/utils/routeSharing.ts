@@ -34,12 +34,15 @@ export function decodeRoute(encoded: string): Point[] {
   }
   
   try {
-    // Attempt to decompress
-    let polylineStr = LZString.decompressFromEncodedURIComponent(encoded);
+    let polylineStr = '';
     
-    // Fallback for older links that weren't compressed
-    if (!polylineStr) {
+    // LZString compressToEncodedURIComponent strictly uses A-Za-z0-9+-$
+    // If the encoded string contains typical polyline ascii characters like ?, @, \, {, }
+    // It means this is an old uncompressed URL. We must NOT pass it to decompress.
+    if (/[?@\\{}_^~`]/.test(encoded)) {
       polylineStr = encoded;
+    } else {
+      polylineStr = LZString.decompressFromEncodedURIComponent(encoded) || encoded;
     }
     
     const coordinates = polyline.decode(polylineStr, 5);

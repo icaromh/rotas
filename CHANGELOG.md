@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.2
+- **Robust Legacy Link Support**: Added a precise Regex fallback `(/[?@\\{}_^~`]/`) in the routing decoder to safely handle uncompressed URL formats generated before v1.4.1. This prevents the LZ-String algorithm from attempting to decompress incompatible URI strings which previously led to massively corrupted Eulerian paths mapping (e.g., 43km mutating into 98km).
+- **Cleaner Shared View**: Refined the "Shared Route" notification box by removing the redundant neighborhood title, and correctly hiding the top navigation's sport-selector when previewing external links to keep the interface purely focused on the map.
+
 ## v1.4.1
 - **Deep URL Compression**: Implemented `lz-string` algorithm on top of the polyline encoder to aggressively compress shared route URLs, definitively solving the `HTTP 431 Request Header Fields Too Large` crash when users try to generate and share links for massive city-scale neighborhoods like *Sant Pere*. Old uncompressed URLs continue to be gracefully supported.
 
