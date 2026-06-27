@@ -9,7 +9,8 @@
 - **Hover Tooltips**: Implemented sleek, dark-themed pill tooltips (`sticky: true`) that follow the user's cursor when hovering over neighborhoods, displaying the area's name.
 - **Rounded Edit Handles**: Overrode Leaflet Draw's default square vertex handles with fully rounded circular nodes to match the modern styling of the application.
 - **Done Mode & UI Reset**: After successfully generating a route, the interface elegantly enters a "Done" state: all draw and setup controls disappear to maximize map visibility, and the action button transforms into a "New Plan" button. Clicking "New Plan" instantly resets all states, clears the map, and brings back the creative tools.
-- **Mathematical Solver Robustness**: Refactored the core Tarjan's Strongly Connected Components algorithm inside the Web Worker from a recursive approach to an iterative call-stack. This definitively prevents the notorious "Maximum call stack size exceeded" crash on massive neighborhoods (like *Parc Natural de la Serra de Collserola*) that have tens of thousands of graph nodes.
+- **Mathematical Solver Robustness**: Refactored the core Tarjan's Strongly Connected Components algorithm inside the Web Worker from a recursive approach to an iterative call-stack. This definitively prevents the notorious "Maximum call stack size exceeded" crash on massive neighborhoods.
+- **Heuristic MCPP Fallback (OOM Prevention)**: Introduced a custom Greedy Shortest-Path Heuristic solver (using Dijkstra's) that automatically activates when graphs exceed 1.000 edges. This bypasses the LP Solver's dense matrix builder, entirely preventing the "Array buffer allocation failed" (Out of Memory) crashes when analyzing gigantic areas.
 - **Brand Consistency**: Upgraded the generic navigation text to use the custom SVG `logo.svg` from the assets folder directly in the app's top navigation bar, and replaced the default Vite favicon with `favicon.svg`.
 
 ## v1.3

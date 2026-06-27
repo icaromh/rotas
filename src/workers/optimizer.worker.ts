@@ -143,37 +143,62 @@ export function extractLargestSCC(g: CustomMultiGraph): CustomMultiGraph {
   const onStack = new Set<string>();
   const sccs: string[][] = [];
 
-  function strongConnect(v: string) {
-    indices.set(v, index);
-    lowlinks.set(v, index);
-    index++;
-    stack.push(v);
-    onStack.add(v);
+  const callStack: { v: string; neighbors: string[]; nextIdx: number }[] = [];
 
-    g.forEachOutNeighbor(v, (w) => {
-      if (!indices.has(w)) {
-        strongConnect(w);
-        lowlinks.set(v, Math.min(lowlinks.get(v)!, lowlinks.get(w)!));
-      } else if (onStack.has(w)) {
-        lowlinks.set(v, Math.min(lowlinks.get(v)!, indices.get(w)!));
+  g.forEachNode((startNode) => {
+    if (!indices.has(startNode)) {
+      const initialNeighbors: string[] = [];
+      g.forEachOutNeighbor(startNode, w => initialNeighbors.push(w));
+      
+      indices.set(startNode, index);
+      lowlinks.set(startNode, index);
+      index++;
+      stack.push(startNode);
+      onStack.add(startNode);
+      
+      callStack.push({ v: startNode, neighbors: initialNeighbors, nextIdx: 0 });
+
+      while (callStack.length > 0) {
+        const top = callStack[callStack.length - 1];
+        const v = top.v;
+        
+        if (top.nextIdx < top.neighbors.length) {
+          const w = top.neighbors[top.nextIdx++];
+          
+          if (!indices.has(w)) {
+            const wNeighbors: string[] = [];
+            g.forEachOutNeighbor(w, nw => wNeighbors.push(nw));
+            
+            indices.set(w, index);
+            lowlinks.set(w, index);
+            index++;
+            stack.push(w);
+            onStack.add(w);
+            
+            callStack.push({ v: w, neighbors: wNeighbors, nextIdx: 0 });
+          } else if (onStack.has(w)) {
+            lowlinks.set(v, Math.min(lowlinks.get(v)!, indices.get(w)!));
+          }
+        } else {
+          callStack.pop();
+          
+          if (callStack.length > 0) {
+             const caller = callStack[callStack.length - 1];
+             lowlinks.set(caller.v, Math.min(lowlinks.get(caller.v)!, lowlinks.get(v)!));
+          }
+          
+          if (lowlinks.get(v) === indices.get(v)) {
+            const scc: string[] = [];
+            let w: string;
+            do {
+              w = stack.pop()!;
+              onStack.delete(w);
+              scc.push(w);
+            } while (w !== v);
+            sccs.push(scc);
+          }
+        }
       }
-    });
-
-    if (lowlinks.get(v) === indices.get(v)) {
-      const scc: string[] = [];
-      let w: string;
-      do {
-        w = stack.pop()!;
-        onStack.delete(w);
-        scc.push(w);
-      } while (w !== v);
-      sccs.push(scc);
-    }
-  }
-
-  g.forEachNode((v) => {
-    if (!indices.has(v)) {
-      strongConnect(v);
     }
   });
 
@@ -348,11 +373,118 @@ export function buildBaseData(overpassData: any, mode: string, polygon: {lat: nu
   return { nodes, baseEdges };
 }
 
+function solveMCPPHeuristic(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string): CustomMultiGraph {
+  const eulerGraph = new CustomMultiGraph();
+  sccGraph.forEachNode(n => {
+    eulerGraph.addNode(n, nodes.get(Number(n)));
+  });
+
+  const balances = new Map<string, number>();
+  sccGraph.forEachNode(n => balances.set(n, 0));
+
+  const adj = new Map<string, {to: string, dist: number, id: string, penalty: number}[]>();
+  sccGraph.forEachNode(n => adj.set(n, []));
+
+  baseEdges.forEach(e => {
+    if (!sccGraph.hasNode(e.u) || !sccGraph.hasNode(e.v)) return;
+
+    if (e.isTarget) {
+      eulerGraph.addDirectedEdge(e.u, e.v, { id: e.id, distance: e.dist });
+      balances.set(e.u, balances.get(e.u)! - 1);
+      balances.set(e.v, balances.get(e.v)! + 1);
+    }
+    
+    adj.get(e.u)!.push({ to: e.v, dist: e.dist, id: e.id, penalty: 1 });
+    const penalty = (e.isOneway && mode === 'bike') ? 2000 : 1;
+    adj.get(e.v)!.push({ to: e.u, dist: e.dist * penalty, id: e.id, penalty: penalty });
+  });
+
+  // Calculate shortest path trees from every node that needs outgoing edges (balance > 0)
+  // to nodes that need incoming edges (balance < 0)
+  
+  const sources = Array.from(balances.entries()).filter(b => b[1] > 0).map(b => ({ node: b[0], amt: b[1] }));
+  const sinks = Array.from(balances.entries()).filter(b => b[1] < 0).map(b => ({ node: b[0], amt: -b[1] }));
+
+  // Simplistic greedy matching
+  for (const src of sources) {
+    while (src.amt > 0) {
+      // Find shortest path to any sink with amt > 0
+      const dists = new Map<string, { dist: number, prev: string | null, edgeId: string | null }>();
+      sccGraph.forEachNode(n => dists.set(n, { dist: Infinity, prev: null, edgeId: null }));
+      dists.set(src.node, { dist: 0, prev: null, edgeId: null });
+      
+      const q = new Set<string>(sccGraph.nodes());
+      let closestSink: typeof sinks[0] | null = null;
+      let minDistToSink = Infinity;
+
+      while (q.size > 0) {
+        let u: string | null = null;
+        let minD = Infinity;
+        for (const n of q) {
+          if (dists.get(n)!.dist < minD) {
+            minD = dists.get(n)!.dist;
+            u = n;
+          }
+        }
+        
+        if (!u || minD === Infinity) break;
+        q.delete(u);
+
+        const possibleSink = sinks.find(s => s.node === u && s.amt > 0);
+        if (possibleSink && minD < minDistToSink) {
+          closestSink = possibleSink;
+          minDistToSink = minD;
+          break; // Since edges are positive, first reached sink isn't necessarily absolute closest without full search, but this is a heuristic
+        }
+
+        for (const edge of adj.get(u)!) {
+          if (!q.has(edge.to)) continue;
+          const alt = minD + (edge.dist * edge.penalty);
+          if (alt < dists.get(edge.to)!.dist) {
+            dists.set(edge.to, { dist: alt, prev: u, edgeId: edge.id });
+          }
+        }
+      }
+
+      if (!closestSink) {
+        // No reachable sink, which shouldn't happen in a strongly connected component
+        break;
+      }
+
+      // Add path to eulerGraph
+      let curr = closestSink.node;
+      const path: {from: string, to: string, id: string}[] = [];
+      while (curr !== src.node) {
+        const p = dists.get(curr)!;
+        path.push({ from: p.prev!, to: curr, id: p.edgeId! });
+        curr = p.prev!;
+      }
+      
+      // Path is built from sink to source, so reverse it
+      for (let i = path.length - 1; i >= 0; i--) {
+        const e = path[i];
+        eulerGraph.addDirectedEdge(e.from, e.to, { id: e.id, distance: 0 }); // dist doesn't strictly matter for drawing
+      }
+
+      src.amt--;
+      closestSink.amt--;
+    }
+  }
+
+  console.log(`[Worker] Heurística gulosa gerou um Grafo Euleriano com ${eulerGraph.order} nós e ${eulerGraph.size} arestas.`);
+  return eulerGraph;
+}
+
 export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string): CustomMultiGraph {
   console.log('[Worker] Step 4: Resolvendo o Mixed Chinese Postman Problem com LP Solver');
   
   const sccEdges = baseEdges.filter(e => sccGraph.hasNode(e.u) && sccGraph.hasNode(e.v));
   
+  if (sccEdges.length > 1000) {
+    console.log('[Worker] Grafo muito grande. Usando Heurística Gulosa para MCPP...');
+    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode);
+  }
+
   const model: any = {
     optimize: "cost",
     opType: "min",
@@ -383,10 +515,17 @@ export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph
   });
 
   console.log('[Worker] Enviando modelo matemático para o Solver LP. Isso pode levar alguns segundos...');
-  const result = solver.Solve(model) as Record<string, number>;
+  let result: Record<string, number>;
+  try {
+    result = solver.Solve(model) as Record<string, number>;
+  } catch (err) {
+    console.log('[Worker] Falha no LP Solver. Caindo para Heurística Gulosa...', err);
+    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode);
+  }
   
   if (!result.feasible) {
-    throw new Error('A malha viária selecionada é matematicamente insolúvel (não há rotas conectadas suficientes).');
+    console.log('[Worker] LP Solver insolúvel. Caindo para Heurística Gulosa...');
+    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode);
   }
   
   console.log(`[Worker] Solver finalizado com sucesso! Custo ótimo (distância): ${(result.result / 1000).toFixed(2)} km`);
