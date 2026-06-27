@@ -5,6 +5,39 @@ import L from 'leaflet';
 import 'leaflet-draw';
 import osmtogeojson from 'osmtogeojson';
 import { encodeRoute, decodeRoute } from './utils/routeSharing';
+import { registerSW } from 'virtual:pwa-register';
+
+// PWA Update Logic
+const pwaToast = document.getElementById('pwa-toast') as HTMLDivElement;
+const pwaReloadBtn = document.getElementById('pwa-reload-btn') as HTMLButtonElement;
+const pwaCloseBtn = document.getElementById('pwa-close-btn') as HTMLButtonElement;
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (pwaToast) {
+      pwaToast.classList.remove('hidden');
+      pwaToast.classList.add('flex');
+    }
+  },
+  onOfflineReady() {
+    console.log('App ready to work offline');
+  },
+});
+
+if (pwaReloadBtn) {
+  pwaReloadBtn.addEventListener('click', () => {
+    updateSW(true);
+  });
+}
+
+if (pwaCloseBtn) {
+  pwaCloseBtn.addEventListener('click', () => {
+    if (pwaToast) {
+      pwaToast.classList.add('hidden');
+      pwaToast.classList.remove('flex');
+    }
+  });
+}
 
 // Fix Leaflet-Draw "type is not defined" ReferenceError in ES modules/strict mode
 const defaultPrecision = {

@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       workbox: {
         runtimeCaching: [
           {
