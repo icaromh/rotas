@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.18] - 2026-06-27
+### Fixed
+- Corrigido problema onde o Global Loader não desaparecia após carregar os bairros salvos na memória cache.
+
 ## [1.4.17] - 2026-06-27
 ### Added
 - Implementado um "Global Loader" em tela cheia que bloqueia interações do usuário enquanto rotas são calculadas ou bairros são buscados.

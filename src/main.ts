@@ -561,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
           alert('Failed to load neighborhoods from OpenStreetMap.');
         } finally {
           isLoadingNeighborhoods = false;
-          magicWandBtn.innerHTML = defaultWandIcon;
+          hideGlobalLoader();
         }
       };
     }
