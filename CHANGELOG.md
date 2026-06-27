@@ -1,6 +1,9 @@
 # Changelog
 
-## v1.4
+## v1.4.1
+- **Deep URL Compression**: Implemented `lz-string` algorithm on top of the polyline encoder to aggressively compress shared route URLs, definitively solving the `HTTP 431 Request Header Fields Too Large` crash when users try to generate and share links for massive city-scale neighborhoods like *Sant Pere*. Old uncompressed URLs continue to be gracefully supported.
+
+## v1.4.0
 - **Magic Wand: Neighborhood Picker 🪄**: Added a new custom map tool that dynamically fetches OpenStreetMap administrative boundaries (`admin_level=9|10` or `place=neighbourhood`) within the current viewport.
 - **GeoJSON Processing**: Integrated `osmtogeojson` to accurately convert raw OSM JSON relations into interactive MultiPolygons directly on the map.
 - **Dynamic Contextual UI**: Selected neighborhoods now automatically populate the bottom sheet/sidebar with their actual names (e.g., "Eixample").

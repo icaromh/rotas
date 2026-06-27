@@ -1,4 +1,5 @@
 import polyline from '@mapbox/polyline';
+import LZString from 'lz-string';
 
 export interface Point {
   lat: number;
@@ -18,11 +19,14 @@ export function encodeRoute(path: Point[]): string {
   const coordinates: [number, number][] = path.map(p => [p.lat, p.lng]);
   
   // precision of 5 is standard (1 meter accuracy)
-  return polyline.encode(coordinates, 5);
+  const encodedPolyline = polyline.encode(coordinates, 5);
+  
+  // Compress it further for massive routes to prevent HTTP 431 errors
+  return LZString.compressToEncodedURIComponent(encodedPolyline);
 }
 
 /**
- * Decodes a polyline string back into an array of {lat, lng} points.
+ * Decodes a compressed polyline string back into an array of {lat, lng} points.
  */
 export function decodeRoute(encoded: string): Point[] {
   if (!encoded) {
@@ -30,7 +34,15 @@ export function decodeRoute(encoded: string): Point[] {
   }
   
   try {
-    const coordinates = polyline.decode(encoded, 5);
+    // Attempt to decompress
+    let polylineStr = LZString.decompressFromEncodedURIComponent(encoded);
+    
+    // Fallback for older links that weren't compressed
+    if (!polylineStr) {
+      polylineStr = encoded;
+    }
+    
+    const coordinates = polyline.decode(polylineStr, 5);
     return coordinates.map(coord => ({
       lat: coord[0],
       lng: coord[1]

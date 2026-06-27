@@ -29,6 +29,7 @@
     "javascript-lp-solver": "^1.0.3",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
+    "lz-string": "^1.5.0",
     "osmtogeojson": "^3.0.0-beta.5",
     "tailwindcss": "^4.3.1"
   }
