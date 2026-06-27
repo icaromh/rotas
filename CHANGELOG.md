@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.15] - 2026-06-27
+### Changed
+- Adicionada tag "Beta" e link para o repositório do GitHub no modal "About".
+
 ## [1.4.14] - 2026-06-27
 ### Fixed
 - Corrigido algoritmo de geração de rotas (MCPP) no modo "Walking" para bairros onde as fronteiras cortam ruas e geram redes desconexas, garantindo que o trajeto resultante seja integralmente conectado e cubra todas as vias necessárias.
