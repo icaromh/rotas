@@ -232,7 +232,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
       currentDistanceKm = distanceKm;
       resultDistance.innerHTML = `${distanceKm.toFixed(2)} <span class="text-sm font-medium text-gray-500">km</span>`;
-      resultTime.parentElement!.style.display = 'none'; // Hide estimated time as it depends on mode
+
+      // Calculate and display estimated time dynamically in shared view using shared mode
+      const mode = sharedModeParam || 'bike';
+      let totalMinutes = 0;
+      if (mode === 'bike') {
+        totalMinutes = (distanceKm / SPEED_BIKE) * 60;
+      } else {
+        totalMinutes = distanceKm * PACE_WALK;
+      }
+      const h = Math.floor(totalMinutes / 60);
+      const m = Math.round(totalMinutes % 60);
+      if (h > 0) {
+        resultTime.innerHTML = `${h}<span class="text-sm font-medium text-gray-500">h</span> ${m}<span class="text-sm font-medium text-gray-500">m</span>`;
+      } else {
+        resultTime.innerHTML = `${m} <span class="text-sm font-medium text-gray-500">min</span>`;
+      }
+      resultTime.parentElement!.style.display = 'flex';
 
       // Update UI panels
       sidebar.classList.remove('hidden');
@@ -260,7 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Show actions footer
+      // Show actions footer; in shared view collapse Preview to col-span-1 so it sits beside GPX
+      previewBtn.classList.remove('col-span-2');
       actionsFooter.classList.remove('hidden');
 
       // Draw the polyline

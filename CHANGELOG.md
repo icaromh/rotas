@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.6
+- **Shared View Layout Fix**: Fixed the Preview and GPX buttons alignment in shared view so that they sit side-by-side on the same row.
+- **Shared View Estimated Time**: Render the estimated time dynamically in the shared view by calculating it from the shared distance and mode parameters using fixed constants.
+
 ## v1.4.5
 - **Shared View UI Overhaul**: The sidebar in shared route view now shows the "Explore Every Inch" header at all times. Action buttons (Preview, GPX) are pinned to the bottom of the sidebar as a fixed footer alongside the "Viewing an external route" notice. In shared view, Preview and GPX appear side-by-side in a single row. The sidebar now has fully rounded corners on desktop via `overflow-hidden` clipping child elements. **New Plan** in shared view redirects to `/` to start fresh, instead of producing a broken in-place reset with stale UI.
 - **Speed/Pace Input Removed**: The speed and pace inputs have been replaced with fixed constants (`SPEED_BIKE = 17 km/h`, `PACE_WALK = 10 min/km`), simplifying the UI.
