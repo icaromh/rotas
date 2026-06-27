@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // State
   let currentBounds: any = null; // Used to hold L.LatLngBounds or an array of LatLng objects
+  let currentNeighborhoodName: string | null = null;
   let currentPolyline: L.Polyline | null = null;
   let currentPathData: { lat: number, lng: number }[] = [];
   let currentRawInput: any = null;
@@ -140,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check URL for Shared Route
   const urlParams = new URLSearchParams(window.location.search);
   const sharedRouteParam = urlParams.get('route');
+  const sharedNameParam = urlParams.get('name');
   let isSharedView = false;
 
   if (sharedRouteParam) {
@@ -165,6 +167,25 @@ document.addEventListener('DOMContentLoaded', () => {
       resultsPanel.classList.remove('hidden');
       sharedNotice.classList.remove('hidden');
       shareBtn.classList.add('hidden'); // No need to share an already shared route
+
+      if (sharedNameParam) {
+        const sharedTitle = document.getElementById('shared-notice-title');
+        if (sharedTitle) {
+          sharedTitle.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            ${sharedNameParam}
+          `;
+        }
+        const neighborhoodTitle = document.getElementById('neighborhood-title');
+        if (neighborhoodTitle) {
+          neighborhoodTitle.textContent = sharedNameParam;
+          neighborhoodTitle.classList.remove('hidden');
+        }
+      }
 
       // Optimize layout for shared view: put Preview and GPX on same row
       const actionGrid = exportBtn.parentElement!;
@@ -359,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
               fillOpacity: 0.2,
               dashArray: '5, 5'
             },
-            onEachFeature: (_feature, layer) => {
+            onEachFeature: (feature, layer) => {
               layer.on('mouseover', function () {
                 (layer as L.Path).setStyle({ fillOpacity: 0.5, weight: 3 });
               });
@@ -374,6 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 currentRawInput = null;
                 resultsPanel.classList.add('hidden');
+
+                const name = feature?.properties?.name || feature?.properties?.tags?.name || feature?.properties?.['name:en'] || null;
+                currentNeighborhoodName = name;
 
                 const clickedLayer = layer as any;
                 clickedLayer.setStyle({
@@ -419,6 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
   map.on(L.Draw.Event.CREATED, (e: any) => {
     const layerType = e.layerType;
     if (layerType === 'polygon') {
+      currentNeighborhoodName = null;
       drawnItems.clearLayers();
       if (currentPolyline) {
         map.removeLayer(currentPolyline);
@@ -582,6 +607,16 @@ document.addEventListener('DOMContentLoaded', () => {
         resultTime.innerHTML = `${m} <span class="text-sm font-medium text-gray-500">min</span>`;
       }
 
+      const neighborhoodTitle = document.getElementById('neighborhood-title');
+      if (neighborhoodTitle) {
+        if (currentNeighborhoodName) {
+          neighborhoodTitle.textContent = currentNeighborhoodName;
+          neighborhoodTitle.classList.remove('hidden');
+        } else {
+          neighborhoodTitle.classList.add('hidden');
+        }
+      }
+
       resultsPanel.classList.remove('hidden');
     }
   };
@@ -717,13 +752,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const encoded = encodeRoute(currentPathData);
     const url = new URL(window.location.href);
     url.searchParams.set('route', encoded);
+
+    let text = 'See more in Rotas';
+    if (currentNeighborhoodName) {
+      url.searchParams.set('name', currentNeighborhoodName);
+      const mode = sportSelect ? sportSelect.value : 'bike';
+      const action = mode === 'bike' ? 'Ride' : 'Walk';
+      text = `${action} through ${currentNeighborhoodName}`;
+    }
+
     const shareUrl = url.toString();
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'Planned route',
-          text: 'See more in Rotas',
+          text: text,
           url: shareUrl,
         });
         console.log('Rota compartilhada com sucesso!');
