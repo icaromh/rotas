@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.13
+- **Proxy Resilience**: Added fallback logic to the Cloudflare Worker proxy (`rotas-overpass-proxy`) to automatically switch between multiple public Overpass API endpoints (`overpass-api.de`, `lz4.overpass-api.de`, `z.overpass-api.de`, `overpass.kumi.systems`) when encountering `504 Gateway Timeout` or other `5xx` errors.
+
 ## v1.4.12
 - **About Modal**: Added an "About" button to the navbar (with a dedicated icon for mobile) that opens a centered modal dialog. The modal displays information about the project ("Rotas") and credits the author (Icaro MH).
 

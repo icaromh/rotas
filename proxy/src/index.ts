@@ -49,34 +49,62 @@ export default {
 
     try {
       const url = new URL(request.url);
-      // Optional: you can add searchParams support or allow selecting the target Overpass API
-      const targetUrl = 'https://overpass-api.de/api/interpreter';
+      const endpoints = [
+        'https://overpass-api.de/api/interpreter',
+        'https://lz4.overpass-api.de/api/interpreter',
+        'https://z.overpass-api.de/api/interpreter',
+        'https://overpass.kumi.systems/api/interpreter'
+      ];
 
-      // Read the original request body
       const bodyText = await request.text();
+      let lastResponse = null;
 
-      // Forward request to Overpass API
-      const overpassResponse = await fetch(targetUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': request.headers.get('Content-Type') || 'application/x-www-form-urlencoded',
-          'Accept': '*/*',
-          'User-Agent': 'RotasOptimizer/1.0 (https://rotas-dusky.vercel.app/)',
-        },
-        body: bodyText,
-      });
+      for (const targetUrl of endpoints) {
+        try {
+          const overpassResponse = await fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': request.headers.get('Content-Type') || 'application/x-www-form-urlencoded',
+              'Accept': '*/*',
+              'User-Agent': 'RotasOptimizer/1.0 (https://rotas-dusky.vercel.app/)',
+            },
+            body: bodyText,
+          });
 
-      // Get the body from the Overpass response
-      const responseBody = await overpassResponse.text();
+          // If the response is successful, or it's a client error (like 400 bad query), break and return it.
+          // If it's a 5xx error (504 timeout, 502 bad gateway), try the next endpoint.
+          if (overpassResponse.ok || (overpassResponse.status >= 400 && overpassResponse.status < 500)) {
+            const responseBody = await overpassResponse.text();
+            return new Response(responseBody, {
+              status: overpassResponse.status,
+              headers: {
+                ...corsHeaders,
+                'Content-Type': overpassResponse.headers.get('Content-Type') || 'application/json',
+              },
+            });
+          }
+          
+          // Store the last response in case all fail
+          lastResponse = overpassResponse;
+        } catch (err) {
+          // fetch error (e.g., DNS, connection refused), continue to next endpoint
+          console.error(`Failed fetching from ${targetUrl}:`, err);
+        }
+      }
 
-      // Return the new response with the injected CORS headers, keeping the original status code
-      return new Response(responseBody, {
-        status: overpassResponse.status,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': overpassResponse.headers.get('Content-Type') || 'application/json',
-        },
-      });
+      // If all endpoints failed (either 5xx or fetch threw)
+      if (lastResponse) {
+        const responseBody = await lastResponse.text();
+        return new Response(responseBody, {
+          status: lastResponse.status,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': lastResponse.headers.get('Content-Type') || 'application/json',
+          },
+        });
+      }
+
+      throw new Error('All Overpass API endpoints failed to respond.');
 
     } catch (error: any) {
       // In case the worker itself fails to fetch from Overpass
