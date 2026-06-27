@@ -375,10 +375,7 @@ export function buildBaseData(overpassData: any, mode: string, polygon: {lat: nu
 
 function solveMCPPHeuristic(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string): CustomMultiGraph {
   const eulerGraph = new CustomMultiGraph();
-  sccGraph.forEachNode(n => {
-    eulerGraph.addNode(n, nodes.get(Number(n)));
-  });
-
+  
   const balances = new Map<string, number>();
   sccGraph.forEachNode(n => balances.set(n, 0));
 
@@ -389,6 +386,8 @@ function solveMCPPHeuristic(nodes: Map<number, any>, sccGraph: CustomMultiGraph,
     if (!sccGraph.hasNode(e.u) || !sccGraph.hasNode(e.v)) return;
 
     if (e.isTarget) {
+      eulerGraph.addNode(e.u, nodes.get(Number(e.u)));
+      eulerGraph.addNode(e.v, nodes.get(Number(e.v)));
       eulerGraph.addDirectedEdge(e.u, e.v, { id: e.id, distance: e.dist });
       balances.set(e.u, balances.get(e.u)! - 1);
       balances.set(e.v, balances.get(e.v)! + 1);
@@ -463,6 +462,8 @@ function solveMCPPHeuristic(nodes: Map<number, any>, sccGraph: CustomMultiGraph,
       // Path is built from sink to source, so reverse it
       for (let i = path.length - 1; i >= 0; i--) {
         const e = path[i];
+        eulerGraph.addNode(e.from, nodes.get(Number(e.from)));
+        eulerGraph.addNode(e.to, nodes.get(Number(e.to)));
         eulerGraph.addDirectedEdge(e.from, e.to, { id: e.id, distance: 0 }); // dist doesn't strictly matter for drawing
       }
 
@@ -531,9 +532,6 @@ export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph
   console.log(`[Worker] Solver finalizado com sucesso! Custo ótimo (distância): ${(result.result / 1000).toFixed(2)} km`);
 
   const eulerGraph = new CustomMultiGraph();
-  sccGraph.forEachNode(n => {
-    eulerGraph.addNode(n, nodes.get(Number(n)));
-  });
 
   baseEdges.forEach(e => {
     if (!sccGraph.hasNode(e.u) || !sccGraph.hasNode(e.v)) return;
@@ -541,12 +539,16 @@ export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph
     // FWD edges
     const fwdCount = Math.round(result[`fwd_${e.id}`] || 0);
     for (let i = 0; i < fwdCount; i++) {
+      eulerGraph.addNode(e.u, nodes.get(Number(e.u)));
+      eulerGraph.addNode(e.v, nodes.get(Number(e.v)));
       eulerGraph.addDirectedEdge(e.u, e.v, { id: e.id, distance: e.dist });
     }
 
     // REV edges
     const revCount = Math.round(result[`rev_${e.id}`] || 0);
     for (let i = 0; i < revCount; i++) {
+      eulerGraph.addNode(e.v, nodes.get(Number(e.v)));
+      eulerGraph.addNode(e.u, nodes.get(Number(e.u)));
       eulerGraph.addDirectedEdge(e.v, e.u, { id: e.id, distance: e.dist });
     }
   });
@@ -600,6 +602,181 @@ export function hierholzer(g: CustomMultiGraph): string[] {
   return circuit.reverse();
 }
 
+function connectEulerianComponents(eulerGraph: CustomMultiGraph, sccGraph: CustomMultiGraph) {
+  console.log('[Worker] Verificando conectividade do Grafo Euleriano...');
+  const activeNodes = new Set<string>();
+  eulerGraph.forEachNode(n => {
+    if (eulerGraph.outDegree(n) > 0 || eulerGraph.inDegree(n) > 0) activeNodes.add(n);
+  });
+
+  if (activeNodes.size === 0) return;
+
+  const eulerAdj = new Map<string, string[]>();
+  activeNodes.forEach(n => eulerAdj.set(n, []));
+  eulerGraph.forEachDirectedEdge((_id, _attr, u, v) => {
+    if (activeNodes.has(u) && activeNodes.has(v)) {
+      eulerAdj.get(u)!.push(v);
+      eulerAdj.get(v)!.push(u);
+    }
+  });
+
+  const components: Set<string>[] = [];
+  const visited = new Set<string>();
+
+  for (const n of activeNodes) {
+    if (!visited.has(n)) {
+      const comp = new Set<string>();
+      const q = [n];
+      visited.add(n);
+      comp.add(n);
+      
+      let head = 0;
+      while (head < q.length) {
+        const curr = q[head++];
+        const neighbors = eulerAdj.get(curr);
+        if (neighbors) {
+          for (const nbr of neighbors) {
+            if (!visited.has(nbr)) {
+              visited.add(nbr);
+              comp.add(nbr);
+              q.push(nbr);
+            }
+          }
+        }
+      }
+      components.push(comp);
+    }
+  }
+
+  console.log(`[Worker] Grafo Euleriano tem ${components.length} componentes conectados.`);
+  if (components.length <= 1) return;
+
+  const sccAdj = new Map<string, {to: string, dist: number, id: string}[]>();
+  sccGraph.forEachNode(n => sccAdj.set(n, []));
+  sccGraph.forEachDirectedEdge((id, attr, u, v) => {
+    sccAdj.get(u)!.push({ to: v, dist: attr.distance || 1, id });
+  });
+
+  let mainComp = components[0];
+
+  for (let i = 1; i < components.length; i++) {
+    const targetComp = components[i];
+    
+    const dists = new Map<string, number>();
+    const prev = new Map<string, {node: string, edgeId: string}>();
+    const q = new Set<string>();
+    
+    sccGraph.forEachNode(n => {
+      if (mainComp.has(n)) {
+        dists.set(n, 0);
+        q.add(n);
+      } else {
+        dists.set(n, Infinity);
+      }
+    });
+
+    let bestTarget: string | null = null;
+    while (q.size > 0) {
+      let u: string | null = null;
+      let d = Infinity;
+      for (const n of q) {
+        const dn = dists.get(n)!;
+        if (dn < d) { d = dn; u = n; }
+      }
+      if (!u || d === Infinity) break;
+      q.delete(u);
+
+      if (targetComp.has(u)) {
+        bestTarget = u;
+        break; 
+      }
+
+      for (const edge of sccAdj.get(u)!) {
+        const alt = d + edge.dist;
+        if (alt < (dists.get(edge.to) || Infinity)) {
+          dists.set(edge.to, alt);
+          prev.set(edge.to, { node: u, edgeId: edge.id });
+          q.add(edge.to);
+        }
+      }
+    }
+
+    if (bestTarget) {
+      const pathFwd: {u: string, v: string, id: string, dist: number}[] = [];
+      let curr = bestTarget;
+      while (!mainComp.has(curr)) {
+        const p = prev.get(curr)!;
+        pathFwd.push({ u: p.node, v: curr, id: p.edgeId, dist: 0 });
+        curr = p.node;
+      }
+      pathFwd.reverse();
+
+      const startNode = pathFwd[0].u;
+      const endNode = bestTarget;
+
+      // Run Dijkstra from endNode to startNode to perfectly balance degrees
+      const distsBack = new Map<string, number>();
+      const prevBack = new Map<string, {node: string, edgeId: string}>();
+      const qBack = new Set<string>();
+      
+      sccGraph.forEachNode(n => {
+        distsBack.set(n, Infinity);
+        qBack.add(n);
+      });
+      distsBack.set(endNode, 0);
+
+      let found = false;
+      while (qBack.size > 0) {
+        let u: string | null = null;
+        let d = Infinity;
+        for (const n of qBack) {
+          const dn = distsBack.get(n)!;
+          if (dn < d) { d = dn; u = n; }
+        }
+        if (!u || d === Infinity) break;
+        qBack.delete(u);
+
+        if (u === startNode) {
+          found = true;
+          break; 
+        }
+
+        for (const edge of sccAdj.get(u)!) {
+          const alt = d + edge.dist;
+          if (alt < (distsBack.get(edge.to) || Infinity)) {
+            distsBack.set(edge.to, alt);
+            prevBack.set(edge.to, { node: u, edgeId: edge.id });
+            qBack.add(edge.to);
+          }
+        }
+      }
+
+      if (found) {
+        let currBack = startNode;
+        while (currBack !== endNode) {
+          const p = prevBack.get(currBack)!;
+          eulerGraph.addNode(p.node, sccGraph.getNodeAttributes(p.node));
+          eulerGraph.addNode(currBack, sccGraph.getNodeAttributes(currBack));
+          eulerGraph.addDirectedEdge(p.node, currBack, { id: p.edgeId, distance: 0 });
+          currBack = p.node;
+        }
+        
+        for (const e of pathFwd) {
+          eulerGraph.addNode(e.u, sccGraph.getNodeAttributes(e.u));
+          eulerGraph.addNode(e.v, sccGraph.getNodeAttributes(e.v));
+          eulerGraph.addDirectedEdge(e.u, e.v, { id: e.id, distance: 0 });
+        }
+        
+        for (const n of targetComp) {
+          mainComp.add(n);
+        }
+      } else {
+        console.warn(`[Worker] Não foi possível encontrar caminho de volta de ${endNode} para ${startNode}! A conectividade falhou para este componente.`);
+      }
+    }
+  }
+}
+
 if (typeof self !== 'undefined') {
 self.onmessage = async (e: MessageEvent<RouteRequest>) => {
   console.log('[Worker] Recebida solicitação de geração de rota:', e.data);
@@ -622,8 +799,8 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     baseEdges.forEach(edge => {
       sccCheckGraph.addNode(edge.u, nodes.get(Number(edge.u)));
       sccCheckGraph.addNode(edge.v, nodes.get(Number(edge.v)));
-      sccCheckGraph.addDirectedEdge(edge.u, edge.v, {});
-      sccCheckGraph.addDirectedEdge(edge.v, edge.u, {});
+      sccCheckGraph.addDirectedEdge(edge.u, edge.v, { distance: edge.dist, id: edge.id });
+      sccCheckGraph.addDirectedEdge(edge.v, edge.u, { distance: edge.dist, id: edge.id });
     });
     
     // 3. Extract SCC
@@ -637,6 +814,9 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
     // 4. Solve MCPP using LP Solver
     const eulerGraph = solveMCPPAndBuildEulerianGraph(nodes, sccGraph, baseEdges, mode);
     
+    // Conecta componentes desconexos para resolver o problema de polígonos que picotam as ruas
+    connectEulerianComponents(eulerGraph, sccGraph);
+
     // 5. Generate Eulerian Circuit
     const circuitNodeIds = hierholzer(eulerGraph);
     

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.14] - 2026-06-27
+### Fixed
+- Corrigido algoritmo de geração de rotas (MCPP) no modo "Walking" para bairros onde as fronteiras cortam ruas e geram redes desconexas, garantindo que o trajeto resultante seja integralmente conectado e cubra todas as vias necessárias.
+
 ## v1.4.13
 - **Proxy Resilience**: Added fallback logic to the Cloudflare Worker proxy (`rotas-overpass-proxy`) to automatically switch between multiple public Overpass API endpoints (`overpass-api.de`, `lz4.overpass-api.de`, `z.overpass-api.de`, `overpass.kumi.systems`) when encountering `504 Gateway Timeout` or other `5xx` errors.
 
