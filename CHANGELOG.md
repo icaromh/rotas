@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4
+- **Magic Wand: Neighborhood Picker 🪄**: Added a new custom map tool that dynamically fetches OpenStreetMap administrative boundaries (`admin_level=9|10` or `place=neighbourhood`) within the current viewport.
+- **GeoJSON Processing**: Integrated `osmtogeojson` to accurately convert raw OSM JSON relations into interactive MultiPolygons directly on the map.
+- **Dynamic Contextual UI**: Selected neighborhoods now automatically populate the bottom sheet/sidebar with their actual names (e.g., "Eixample").
+- **Smart Share Links**: Natively shares the route with personalized contextual text (e.g., "Ride through Gràcia") and embeds the neighborhood name into the URL (`?name=...`) for a fully immersive "Guest View" experience.
+- **UI/UX Refinements**: Shortened the "Preview Route" action button to "Preview" to prevent text overflow in shared split-layouts, and ensured creation settings (like speed config) are 100% hidden on desktop when viewing external shared links.
+
 ## v1.3
 - **Komoot-Inspired Premium Redesign**: Complete visual overhaul of the UI/UX focusing on responsiveness, aesthetics, and clarity.
   - **Floating Map Controls**: Moved native Leaflet zoom, GPS, and draw controls to isolated top corners, maximizing map real estate.
