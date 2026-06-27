@@ -963,14 +963,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = new URL(window.location.href);
     url.searchParams.set('route', encoded);
 
-    let text = 'See more in Rotas';
     if (currentNeighborhoodName) {
       const mode = sportSelect ? sportSelect.value : 'bike';
       url.searchParams.set('name', currentNeighborhoodName);
       url.searchParams.set('mode', mode);
       url.searchParams.set('distance', currentDistanceKm.toFixed(2));
-      const action = mode === 'bike' ? 'Ride' : 'Walk';
-      text = `${action} through ${currentNeighborhoodName}`;
     }
 
     const shareUrl = url.toString();
@@ -978,8 +975,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Planned route',
-          text: text,
           url: shareUrl,
         });
         console.log('Rota compartilhada com sucesso!');
