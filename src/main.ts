@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPolyline: L.Polyline | null = null;
   let currentPathData: { lat: number, lng: number }[] = [];
   let currentRawInput: any = null;
+  let currentDistanceKm: number = 0;
 
   // Animation State
   let animPolyline: L.Polyline | null = null;
@@ -205,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sharedRouteParam = urlParams.get('route');
   const sharedNameParam = urlParams.get('name');
   const sharedModeParam = urlParams.get('mode');
+  const sharedDistanceParam = urlParams.get('distance');
   let isSharedView = false;
 
   if (sharedRouteParam) {
@@ -213,14 +215,20 @@ document.addEventListener('DOMContentLoaded', () => {
       isSharedView = true;
       currentPathData = decodedPath;
 
-      // Calculate total distance for UI
-      let distanceMeters = 0;
-      for (let i = 0; i < decodedPath.length - 1; i++) {
-        distanceMeters += L.latLng(decodedPath[i].lat, decodedPath[i].lng)
-          .distanceTo(L.latLng(decodedPath[i + 1].lat, decodedPath[i + 1].lng));
+      // Use distance from URL if available (accurate), otherwise fallback to point-to-point calculation
+      let distanceKm: number;
+      if (sharedDistanceParam) {
+        distanceKm = parseFloat(sharedDistanceParam);
+      } else {
+        let distanceMeters = 0;
+        for (let i = 0; i < decodedPath.length - 1; i++) {
+          distanceMeters += L.latLng(decodedPath[i].lat, decodedPath[i].lng)
+            .distanceTo(L.latLng(decodedPath[i + 1].lat, decodedPath[i + 1].lng));
+        }
+        distanceKm = distanceMeters / 1000;
       }
 
-      const distanceKm = distanceMeters / 1000;
+      currentDistanceKm = distanceKm;
       resultDistance.innerHTML = `${distanceKm.toFixed(2)} <span class="text-sm font-medium text-gray-500">km</span>`;
       resultTime.parentElement!.style.display = 'none'; // Hide estimated time as it depends on mode
 
@@ -636,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.type === 'success' && data.path) {
       currentPathData = data.path;
       const distanceKm = data.distance as number;
+      currentDistanceKm = distanceKm;
 
       if (currentPolyline) map.removeLayer(currentPolyline);
 
@@ -841,6 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const mode = sportSelect ? sportSelect.value : 'bike';
       url.searchParams.set('name', currentNeighborhoodName);
       url.searchParams.set('mode', mode);
+      url.searchParams.set('distance', currentDistanceKm.toFixed(2));
       const action = mode === 'bike' ? 'Ride' : 'Walk';
       text = `${action} through ${currentNeighborhoodName}`;
     }

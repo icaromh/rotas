@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.4
+- **Accurate Shared Route Distance**: Fixed a regression where shared URLs displayed approximately double the real distance. The root cause was recalculating distance from node-to-node straight lines (losing intermediate street geometry). The original distance computed by the worker is now embedded in the shared URL (`?distance=...`) and used directly, with a fallback to point-to-point calculation for legacy links.
+
 ## v1.4.3
 - **Shared Route Fixes**: Fixed a bug where URL parameters losing their `+` encoding (converted to spaces) caused LZString decompression to fail, resulting in corrupted path generation. Additionally, ensured that the mobile navigation button accurately displays "New Plan" instead of "Plan Route" when viewing shared routes.
 
