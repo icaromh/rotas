@@ -736,6 +736,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Settings Logic
+  const settingsBtn = document.getElementById('settings-btn') as HTMLButtonElement;
+  const preferencesModal = document.getElementById('preferences-modal') as HTMLDialogElement;
+  const closePreferencesBtn = document.getElementById('close-preferences') as HTMLButtonElement;
+  const savePreferencesBtn = document.getElementById('save-preferences') as HTMLButtonElement;
+  const bufferSlider = document.getElementById('buffer-slider') as HTMLInputElement;
+  const bufferValueDisplay = document.getElementById('buffer-value-display') as HTMLSpanElement;
+  const safetySelect = document.getElementById('safety-select') as HTMLSelectElement;
+  const safetyPreferenceContainer = document.getElementById('safety-preference-container') as HTMLDivElement;
+
+  // Default settings
+  let currentBufferMeters = 20;
+  let currentSafety = 'any';
+
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+      preferencesModal.showModal();
+      // Update visibility based on current sport
+      const sport = sportSelect ? sportSelect.value : 'bike';
+      if (sport === 'walk') {
+        safetyPreferenceContainer.classList.add('hidden');
+      } else {
+        safetyPreferenceContainer.classList.remove('hidden');
+      }
+    });
+  }
+
+  if (closePreferencesBtn) {
+    closePreferencesBtn.addEventListener('click', () => {
+      preferencesModal.close();
+    });
+  }
+
+  if (bufferSlider) {
+    bufferSlider.addEventListener('input', (e) => {
+      bufferValueDisplay.textContent = `${(e.target as HTMLInputElement).value}m`;
+    });
+  }
+
+  if (savePreferencesBtn) {
+    savePreferencesBtn.addEventListener('click', () => {
+      currentBufferMeters = parseInt(bufferSlider.value, 10);
+      currentSafety = safetySelect.value;
+      preferencesModal.close();
+    });
+  }
+
+  // Close on backdrop click
+  if (preferencesModal) {
+    preferencesModal.addEventListener('click', (e) => {
+      const dialogDimensions = preferencesModal.getBoundingClientRect();
+      if (
+        e.clientX < dialogDimensions.left ||
+        e.clientX > dialogDimensions.right ||
+        e.clientY < dialogDimensions.top ||
+        e.clientY > dialogDimensions.bottom
+      ) {
+        preferencesModal.close();
+      }
+    });
+  }
+
   generateBtn.addEventListener('click', () => {
     if (isDoneMode) {
       if (isSharedView) {
@@ -755,14 +817,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     generateBtn.disabled = true;
     if (mobileGenerateBtn) mobileGenerateBtn.disabled = true;
+    
     showGlobalLoader('Planning Route', 'This might take a few moments depending on the size of the area...');
+
     resultsPanel.classList.add('hidden');
     actionsFooter.classList.add('hidden');
 
     console.log('[Main] Enviando payload para o Worker:', currentBounds);
     worker.postMessage({
       mode: mode,
-      polygon: currentBounds
+      polygon: currentBounds,
+      bufferMeters: currentBufferMeters,
+      safety: currentSafety
     });
   });
 

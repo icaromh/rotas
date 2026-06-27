@@ -236,10 +236,10 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
   return R * c;
 }
 
-export async function fetchOverpass(polygon: {lat: number, lng: number}[], mode: 'bike' | 'walk') {
-  console.log(`[Worker] Step 1: Iniciando fetch do Overpass API para modo: ${mode}`);
+export async function fetchOverpass(polygon: {lat: number, lng: number}[], mode: 'bike' | 'walk', bufferMeters: number = 20, safety: string = 'any') {
+  console.log(`[Worker] Step 1: Iniciando fetch do Overpass API para modo: ${mode}, buffer: ${bufferMeters}m, safety: ${safety}`);
   
-  // Calculate bounding box and add buffer
+  // Calculate bounding box and add buffer based on user preference
   let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
   for (const p of polygon) {
     if (p.lat < minLat) minLat = p.lat;
@@ -247,18 +247,79 @@ export async function fetchOverpass(polygon: {lat: number, lng: number}[], mode:
     if (p.lng < minLng) minLng = p.lng;
     if (p.lng > maxLng) maxLng = p.lng;
   }
-  const buffer = 0.002; // Approx 200m
-  minLat -= buffer;
-  maxLat += buffer;
-  minLng -= buffer;
-  maxLng += buffer;
+  
+  // Convert meters to approx degrees (1m ~ 0.00001 deg)
+  // Ensure we fetch at least a minimum buffer so polygons aren't strictly clipped
+  const fetchBufferDegrees = Math.max(0.001, (bufferMeters * 0.00001) + 0.001); 
+  
+  minLat -= fetchBufferDegrees;
+  maxLat += fetchBufferDegrees;
+  minLng -= fetchBufferDegrees;
+  maxLng += fetchBufferDegrees;
 
   const bboxStr = `${minLat},${minLng},${maxLat},${maxLng}`;
   
-  // Aggressive filter to eliminate sidewalks, cycleways, and service alleys.
-  // This drastically simplifies the map, collapsing complex avenues into single primary routes.
-  const wayFilter = `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"]`;
+  // Base filter eliminates sidewalks, simple cycleways, and service alleys, 
+  // keeping the main routing network
+  let wayFilter = `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"]`;
 
+  // Apply safety preferences if we are biking
+  if (mode === 'bike') {
+    if (safety === 'safe') {
+      // Exclude heavy 'primary' roads unless they have cycleways, keep everything else
+      wayFilter = `["highway"~"^(secondary|tertiary|unclassified|residential|living_street|pedestrian|cycleway)$"]`;
+      // Also query explicit cycleways
+      const cyclewayFilter = `way["cycleway"](${bboxStr});`;
+      const explicitCycleFilter = `way["highway"="primary"]["cycleway"](${bboxStr});`;
+      
+      const query = `
+        [out:json][timeout:25];
+        (
+          way${wayFilter}(${bboxStr});
+          ${cyclewayFilter}
+          ${explicitCycleFilter}
+        );
+        out body;
+        >;
+        out skel qt;
+      `;
+      
+      const res = await fetch('https://rotas-overpass-proxy.icaro-mh.workers.dev/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'data=' + encodeURIComponent(query)
+      });
+      if (!res.ok) throw new Error('Falha ao baixar dados do OSM (Overpass).');
+      return await res.json();
+      
+    } else if (safety === 'strict') {
+      // Only dedicated cycleways or residential/living streets that explicitly allow bikes
+      wayFilter = `["highway"="cycleway"]`;
+      const cyclewayFilter = `way["cycleway"](${bboxStr});`;
+      const bicycleRoad = `way["bicycle_road"="yes"](${bboxStr});`;
+      const strictQuery = `
+        [out:json][timeout:25];
+        (
+          way${wayFilter}(${bboxStr});
+          ${cyclewayFilter}
+          ${bicycleRoad}
+        );
+        out body;
+        >;
+        out skel qt;
+      `;
+      
+      const res = await fetch('https://rotas-overpass-proxy.icaro-mh.workers.dev/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'data=' + encodeURIComponent(strictQuery)
+      });
+      if (!res.ok) throw new Error('Falha ao baixar dados do OSM (Overpass).');
+      return await res.json();
+    }
+  }
+
+  // Default query (any / walk)
   const query = `
     [out:json][timeout:25];
     (
@@ -345,8 +406,8 @@ function isPointInOrNearPolygon(point: {lat: number, lng: number}, polygon: {lat
   return false;
 }
 
-export function buildBaseData(overpassData: any, mode: string, polygon: {lat: number, lng: number}[]) {
-  console.log('[Worker] Step 2: Construindo grafo base e extraindo nós');
+export function buildBaseData(overpassData: any, mode: string, polygon: {lat: number, lng: number}[], bufferMeters: number = 20) {
+  console.log(`[Worker] Step 2: Construindo grafo base com bufferMeters: ${bufferMeters}m`);
   const nodes = new Map<number, any>();
   
   for (const element of overpassData.elements) {
@@ -356,6 +417,7 @@ export function buildBaseData(overpassData: any, mode: string, polygon: {lat: nu
   }
 
   const baseEdges: BaseEdge[] = [];
+  const bufferDegrees = bufferMeters * 0.00001; // Approx conversion
   
   for (const element of overpassData.elements) {
     if (element.type === 'way' && element.nodes) {
@@ -375,10 +437,10 @@ export function buildBaseData(overpassData: any, mode: string, polygon: {lat: nu
         const midLat = (posU.lat + posV.lat) / 2;
         const midLng = (posU.lon + posV.lon) / 2;
         
-        // Verifica se o meio, início ou fim da rua está dentro ou MUITO perto do polígono (gordura de ~22m)
-        const isTarget = isPointInOrNearPolygon({lat: midLat, lng: midLng}, polygon)
-                      || isPointInOrNearPolygon({lat: posU.lat, lng: posU.lon}, polygon)
-                      || isPointInOrNearPolygon({lat: posV.lat, lng: posV.lon}, polygon);
+        // Verifica se o meio, início ou fim da rua está dentro ou MUITO perto do polígono (gordura configurada)
+        const isTarget = isPointInOrNearPolygon({lat: midLat, lng: midLng}, polygon, bufferDegrees)
+                      || isPointInOrNearPolygon({lat: posU.lat, lng: posU.lon}, polygon, bufferDegrees)
+                      || isPointInOrNearPolygon({lat: posV.lat, lng: posV.lon}, polygon, bufferDegrees);
 
         baseEdges.push({
           u: String(u),
@@ -801,16 +863,16 @@ function connectEulerianComponents(eulerGraph: CustomMultiGraph, sccGraph: Custo
 }
 
 if (typeof self !== 'undefined') {
-self.onmessage = async (e: MessageEvent<RouteRequest>) => {
+self.onmessage = async (e: MessageEvent<any>) => {
   console.log('[Worker] Recebida solicitação de geração de rota:', e.data);
-  const { polygon, mode } = e.data;
+  const { polygon, mode, bufferMeters = 20, safety = 'any' } = e.data;
   let overpassData: any = null;
   try {
     // 1. Fetch Data
-    overpassData = await fetchOverpass(polygon, mode);
+    overpassData = await fetchOverpass(polygon, mode, bufferMeters, safety);
     
     // 2. Build Base Data
-    const { nodes, baseEdges } = buildBaseData(overpassData, mode, polygon);
+    const { nodes, baseEdges } = buildBaseData(overpassData, mode, polygon, bufferMeters);
     
     if (baseEdges.length === 0) {
       self.postMessage({ type: 'error', message: 'Nenhuma rua válida encontrada nesta região para o modo selecionado.', rawInput: { polygon, mode, overpassData } });
@@ -876,7 +938,9 @@ self.onmessage = async (e: MessageEvent<RouteRequest>) => {
       rawInput: {
         polygon,
         mode,
-        overpassData
+        overpassData,
+        bufferMeters,
+        safety
       }
     });
     

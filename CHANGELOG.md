@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0] - 2026-06-27
+### Added
+- Novas opções de personalização de rotas com botão "Settings" na interface:
+  - **Polygon Expansion (Slider):** O usuário agora pode escolher uma distância (de 0m a 100m) para extrapolar o polígono ao buscar ruas.
+  - **Cycling Preference:** Opção para ciclistas escolherem o tipo de vias ("Qualquer rua", "Mais segura", "Apenas ciclovias estritas").
+### Changed
+- Otimização das consultas de `Overpass API` no worker, permitindo refinar a busca baseada na preferência de ciclofaixas selecionada pelo usuário.
 ## [1.4.18] - 2026-06-27
 ### Fixed
 - Corrigido problema onde o Global Loader não desaparecia após carregar os bairros salvos na memória cache.
