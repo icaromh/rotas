@@ -440,28 +440,9 @@ document.addEventListener('DOMContentLoaded', () => {
               fillOpacity: 0.2,
               dashArray: '5, 5'
             },
-            pointToLayer: (_feature, latlng) => {
-              // Custom map pin for any points (nodes) returned
-              const pinHtml = `
-                <div class="relative flex items-center justify-center w-8 h-8 drop-shadow-md" style="margin-left: -16px; margin-top: -32px;">
-                  <svg viewBox="0 0 32 40" class="w-8 h-10 drop-shadow-sm" style="filter: drop-shadow(0 4px 4px rgba(0,0,0,0.25));">
-                    <path d="M16 0C7.163 0 0 7.163 0 16c0 11.2 16 24 16 24s16-12.8 16-24C32 7.163 24.837 0 16 0z" fill="white"/>
-                    <circle cx="16" cy="15" r="11" fill="#f0ece1"/>
-                  </svg>
-                  <div class="absolute text-gray-900 pointer-events-none" style="top: 7px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                  </div>
-                </div>
-              `;
-              const icon = L.divIcon({
-                className: 'custom-poi-pin',
-                html: pinHtml,
-                iconSize: [0, 0], // Sizing is handled by the inner div
-                iconAnchor: [0, 0] 
-              });
-              return L.marker(latlng, { icon });
+            filter: (feature) => {
+              // Hide POI markers, we only care about the administrative boundaries
+              return feature.geometry.type !== 'Point' && feature.geometry.type !== 'MultiPoint';
             },
             onEachFeature: (feature, layer) => {
               const name = feature?.properties?.name || feature?.properties?.tags?.name || feature?.properties?.['name:en'] || null;
