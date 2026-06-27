@@ -749,9 +749,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const safetySelect = document.getElementById('safety-select') as HTMLSelectElement;
   const safetyPreferenceContainer = document.getElementById('safety-preference-container') as HTMLDivElement;
 
-  // Default settings
+  // Default settings (try to load from local storage first)
   let currentBufferMeters = 20;
   let currentSafety = 'any';
+  
+  try {
+    const savedBuffer = localStorage.getItem('rotas_bufferMeters');
+    const savedSafety = localStorage.getItem('rotas_safety');
+    
+    if (savedBuffer !== null) {
+      currentBufferMeters = parseInt(savedBuffer, 10);
+      if (bufferSlider) bufferSlider.value = savedBuffer;
+      if (bufferValueDisplay) bufferValueDisplay.textContent = `${savedBuffer}m`;
+    }
+    if (savedSafety !== null) {
+      currentSafety = savedSafety;
+      if (safetySelect) safetySelect.value = savedSafety;
+    }
+  } catch (e) {
+    console.warn("Failed to read preferences from localStorage", e);
+  }
 
   const openSettings = () => {
     preferencesModal.showModal();
@@ -788,6 +805,14 @@ document.addEventListener('DOMContentLoaded', () => {
     savePreferencesBtn.addEventListener('click', () => {
       currentBufferMeters = parseInt(bufferSlider.value, 10);
       currentSafety = safetySelect.value;
+      
+      try {
+        localStorage.setItem('rotas_bufferMeters', currentBufferMeters.toString());
+        localStorage.setItem('rotas_safety', currentSafety);
+      } catch (e) {
+        console.warn("Failed to write preferences to localStorage", e);
+      }
+      
       preferencesModal.close();
     });
   }
