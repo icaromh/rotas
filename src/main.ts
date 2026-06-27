@@ -226,15 +226,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update UI panels
       sidebar.classList.remove('hidden');
-      creatorPanel.classList.add('hidden');
       resultsPanel.classList.remove('hidden');
       sharedNotice.classList.remove('hidden');
       shareBtn.classList.add('hidden'); // No need to share an already shared route
 
-      // Hide sport selectors in shared view
-      const desktopTools = document.getElementById('desktop-tools');
-      desktopTools?.classList.add('hidden');
-      document.getElementById('mobile-sport-dropdown')?.classList.add('hidden');
+      // Set to done mode to update buttons and hide creator panel & sport selectors
+      setDoneMode(true);
 
       if (sharedNameParam) {
         const neighborhoodTitle = document.getElementById('neighborhood-title');

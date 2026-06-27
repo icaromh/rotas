@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.3
+- **Shared Route Fixes**: Fixed a bug where URL parameters losing their `+` encoding (converted to spaces) caused LZString decompression to fail, resulting in corrupted path generation. Additionally, ensured that the mobile navigation button accurately displays "New Plan" instead of "Plan Route" when viewing shared routes.
+
 ## v1.4.2
 - **Robust Legacy Link Support**: Added a precise Regex fallback `(/[?@\\{}_^~`]/`) in the routing decoder to safely handle uncompressed URL formats generated before v1.4.1. This prevents the LZ-String algorithm from attempting to decompress incompatible URI strings which previously led to massively corrupted Eulerian paths mapping (e.g., 43km mutating into 98km).
 - **Cleaner Shared View**: Refined the "Shared Route" notification box by removing the redundant neighborhood title, and correctly hiding the top navigation's sport-selector when previewing external links to keep the interface purely focused on the map.
