@@ -6,7 +6,6 @@
 - **Dynamic Contextual UI**: Selected neighborhoods now automatically populate the bottom sheet/sidebar with their actual names (e.g., "Eixample").
 - **Smart Share Links**: Natively shares the route with personalized contextual text (e.g., "Ride through Gràcia") and embeds the neighborhood name into the URL (`?name=...`) for a fully immersive "Guest View" experience.
 - **UI/UX Refinements**: Shortened the "Preview Route" action button to "Preview" to prevent text overflow in shared split-layouts, and ensured creation settings (like speed config) are 100% hidden on desktop when viewing external shared links.
-- **Apple-Maps Style POI Markers**: Injected custom SVG map pins with a white backdrop and beige interior for any points of interest parsed by Overpass, replacing the default Leaflet blue markers.
 - **Hover Tooltips**: Implemented sleek, dark-themed pill tooltips (`sticky: true`) that follow the user's cursor when hovering over neighborhoods, displaying the area's name.
 - **Rounded Edit Handles**: Overrode Leaflet Draw's default square vertex handles with fully rounded circular nodes to match the modern styling of the application.
 - **Done Mode & UI Reset**: After successfully generating a route, the interface elegantly enters a "Done" state: all draw and setup controls disappear to maximize map visibility, and the action button transforms into a "New Plan" button. Clicking "New Plan" instantly resets all states, clears the map, and brings back the creative tools.
