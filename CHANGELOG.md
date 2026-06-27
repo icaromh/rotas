@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.17] - 2026-06-27
+### Added
+- Implementado um "Global Loader" em tela cheia que bloqueia interações do usuário enquanto rotas são calculadas ou bairros são buscados.
+- Cache inteligente no lado do cliente (Cache API do navegador) para chamadas do mapa de bairros, acelerando radicalmente consultas repetidas à mesma área geográfica.
+
+### Changed
+- Estilo dos botões desabilitados foi aprimorado para exibir visualmente o estado de bloqueio (`cursor-not-allowed`).
+
 ## [1.4.16] - 2026-06-27
 ### Fixed
 - Algoritmo aprimorado para não excluir ruas que ficam nas bordas ou limites do polígono desenhado. Foi adicionada uma "gordura" (buffer de ~22m) que garante que a via não seja ignorada se qualquer extremidade ou o centro dela estiver rente ou tangenciando o limite da marcação.
