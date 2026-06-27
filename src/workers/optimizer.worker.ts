@@ -316,59 +316,82 @@ export interface BaseEdge {
 }
 
 export function isPointInPolygon(point: {lat: number, lng: number}, vs: {lat: number, lng: number}[]) {
-  let x = point.lng, y = point.lat;
+  const x = point.lng, y = point.lat;
   let inside = false;
   for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-    let xi = vs[i].lng, yi = vs[i].lat;
-    let xj = vs[j].lng, yj = vs[j].lat;
-    let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    const xi = vs[i].lng, yi = vs[i].lat;
+    const xj = vs[j].lng, yj = vs[j].lat;
+    const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
     if (intersect) inside = !inside;
   }
   return inside;
 }
 
+function distanceToSegment(p: {lat: number, lng: number}, v: {lat: number, lng: number}, w: {lat: number, lng: number}) {
+  const l2 = (w.lng - v.lng) ** 2 + (w.lat - v.lat) ** 2;
+  if (l2 === 0) return Math.sqrt((p.lng - v.lng) ** 2 + (p.lat - v.lat) ** 2);
+  let t = ((p.lng - v.lng) * (w.lng - v.lng) + (p.lat - v.lat) * (w.lat - v.lat)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  const projX = v.lng + t * (w.lng - v.lng);
+  const projY = v.lat + t * (w.lat - v.lat);
+  return Math.sqrt((p.lng - projX) ** 2 + (p.lat - projY) ** 2);
+}
+
+function isPointInOrNearPolygon(point: {lat: number, lng: number}, polygon: {lat: number, lng: number}[], bufferDegrees: number = 0.0002) {
+  if (isPointInPolygon(point, polygon)) return true;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    if (distanceToSegment(point, polygon[i], polygon[j]) <= bufferDegrees) return true;
+  }
+  return false;
+}
+
 export function buildBaseData(overpassData: any, mode: string, polygon: {lat: number, lng: number}[]) {
-  console.log('[Worker] Step 2: Extraindo ruas e interseções base');
-  const nodes = new Map<number, {lat: number, lon: number}>();
+  console.log('[Worker] Step 2: Construindo grafo base e extraindo nós');
+  const nodes = new Map<number, any>();
   
   for (const element of overpassData.elements) {
     if (element.type === 'node') {
-      nodes.set(element.id, { lat: element.lat, lon: element.lon });
+      nodes.set(element.id, element);
     }
   }
 
   const baseEdges: BaseEdge[] = [];
-  let edgeCounter = 0;
-
+  
   for (const element of overpassData.elements) {
     if (element.type === 'way' && element.nodes) {
       const isOneway = mode === 'walk' ? false : (element.tags?.oneway === 'yes' || element.tags?.oneway === '1' || element.tags?.oneway === '-1');
       
       for (let i = 0; i < element.nodes.length - 1; i++) {
         const u = element.nodes[i];
-        const v = element.nodes[i + 1];
+        const v = element.nodes[i+1];
         
-        if (!nodes.has(u) || !nodes.has(v)) continue;
+        const posU = nodes.get(u);
+        const posV = nodes.get(v);
         
-        const posU = nodes.get(u)!;
-        const posV = nodes.get(v)!;
+        if (!posU || !posV) continue;
+
         const dist = haversine(posU.lat, posU.lon, posV.lat, posV.lon);
+        
         const midLat = (posU.lat + posV.lat) / 2;
         const midLng = (posU.lon + posV.lon) / 2;
-        const isTarget = isPointInPolygon({lat: midLat, lng: midLng}, polygon);
         
+        // Verifica se o meio, início ou fim da rua está dentro ou MUITO perto do polígono (gordura de ~22m)
+        const isTarget = isPointInOrNearPolygon({lat: midLat, lng: midLng}, polygon)
+                      || isPointInOrNearPolygon({lat: posU.lat, lng: posU.lon}, polygon)
+                      || isPointInOrNearPolygon({lat: posV.lat, lng: posV.lon}, polygon);
+
         baseEdges.push({
-          id: `e${edgeCounter++}`,
           u: String(u),
           v: String(v),
           dist,
-          isOneway,
-          isTarget
+          isTarget,
+          id: String(element.id),
+          isOneway
         });
       }
     }
   }
-  
+
   console.log(`[Worker] Base gerada com ${baseEdges.length} segmentos de rua.`);
   return { nodes, baseEdges };
 }

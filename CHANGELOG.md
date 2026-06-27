@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.16] - 2026-06-27
+### Fixed
+- Algoritmo aprimorado para não excluir ruas que ficam nas bordas ou limites do polígono desenhado. Foi adicionada uma "gordura" (buffer de ~22m) que garante que a via não seja ignorada se qualquer extremidade ou o centro dela estiver rente ou tangenciando o limite da marcação.
+
 ## [1.4.15] - 2026-06-27
 ### Changed
 - Adicionada tag "Beta" e link para o repositório do GitHub no modal "About".
