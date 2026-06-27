@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.12
+- **About Modal**: Added an "About" button to the navbar (with a dedicated icon for mobile) that opens a centered modal dialog. The modal displays information about the project ("Rotas") and credits the author (Icaro MH).
+
 ## v1.4.11
 - **Navbar Fix**: Updated the "Planner" link in the navigation bar to correctly redirect to the home page (`/`) instead of using a dead hash link (`#`).
 

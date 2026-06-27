@@ -25,7 +25,7 @@
         <div class="hidden md:flex gap-5 text-sm font-bold text-gray-700 mt-1">
           <!-- <a href="#" class="hover:text-[#4a6b46] transition-colors">Routes</a> -->
           <a href="/" class="hover:text-[#4a6b46] transition-colors">Planner</a>
-          <!-- <a href="#" class="hover:text-[#4a6b46] transition-colors">Features</a> -->
+          <button id="about-btn" class="hover:text-[#4a6b46] transition-colors cursor-pointer">About</button>
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -67,6 +67,15 @@
           class="bg-[#4a6b46] hover:bg-[#395336] text-white font-bold px-5 py-2 rounded-full text-sm transition-colors shadow-sm">
           Login or Signup
         </button> -->
+        <button id="mobile-about-btn"
+          class="md:hidden bg-[#f0ece1] hover:bg-[#e5decb] text-[#4a6b46] p-2 rounded-full transition-colors flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 16v-4"></path>
+            <path d="M12 8h.01"></path>
+          </svg>
+        </button>
       </div>
     </nav>
 
@@ -208,7 +217,48 @@
 
     </div>
   </div>
+
+  <!-- About Modal -->
+  <dialog id="about-modal" class="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-3xl p-0 shadow-2xl border-0 m-auto bg-transparent w-[90%] max-w-md open:animate-in open:fade-in open:zoom-in-95 transition-all">
+    <div class="bg-white p-6 md:p-8 rounded-3xl flex flex-col gap-4 text-center">
+      <div class="mx-auto bg-[#f4f1ea] w-16 h-16 rounded-full flex items-center justify-center mb-2">
+        <img src="/logo.svg" alt="Rotas Logo" class="h-10 w-auto drop-shadow-sm" />
+      </div>
+      <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Rotas</h2>
+      <p class="text-gray-600 text-sm md:text-base leading-relaxed">
+        Draw an area on the map and get an optimized GPX track to walk or ride through every single street inside it.
+      </p>
+      <div class="bg-gray-50 rounded-2xl p-4 mt-2">
+        <p class="text-sm font-bold text-gray-800">Developed by Icaro MH</p>
+        <p class="text-xs text-gray-500 mt-1">Open source path planner.</p>
+      </div>
+      <button id="close-about-btn" class="mt-4 bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-[0.98] w-full focus:outline-none">
+        Close
+      </button>
+    </div>
+  </dialog>
+
   <script type="module" src="/src/main.ts"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const modal = document.getElementById("about-modal");
+      const btnDesktop = document.getElementById("about-btn");
+      const btnMobile = document.getElementById("mobile-about-btn");
+      const closeBtn = document.getElementById("close-about-btn");
+
+      const openModal = () => modal.showModal();
+      const closeModal = () => modal.close();
+
+      if (btnDesktop) btnDesktop.addEventListener("click", openModal);
+      if (btnMobile) btnMobile.addEventListener("click", openModal);
+      if (closeBtn) closeBtn.addEventListener("click", closeModal);
+
+      // Close on backdrop click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    });
+  </script>
   <style>
     /* Custom Scrollbar for the floating panel */
     .custom-scrollbar::-webkit-scrollbar {
