@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.5
+- **Shared View UI Overhaul**: The sidebar in shared route view now shows the "Explore Every Inch" header at all times. Action buttons (Preview, GPX) are pinned to the bottom of the sidebar as a fixed footer alongside the "Viewing an external route" notice. In shared view, Preview and GPX appear side-by-side in a single row. The sidebar now has fully rounded corners on desktop via `overflow-hidden` clipping child elements. **New Plan** in shared view redirects to `/` to start fresh, instead of producing a broken in-place reset with stale UI.
+- **Speed/Pace Input Removed**: The speed and pace inputs have been replaced with fixed constants (`SPEED_BIKE = 17 km/h`, `PACE_WALK = 10 min/km`), simplifying the UI.
+
 ## v1.4.4
 - **Accurate Shared Route Distance**: Fixed a regression where shared URLs displayed approximately double the real distance. The root cause was recalculating distance from node-to-node straight lines (losing intermediate street geometry). The original distance computed by the worker is now embedded in the shared URL (`?distance=...`) and used directly, with a fallback to point-to-point calculation for legacy links.
 
