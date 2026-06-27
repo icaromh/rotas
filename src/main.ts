@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
+import osmtogeojson from 'osmtogeojson';
 import { encodeRoute, decodeRoute } from './utils/routeSharing';
 
 // Fix Leaflet-Draw "type is not defined" ReferenceError in ES modules/strict mode
@@ -108,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sharedNotice = document.getElementById('shared-notice') as HTMLDivElement;
 
   // State
-  let currentBounds: L.LatLngBounds | null = null;
+  let currentBounds: any = null; // Used to hold L.LatLngBounds or an array of LatLng objects
   let currentPolyline: L.Polyline | null = null;
   let currentPathData: { lat: number, lng: number }[] = [];
   let currentRawInput: any = null;
@@ -272,6 +273,146 @@ document.addEventListener('DOMContentLoaded', () => {
     const drawToolsContainer = document.getElementById('draw-tools-container');
     if (drawToolsContainer) {
       drawToolsContainer.appendChild(drawControl.getContainer() as Node);
+
+      // Create Magic Wand Tool
+      const magicWandControl = L.DomUtil.create('div', 'leaflet-control leaflet-draw');
+      const magicWandToolbar = L.DomUtil.create('div', 'leaflet-draw-toolbar leaflet-bar', magicWandControl);
+      const magicWandBtn = L.DomUtil.create('a', 'leaflet-draw-draw-polygon', magicWandToolbar);
+      magicWandBtn.href = '#';
+      magicWandBtn.title = 'Magic Wand: Select Neighborhood';
+      magicWandBtn.style.backgroundImage = 'none';
+      magicWandBtn.style.display = 'flex';
+      magicWandBtn.style.alignItems = 'center';
+      magicWandBtn.style.justifyContent = 'center';
+      
+      const defaultWandIcon = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/>
+          <path d="m14 7 3 3"/>
+          <path d="M5 6v4"/>
+          <path d="M19 14v4"/>
+          <path d="M10 2v2"/>
+          <path d="M7 8H3"/>
+          <path d="M21 16h-4"/>
+          <path d="M11 3H9"/>
+        </svg>
+      `;
+      const loadingSpinner = `
+        <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+      `;
+      
+      magicWandBtn.innerHTML = defaultWandIcon;
+      drawToolsContainer.appendChild(magicWandControl);
+
+      let activeNeighborhoodLayer: L.GeoJSON | null = null;
+      let isLoadingNeighborhoods = false;
+
+      magicWandBtn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isLoadingNeighborhoods) return;
+
+        // Toggle Off
+        if (activeNeighborhoodLayer) {
+          map.removeLayer(activeNeighborhoodLayer);
+          activeNeighborhoodLayer = null;
+          magicWandBtn.style.backgroundColor = '';
+          return;
+        }
+
+        isLoadingNeighborhoods = true;
+        magicWandBtn.innerHTML = loadingSpinner;
+        
+        try {
+          const bounds = map.getBounds();
+          const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
+          const query = `
+            [out:json][timeout:25];
+            (
+              relation["admin_level"~"9|10"](${bbox});
+              relation["place"~"neighbourhood|suburb"](${bbox});
+            );
+            out geom;
+          `;
+
+          const res = await fetch('https://rotas-overpass-proxy.icaro-mh.workers.dev/api/interpreter', {
+            method: 'POST',
+            body: 'data=' + encodeURIComponent(query)
+          });
+          const data = await res.json();
+          
+          if (!data.elements || data.elements.length === 0) {
+            alert('No neighborhoods found in this area. Try moving or zooming out the map.');
+            return;
+          }
+
+          const geojson = osmtogeojson(data);
+
+          activeNeighborhoodLayer = L.geoJSON(geojson, {
+            style: {
+              color: '#10b981', // Emerald outline
+              weight: 2,
+              fillColor: '#10b981',
+              fillOpacity: 0.2,
+              dashArray: '5, 5'
+            },
+            onEachFeature: (_feature, layer) => {
+              layer.on('mouseover', function () {
+                (layer as L.Path).setStyle({ fillOpacity: 0.5, weight: 3 });
+              });
+              layer.on('mouseout', function () {
+                activeNeighborhoodLayer!.resetStyle(layer as L.Path);
+              });
+              layer.on('click', function () {
+                drawnItems.clearLayers();
+                if (currentPolyline) {
+                  map.removeLayer(currentPolyline);
+                  currentPolyline = null;
+                }
+                currentRawInput = null;
+                resultsPanel.classList.add('hidden');
+
+                const clickedLayer = layer as any;
+                clickedLayer.setStyle({
+                  color: '#1f2937', // Custom dark gray style to match Draw tools
+                  weight: 2,
+                  dashArray: '5, 5',
+                  fillOpacity: 0.2
+                });
+                
+                // Extract coordinates for LP Solver
+                let latlngs: any[] = clickedLayer.getLatLngs();
+                // If MultiPolygon, drill down to the longest array
+                while (latlngs.length > 0 && Array.isArray(latlngs[0])) {
+                  latlngs = latlngs.reduce((prev, current) => (prev.length > current.length) ? prev : current);
+                }
+                
+                currentBounds = latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng }));
+                
+                // In order to make it editable by Leaflet Draw, we wrap the extracted flat latlngs in a new L.Polygon
+                const newPolygon = L.polygon(latlngs, clickedLayer.options);
+                drawnItems.addLayer(newPolygon);
+
+                // Clean up Magic Wand state
+                map.removeLayer(activeNeighborhoodLayer!);
+                activeNeighborhoodLayer = null;
+                magicWandBtn.style.backgroundColor = '';
+              });
+            }
+          }).addTo(map);
+
+          magicWandBtn.style.backgroundColor = '#e5e7eb'; // Active highlighted state
+        } catch (error) {
+          console.error(error);
+          alert('Failed to load neighborhoods from OpenStreetMap.');
+        } finally {
+          isLoadingNeighborhoods = false;
+          magicWandBtn.innerHTML = defaultWandIcon;
+        }
+      };
     }
   }
 

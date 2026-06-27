@@ -14,6 +14,7 @@
     "@types/leaflet": "^1.9.21",
     "@types/leaflet-draw": "^1.0.13",
     "@types/mapbox__polyline": "^1.0.5",
+    "@types/osmtogeojson": "^2.2.34",
     "puppeteer": "^25.2.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
@@ -28,6 +29,7 @@
     "javascript-lp-solver": "^1.0.3",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
+    "osmtogeojson": "^3.0.0-beta.5",
     "tailwindcss": "^4.3.1"
   }
 }
