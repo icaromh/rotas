@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.9
+- **Title Update**: Updated the application `<title>` in `index.html` to "Rotas - Explore Every Inch" for better alignment with the internal branding.
+
 ## v1.4.8
 - **UI Cleanup**: Fully removed the legacy speed input elements from the HTML interface, as the application now relies completely on fixed speed constants.
 
