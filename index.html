@@ -79,20 +79,18 @@
         <aside id="sidebar"
           class="hidden fixed bottom-6 inset-x-4 md:inset-auto md:relative md:w-80 bg-white shadow-2xl md:shadow-xl flex flex-col pointer-events-auto h-auto max-h-[50vh] md:max-h-none md:h-full rounded-3xl md:rounded-none md:rounded-r-3xl z-[1002] md:z-50">
 
-          <!-- Header -->
-          <div class="hidden md:block p-5 bg-white border-b border-gray-100 rounded-t-3xl md:rounded-none md:rounded-tr-3xl shrink-0">
-            <h1 class="text-xl font-bold text-gray-800 tracking-tight">Explore Every Inch</h1>
-            <p class="text-xs text-gray-400 mt-1 hidden md:block">Draw an area on the map and get an optimized GPX track
-              to walk or ride
-              through every single street inside it.</p>
-          </div>
+          <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto md:hidden shrink-0 mt-4 mb-1"></div>
 
-          <div
-            class="p-4 md:p-5 flex-grow overflow-y-auto flex flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] custom-scrollbar rounded-b-3xl md:rounded-none md:rounded-br-3xl">
+          <div id="creator-panel">
+            <!-- Header -->
+            <div class="hidden md:block p-5 bg-white border-b border-gray-100 rounded-t-3xl md:rounded-none md:rounded-tr-3xl shrink-0">
+              <h1 class="text-xl font-bold text-gray-800 tracking-tight">Explore Every Inch</h1>
+              <p class="text-xs text-gray-400 mt-1 hidden md:block">Draw an area on the map and get an optimized GPX track
+                to walk or ride
+                through every single street inside it.</p>
+            </div>
 
-            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto md:hidden shrink-0"></div>
-
-            <div id="creator-panel" class="hidden md:flex flex-col gap-6 flex-grow">
+            <div class="p-4 md:p-5 flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] rounded-b-3xl md:rounded-none md:rounded-br-3xl hidden md:flex">
               <!-- Speed Settings -->
               <div class="space-y-2">
                 <div class="flex justify-between items-center">
@@ -105,6 +103,9 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="p-4 md:p-5 flex-grow overflow-y-auto flex flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] custom-scrollbar rounded-b-3xl md:rounded-none md:rounded-br-3xl">
 
             <!-- Results (Hidden initially) -->
             <div id="results-panel" class="hidden flex-col gap-4 md:pt-4 md:border-t border-gray-100">
@@ -130,7 +131,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Preview Route
+                Preview
               </button>
               <div class="grid grid-cols-2 gap-2 mt-3">
                 <button id="export-gpx-btn"
