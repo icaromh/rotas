@@ -259,21 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // Set to done mode to update buttons and hide creator panel & sport selectors
       setDoneMode(true);
 
-      if (sharedNameParam) {
-        const neighborhoodTitle = document.getElementById('neighborhood-title');
-        const neighborhoodName = document.getElementById('neighborhood-name');
-        if (neighborhoodTitle && neighborhoodName) {
-          neighborhoodName.textContent = sharedNameParam;
-          neighborhoodTitle.classList.remove('hidden');
-          
-          if (sharedModeParam) {
-            const sportTag = document.getElementById('sport-tag');
-            if (sportTag) {
-              sportTag.textContent = sharedModeParam === 'bike' ? 'Ride' : 'Walk';
-              sportTag.classList.remove('hidden');
-            }
-          }
-        }
+      const neighborhoodTitle = document.getElementById('neighborhood-title');
+      const neighborhoodName = document.getElementById('neighborhood-name');
+      const sportTag = document.getElementById('sport-tag');
+
+      if (neighborhoodTitle && neighborhoodName && sportTag) {
+        neighborhoodName.textContent = sharedNameParam || 'Custom Route';
+        neighborhoodTitle.classList.remove('hidden');
+        
+        sportTag.textContent = mode === 'bike' ? 'Ride' : 'Walk';
+        sportTag.classList.remove('hidden');
       }
 
       // Show actions footer; in shared view collapse Preview to col-span-1 so it sits beside GPX
@@ -689,23 +684,17 @@ document.addEventListener('DOMContentLoaded', () => {
         resultTime.innerHTML = `${m} <span class="text-sm font-medium text-gray-500">min</span>`;
       }
 
-      if (currentNeighborhoodName) {
-        const neighborhoodTitle = document.getElementById('neighborhood-title');
-        const neighborhoodName = document.getElementById('neighborhood-name');
-        if (neighborhoodTitle && neighborhoodName) {
-          neighborhoodName.textContent = currentNeighborhoodName;
-          neighborhoodTitle.classList.remove('hidden');
-          
-          const mode = sportSelect ? sportSelect.value : 'bike';
-          const sportTag = document.getElementById('sport-tag');
-          if (sportTag) {
-            sportTag.textContent = mode === 'bike' ? 'Ride' : 'Walk';
-            sportTag.classList.remove('hidden');
-          }
-        }
-      } else {
-        const neighborhoodTitle = document.getElementById('neighborhood-title');
-        if (neighborhoodTitle) neighborhoodTitle.classList.add('hidden');
+      const neighborhoodTitle = document.getElementById('neighborhood-title');
+      const neighborhoodName = document.getElementById('neighborhood-name');
+      const sportTag = document.getElementById('sport-tag');
+
+      if (neighborhoodTitle && neighborhoodName && sportTag) {
+        neighborhoodName.textContent = currentNeighborhoodName || 'Custom Route';
+        neighborhoodTitle.classList.remove('hidden');
+        
+        const currentMode = sportSelect ? sportSelect.value : 'bike';
+        sportTag.textContent = currentMode === 'bike' ? 'Ride' : 'Walk';
+        sportTag.classList.remove('hidden');
       }
 
       resultsPanel.classList.remove('hidden');

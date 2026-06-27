@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.10
+- **Consistent Sport Tag Visibility**: Ensured that the sport tag ("Ride" or "Walk") is always displayed in the "Done" view and shared route view, even for custom drawn polygons that don't have a neighborhood name. In these cases, it defaults to displaying "Custom Route".
+
 ## v1.4.9
 - **Title Update**: Updated the application `<title>` in `index.html` to "Rotas - Explore Every Inch" for better alignment with the internal branding.
 
