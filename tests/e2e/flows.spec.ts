@@ -31,8 +31,8 @@ test.describe('App E2E Flows', () => {
     });
 
     // 3. Generate path and check results
-    if (await page.locator('#mobile-generate-btn').isVisible()) {
-      await page.locator('#mobile-generate-btn').click();
+    if (await page.locator('#mobile-generate-fab').isVisible()) {
+      await page.locator('#mobile-generate-fab').click();
     } else {
       await page.locator('#generate-btn').click();
     }
@@ -94,8 +94,8 @@ test.describe('App E2E Flows', () => {
     });
 
     // 3. Generate path
-    if (await page.locator('#mobile-generate-btn').isVisible()) {
-      await page.locator('#mobile-generate-btn').click();
+    if (await page.locator('#mobile-generate-fab').isVisible()) {
+      await page.locator('#mobile-generate-fab').click();
     } else {
       await page.locator('#generate-btn').click();
     }
