@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { ChevronDownIcon, SettingsIcon, RefreshIcon, RouteIcon } from './icons';
 
 interface Props {
   onOpenSettings: () => void;
@@ -32,9 +33,7 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
             <option value="bike">Cycling</option>
             <option value="walk">Walking</option>
           </select>
-          <svg className="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m6 9 6 6 6-6" />
-          </svg>
+          <ChevronDownIcon className="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" />
         </div>
 
         {/* Settings Button */}
@@ -43,10 +42,7 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
           onClick={onOpenSettings}
           className="hidden md:flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 h-11 w-11 rounded-full shadow-lg border border-gray-200 transition-colors"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
+          <SettingsIcon size={18} />
         </button>
       </div>
 
@@ -59,20 +55,12 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
         >
           {isDoneMode ? (
             <>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                <path d="M3 3v5h5"/>
-                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-                <path d="M16 21v-5h5"/>
-              </svg>
+              <RefreshIcon size={18} />
               New Plan
             </>
           ) : (
             <>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
+              <RouteIcon size={18} />
               Plan Route
             </>
           )}
