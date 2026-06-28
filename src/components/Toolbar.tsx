@@ -21,7 +21,7 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
         className={`flex flex-col md:flex-row items-start gap-3 pointer-events-auto transition-all ${isDoneMode ? 'hidden' : ''}`}
       >
         {/* Draw Controls Container (Leaflet injects here) */}
-        <div id="draw-tools-container" className="flex items-start gap-3"></div>
+        <div id="draw-tools-container" className="flex flex-col md:flex-row items-start gap-3"></div>
 
         {/* Sport Dropdown */}
         <div className="hidden relative bg-white rounded-full shadow-lg border border-gray-200 md:flex items-center h-11 pl-4 pr-3 hover:bg-gray-50 transition-colors cursor-pointer group">

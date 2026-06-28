@@ -8,6 +8,9 @@
 ### Changed
 - Refatoração de todos os botões e SVGs inline da aplicação para utilizar os novos componentes padronizados, melhorando consistência visual e manutenibilidade.
 
+### Fixed
+- Correção no layout mobile onde o ícone da "Magic Wand" se sobrepunha ao menu de ferramentas de desenho do polígono (agora renderizam em coluna).
+
 ## [1.8.0] - 2026-06-28
 - Migração completa da arquitetura vanilla TypeScript para React (v19).
 - Centralização do estado global utilizando `zustand`.
