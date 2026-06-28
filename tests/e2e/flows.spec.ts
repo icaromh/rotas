@@ -2,8 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('App E2E Flows', () => {
   test.beforeEach(async ({ page, context }) => {
-    // Grant clipboard permissions for share fallback
-    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    try {
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    } catch (e) {
+      // WebKit doesn't support clipboard permissions this way, ignore
+    }
   });
 
   test('Flow 1: Cycling path generation and share', async ({ page }) => {
@@ -28,7 +31,11 @@ test.describe('App E2E Flows', () => {
     });
 
     // 3. Generate path and check results
-    await page.locator('#generate-btn').click();
+    if (await page.locator('#mobile-generate-btn').isVisible()) {
+      await page.locator('#mobile-generate-btn').click();
+    } else {
+      await page.locator('#generate-btn').click();
+    }
     
     // Wait for the results panel to appear and distance to be calculated
     const resultsPanel = page.locator('#results-panel');
@@ -44,13 +51,26 @@ test.describe('App E2E Flows', () => {
       dialog.accept();
     });
 
+    // Disable native share and mock clipboard to avoid WebKit permission issues
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+      (window as any).__mockClipboard = '';
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: async (text: string) => { (window as any).__mockClipboard = text; },
+          readText: async () => (window as any).__mockClipboard
+        },
+        configurable: true
+      });
+    });
+    
     await page.locator('#share-btn').click();
     
     // Wait for clipboard alert
     await expect.poll(() => dialogMessage).toBe('Link da rota copiado para a área de transferência!');
 
-    // Get the URL from clipboard
-    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+    // Get the URL from mock clipboard
+    const clipboardText = await page.evaluate(() => (window as any).__mockClipboard);
     expect(clipboardText).toContain('?route=');
     expect(clipboardText).toContain('mode=bike');
   });
@@ -74,7 +94,11 @@ test.describe('App E2E Flows', () => {
     });
 
     // 3. Generate path
-    await page.locator('#generate-btn').click();
+    if (await page.locator('#mobile-generate-btn').isVisible()) {
+      await page.locator('#mobile-generate-btn').click();
+    } else {
+      await page.locator('#generate-btn').click();
+    }
     
     // Wait for the results
     const resultsPanel = page.locator('#results-panel');
@@ -88,10 +112,23 @@ test.describe('App E2E Flows', () => {
       dialog.accept();
     });
 
+    // Disable native share and mock clipboard
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+      (window as any).__mockClipboard = '';
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: async (text: string) => { (window as any).__mockClipboard = text; },
+          readText: async () => (window as any).__mockClipboard
+        },
+        configurable: true
+      });
+    });
+
     await page.locator('#share-btn').click();
     await expect.poll(() => dialogMessage).toBe('Link da rota copiado para a área de transferência!');
 
-    const sharedUrl = await page.evaluate(() => navigator.clipboard.readText());
+    const sharedUrl = await page.evaluate(() => (window as any).__mockClipboard);
     expect(sharedUrl).toContain('mode=walk');
 
     // 5. Open the shared URL and verify parsing

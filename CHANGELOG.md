@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.10.8] - 2026-06-28
+### Added
+- Introdução de testes E2E Mobile com suporte a Safari (WebKit) via Playwright.
+- Implementação de testes de regressão visual (Visual Regression Tests) focados nos estados críticos da interface de usuário, com a área do mapa mascarada para evitar falsos positivos gerados pelo carregamento assíncrono dos tiles.
+- Adição dos scripts `test:e2e:visual` e `test:e2e:visual:update` no `package.json`.
+
 ## [1.10.7] - 2026-06-28
 ### Fixed
 - Correção de um espaçamento (gap) extra de 12px que aparecia no layout mobile entre as ferramentas de desenho e a "Magic Wand" quando o polígono ainda não havia sido desenhado, causado por elementos de UI invisíveis do Leaflet Draw.
