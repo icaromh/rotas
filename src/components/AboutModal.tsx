@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { GitHubIcon } from './icons';
+import { Button } from './ui/Button';
 
 interface Props {
   isOpen: boolean;
@@ -48,9 +49,16 @@ export const AboutModal: React.FC<Props> = ({ isOpen, onClose }) => {
             View on GitHub
           </a>
         </div>
-        <button id="close-about-btn" onClick={onClose} className="mt-4 bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-[0.98] w-full focus:outline-none">
+        <Button 
+          id="close-about-btn" 
+          onClick={onClose} 
+          variant="primary"
+          size="lg"
+          fullWidth
+          className="mt-4"
+        >
           Close
-        </button>
+        </Button>
       </div>
     </dialog>
   );

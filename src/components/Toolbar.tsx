@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { ChevronDownIcon, SettingsIcon, RefreshIcon, RouteIcon } from './icons';
+import { Button } from './ui/Button';
 
 interface Props {
   onOpenSettings: () => void;
@@ -37,21 +38,25 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
         </div>
 
         {/* Settings Button */}
-        <button 
+        <Button 
           id="settings-btn" 
           onClick={onOpenSettings}
-          className="hidden md:flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 h-11 w-11 rounded-full shadow-lg border border-gray-200 transition-colors"
+          variant="icon"
+          size="icon"
+          className="hidden md:flex"
         >
           <SettingsIcon size={18} />
-        </button>
+        </Button>
       </div>
 
       {/* Right Side: Generate Button */}
       <div id="desktop-generate-wrapper" className="pointer-events-auto ml-auto hidden md:block">
-        <button 
+        <Button 
           id="generate-btn" 
           onClick={onGenerate}
-          className="bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-2.5 px-5 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-11"
+          variant="primary"
+          size="md"
+          className="h-11"
         >
           {isDoneMode ? (
             <>
@@ -64,7 +69,7 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
               Plan Route
             </>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

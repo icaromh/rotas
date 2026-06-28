@@ -2,6 +2,7 @@ import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Link } from '@tanstack/react-router';
 import { ChevronDownIcon, SettingsIcon, RefreshIcon, RouteIcon, InfoIcon } from './icons';
+import { Button } from './ui/Button';
 
 interface Props {
   onOpenSettings: () => void;
@@ -23,7 +24,7 @@ export const TopNav: React.FC<Props> = ({ onOpenSettings, onOpenAbout, onGenerat
         </div>
         <div className="hidden md:flex gap-5 text-sm font-bold text-gray-700 mt-1">
           <Link to="/" className="hover:text-[#4a6b46] transition-colors">Planner</Link>
-          <button id="about-btn" onClick={onOpenAbout} className="hover:text-[#4a6b46] transition-colors cursor-pointer">About</button>
+          <Button id="about-btn" variant="ghost-text" size="none" onClick={onOpenAbout}>About</Button>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -42,16 +43,18 @@ export const TopNav: React.FC<Props> = ({ onOpenSettings, onOpenAbout, onGenerat
               <ChevronDownIcon className="w-3.5 h-3.5 text-[#4a6b46] absolute right-2.5 pointer-events-none" />
             </div>
 
-            <button id="mobile-settings-btn" onClick={onOpenSettings} className="md:hidden bg-[#f0ece1] hover:bg-[#e5decb] text-[#4a6b46] h-9 w-9 rounded-full transition-colors flex items-center justify-center">
+            <Button id="mobile-settings-btn" onClick={onOpenSettings} variant="icon-secondary" size="icon-sm" className="md:hidden">
               <SettingsIcon size={16} />
-            </button>
+            </Button>
           </>
         )}
 
-        <button 
+        <Button 
           id="mobile-generate-btn" 
           onClick={onGenerate}
-          className="md:hidden bg-[#4a6b46] text-white font-bold px-4 py-2 rounded-full text-sm transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+          variant="primary"
+          size="md"
+          className="md:hidden"
         >
           {isDoneMode ? (
             <>
@@ -64,11 +67,11 @@ export const TopNav: React.FC<Props> = ({ onOpenSettings, onOpenAbout, onGenerat
               Plan
             </>
           )}
-        </button>
+        </Button>
 
-        <button id="mobile-about-btn" onClick={onOpenAbout} className="md:hidden bg-[#f0ece1] hover:bg-[#e5decb] text-[#4a6b46] p-2 rounded-full transition-colors flex items-center justify-center">
+        <Button id="mobile-about-btn" onClick={onOpenAbout} variant="icon-secondary" size="icon-sm" className="md:hidden p-2">
           <InfoIcon size={18} />
-        </button>
+        </Button>
       </div>
     </nav>
   );

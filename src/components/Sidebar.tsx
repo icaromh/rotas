@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { StopCircleIcon, PlayCircleIcon, DownloadIcon, ShareIcon } from './icons';
+import { Button } from './ui/Button';
 import { encodeRoute } from '../utils/routeSharing';
 import { Link } from '@tanstack/react-router';
 
@@ -114,7 +115,13 @@ export const Sidebar: React.FC<Props> = ({
 
       <div id="actions-footer" className="shrink-0 flex flex-col gap-3 p-4 md:p-5 bg-white md:bg-[#f8f7f5] border-t border-gray-100">
         <div className="grid grid-cols-2 gap-2">
-          <button id="preview-btn" onClick={onPreviewToggle} className={`${isSharedView ? 'col-span-1' : 'col-span-2'} bg-[#f0ece1] hover:bg-[#e6dfcf] text-[#4a6b46] font-bold py-2.5 px-4 rounded-full shadow-sm transition-colors flex justify-center items-center gap-2`}>
+          <Button 
+            id="preview-btn" 
+            onClick={onPreviewToggle} 
+            variant="secondary"
+            size="md"
+            className={isSharedView ? 'col-span-1' : 'col-span-2'}
+          >
             {isPreviewing ? (
               <>
                 <StopCircleIcon className="w-5 h-5 mr-1" />
@@ -126,18 +133,30 @@ export const Sidebar: React.FC<Props> = ({
                 Preview
               </>
             )}
-          </button>
+          </Button>
           
-          <button id="export-gpx-btn" onClick={onExportGpx} className="col-span-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-3 rounded-full shadow transition-colors flex justify-center items-center gap-2 text-sm">
+          <Button 
+            id="export-gpx-btn" 
+            onClick={onExportGpx} 
+            variant="dark"
+            size="sm"
+            className="col-span-1 text-sm"
+          >
             <DownloadIcon size={16} />
             GPX
-          </button>
+          </Button>
 
           {!isSharedView && (
-            <button id="share-btn" onClick={handleShare} className="col-span-1 bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-2 px-3 rounded-full shadow transition-colors flex justify-center items-center gap-2 text-sm">
+            <Button 
+              id="share-btn" 
+              onClick={handleShare} 
+              variant="primary"
+              size="sm"
+              className="col-span-1 text-sm shadow-md"
+            >
               <ShareIcon size={16} />
               Share
-            </button>
+            </Button>
           )}
         </div>
 

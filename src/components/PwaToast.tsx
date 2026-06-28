@@ -1,22 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { registerSW } from 'virtual:pwa-register';
+import React from 'react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import { RefreshIcon } from './icons';
+import { Button } from './ui/Button';
 
 export const PwaToast: React.FC = () => {
-  const [needRefresh, setNeedRefresh] = useState(false);
-  const [updateSW, setUpdateSW] = useState<((reloadPage?: boolean) => Promise<void>) | null>(null);
-
-  useEffect(() => {
-    const updateFn = registerSW({
-      onNeedRefresh() {
-        setNeedRefresh(true);
-      },
-      onOfflineReady() {
-        console.log('App ready to work offline');
-      },
-    });
-    setUpdateSW(() => updateFn);
-  }, []);
+  const {
+    needRefresh: [needRefresh, setNeedRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onOfflineReady() {
+      console.log('App ready to work offline');
+    },
+  });
 
   if (!needRefresh) return null;
 
@@ -32,8 +27,8 @@ export const PwaToast: React.FC = () => {
         </div>
       </div>
       <div className="flex gap-2 justify-end mt-1">
-        <button id="pwa-close-btn" onClick={() => setNeedRefresh(false)} className="px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-100 rounded-md transition-colors">Later</button>
-        <button id="pwa-reload-btn" onClick={() => updateSW?.(true)} className="px-3 py-1.5 text-xs font-semibold bg-[#4a6b46] hover:bg-[#395336] text-white rounded-md transition-colors shadow-sm">Reload Now</button>
+        <Button id="pwa-close-btn" onClick={() => setNeedRefresh(false)} variant="ghost" size="sm" className="text-xs">Later</Button>
+        <Button id="pwa-reload-btn" onClick={() => updateServiceWorker?.(true)} variant="primary" size="sm" className="text-xs shadow-sm">Reload Now</Button>
       </div>
     </div>
   );

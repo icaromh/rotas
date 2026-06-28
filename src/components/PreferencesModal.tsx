@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { SettingsIcon, XIcon, ChevronDownIcon } from './icons';
+import { Button } from './ui/Button';
 
 interface Props {
   isOpen: boolean;
@@ -44,9 +45,9 @@ export const PreferencesModal: React.FC<Props> = ({ isOpen, onClose }) => {
             <SettingsIcon size={20} />
             Route Settings
           </h2>
-          <button id="close-preferences" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100">
+          <Button id="close-preferences" onClick={onClose} variant="icon-ghost" size="icon-sm" className="p-1">
             <XIcon size={20} />
-          </button>
+          </Button>
         </div>
 
         <div className="flex flex-col gap-6">
@@ -91,9 +92,16 @@ export const PreferencesModal: React.FC<Props> = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        <button id="save-preferences" onClick={handleSave} className="w-full mt-8 bg-[#4a6b46] hover:bg-[#395336] text-white font-bold py-3 rounded-full shadow-md transition-colors text-sm">
+        <Button 
+          id="save-preferences" 
+          onClick={handleSave} 
+          variant="primary"
+          size="lg"
+          fullWidth
+          className="mt-8 text-sm"
+        >
           Save Settings
-        </button>
+        </Button>
       </div>
     </dialog>
   );
