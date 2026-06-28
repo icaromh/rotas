@@ -23,30 +23,32 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
         {/* Draw Controls Container (Leaflet injects here) */}
         <div id="draw-tools-container" className="flex flex-col md:flex-row items-start gap-3"></div>
 
-        {/* Sport Dropdown */}
-        <div className="hidden relative bg-white rounded-full shadow-lg border border-gray-200 md:flex items-center h-11 pl-4 pr-3 hover:bg-gray-50 transition-colors cursor-pointer group">
-          <select 
-            id="sport-select"
-            value={sportMode}
-            onChange={(e) => setSportMode(e.target.value as any)}
-            className="appearance-none bg-transparent text-sm font-extrabold text-gray-800 h-full pr-6 cursor-pointer outline-none"
-          >
-            <option value="bike">Cycling</option>
-            <option value="walk">Walking</option>
-          </select>
-          <ChevronDownIcon className="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" />
-        </div>
+        <div className="flex items-center gap-3">
+          {/* Sport Dropdown */}
+          <div className="flex relative bg-white rounded-full shadow-lg border border-gray-200 items-center h-11 pl-4 pr-3 hover:bg-gray-50 transition-colors cursor-pointer group">
+            <select 
+              id="sport-select"
+              value={sportMode}
+              onChange={(e) => setSportMode(e.target.value as any)}
+              className="appearance-none bg-transparent text-sm font-extrabold text-gray-800 h-full pr-6 cursor-pointer outline-none"
+            >
+              <option value="bike">Cycling</option>
+              <option value="walk">Walking</option>
+            </select>
+            <ChevronDownIcon className="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" />
+          </div>
 
-        {/* Settings Button */}
-        <Button 
-          id="settings-btn" 
-          onClick={onOpenSettings}
-          variant="icon"
-          size="icon"
-          className="hidden md:flex"
-        >
-          <SettingsIcon size={18} />
-        </Button>
+          {/* Settings Button */}
+          <Button 
+            id="settings-btn" 
+            onClick={onOpenSettings}
+            variant="icon"
+            size="icon"
+            className="flex"
+          >
+            <SettingsIcon size={18} />
+          </Button>
+        </div>
       </div>
 
       {/* Right Side: Generate Button */}

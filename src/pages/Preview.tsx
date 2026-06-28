@@ -75,9 +75,8 @@ export const Preview: React.FC = () => {
   return (
     <>
       <TopNav 
-        onOpenSettings={() => {}} // No settings in preview
         onOpenAbout={() => setIsAboutOpen(true)}
-        onGenerate={() => {}} // No generate in preview
+        onGenerate={() => window.location.href = '/'}
         isDoneMode={true}
       />
       

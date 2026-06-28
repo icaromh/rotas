@@ -127,7 +127,6 @@ export const Planner: React.FC = () => {
   return (
     <>
       <TopNav 
-        onOpenSettings={() => setIsSettingsOpen(true)} 
         onOpenAbout={() => setIsAboutOpen(true)}
         onGenerate={handleGenerate}
         isDoneMode={isDoneMode}
