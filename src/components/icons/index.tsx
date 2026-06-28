@@ -112,8 +112,25 @@ export const GitHubIcon: React.FC<IconProps> = ({ size = 24, className = '', ...
 );
 
 export const XIcon: React.FC<IconProps> = ({ size = 24, className = '', ...props }) => (
-  <svg width={size} height={size} {...defaultProps} className={className} {...props}>
-    <path d="M18 6 6 18" />
-    <path d="m6 6 12 12" />
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+    <path d="M18 6 6 18"/>
+    <path d="m6 6 12 12"/>
+  </svg>
+);
+
+export const BikeIcon: React.FC<IconProps> = ({ size = 24, className = '', ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+    <circle cx="5.5" cy="17.5" r="3.5"/>
+    <circle cx="18.5" cy="17.5" r="3.5"/>
+    <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"/>
+  </svg>
+);
+
+export const WalkIcon: React.FC<IconProps> = ({ size = 24, className = '', ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+    <circle cx="12" cy="5" r="1"/>
+    <path d="m9 20 3-6 3 6"/>
+    <path d="m6 8 6 2 6-2"/>
+    <path d="M12 10v4"/>
   </svg>
 );

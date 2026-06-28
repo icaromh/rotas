@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { ChevronDownIcon, SettingsIcon, RefreshIcon, RouteIcon } from './icons';
+import { ChevronDownIcon, SettingsIcon, RefreshIcon, RouteIcon, BikeIcon, WalkIcon } from './icons';
 import { Button } from './ui/Button';
 
 interface Props {
@@ -25,17 +25,30 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
 
         <div className="flex items-center gap-3">
           {/* Sport Dropdown */}
-          <div className="flex relative bg-white rounded-full shadow-lg border border-gray-200 items-center h-11 pl-4 pr-3 hover:bg-gray-50 transition-colors cursor-pointer group">
+          <div className="flex relative bg-white rounded-full shadow-lg border border-gray-200 items-center justify-center h-11 w-11 md:w-auto md:pl-4 md:pr-3 hover:bg-gray-50 transition-colors cursor-pointer group">
+            
+            {/* Visual Label: Icon (Mobile) / Text (Desktop) */}
+            <div className="pointer-events-none flex items-center md:pr-6">
+              <span className="hidden md:inline text-sm font-extrabold text-gray-800">
+                {sportMode === 'bike' ? 'Cycling' : 'Walking'}
+              </span>
+              <span className="md:hidden text-gray-800 flex items-center justify-center">
+                {sportMode === 'bike' ? <BikeIcon size={20} /> : <WalkIcon size={20} />}
+              </span>
+            </div>
+
+            <ChevronDownIcon className="hidden md:block w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" />
+
+            {/* Invisible Native Select Overlay */}
             <select 
               id="sport-select"
               value={sportMode}
               onChange={(e) => setSportMode(e.target.value as any)}
-              className="appearance-none bg-transparent text-sm font-extrabold text-gray-800 h-full pr-6 cursor-pointer outline-none"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
             >
               <option value="bike">Cycling</option>
               <option value="walk">Walking</option>
             </select>
-            <ChevronDownIcon className="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" />
           </div>
 
           {/* Settings Button */}

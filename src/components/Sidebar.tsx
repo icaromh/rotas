@@ -16,9 +16,9 @@ interface Props {
   currentPathData: { lat: number; lng: number }[];
 }
 
-export const Sidebar: React.FC<Props> = ({ 
-  onPreviewToggle, 
-  onExportGpx, 
+export const Sidebar: React.FC<Props> = ({
+  onPreviewToggle,
+  onExportGpx,
   isPreviewing,
   isDoneMode,
   isSharedView,
@@ -47,7 +47,7 @@ export const Sidebar: React.FC<Props> = ({
     const encoded = encodeRoute(currentPathData);
     const url = new URL(window.location.origin + '/preview');
     url.searchParams.set('route', encoded);
-    
+
     if (currentNeighborhoodName) {
       url.searchParams.set('name', currentNeighborhoodName);
     }
@@ -75,7 +75,6 @@ export const Sidebar: React.FC<Props> = ({
 
   return (
     <aside id="sidebar" className="fixed bottom-6 inset-x-4 md:inset-auto md:relative md:w-80 bg-white shadow-2xl md:shadow-xl flex flex-col pointer-events-auto h-auto max-h-[50vh] md:max-h-none md:h-full rounded-3xl overflow-hidden z-[1002] md:z-50">
-      <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto md:hidden shrink-0 mt-4 mb-1"></div>
 
       <div className="hidden md:block p-5 bg-white border-b border-gray-100 shrink-0">
         <h1 className="text-xl font-bold text-gray-800 tracking-tight">Explore Every Inch</h1>
@@ -115,9 +114,9 @@ export const Sidebar: React.FC<Props> = ({
 
       <div id="actions-footer" className="shrink-0 flex flex-col gap-3 p-4 md:p-5 bg-white md:bg-[#f8f7f5] border-t border-gray-100">
         <div className="grid grid-cols-2 gap-2">
-          <Button 
-            id="preview-btn" 
-            onClick={onPreviewToggle} 
+          <Button
+            id="preview-btn"
+            onClick={onPreviewToggle}
             variant="secondary"
             size="md"
             className={isSharedView ? 'col-span-1' : 'col-span-2'}
@@ -134,10 +133,10 @@ export const Sidebar: React.FC<Props> = ({
               </>
             )}
           </Button>
-          
-          <Button 
-            id="export-gpx-btn" 
-            onClick={onExportGpx} 
+
+          <Button
+            id="export-gpx-btn"
+            onClick={onExportGpx}
             variant="dark"
             size="sm"
             className="col-span-1 text-sm"
@@ -147,9 +146,9 @@ export const Sidebar: React.FC<Props> = ({
           </Button>
 
           {!isSharedView && (
-            <Button 
-              id="share-btn" 
-              onClick={handleShare} 
+            <Button
+              id="share-btn"
+              onClick={handleShare}
               variant="primary"
               size="sm"
               className="col-span-1 text-sm shadow-md"
