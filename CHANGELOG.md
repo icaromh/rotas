@@ -11,6 +11,7 @@
 ### Fixed
 - Correção no layout mobile onde o ícone da "Magic Wand" se sobrepunha ao menu de ferramentas de desenho do polígono (agora renderizam em coluna).
 - Selector de esporte (Ciclismo/Caminhada) e botão de configurações movidos da barra de navegação principal (`TopNav`) para flutuar diretamente sobre o mapa (`Toolbar`) na visualização mobile, garantindo uma interface mais limpa.
+- Ajuste no layout mobile para alinhar o botão de configurações (`Settings`) verticalmente abaixo do ícone de esporte, acompanhando o fluxo do menu de desenho.
 
 ### Changed
 - O selector de esporte na visualização mobile agora exibe ícones SVG dedicados (pessoa caminhando / bicicleta) em vez de texto, melhorando a experiência de usuário e ocupando menos espaço na tela.
