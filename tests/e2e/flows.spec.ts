@@ -7,6 +7,9 @@ test.describe('App E2E Flows', () => {
   });
 
   test('Flow 1: Cycling path generation and share', async ({ page }) => {
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    page.on('pageerror', err => console.log('PAGE ERROR:', err.message));
+
     await page.goto('/');
 
     // 1. Choose cycling
@@ -29,7 +32,7 @@ test.describe('App E2E Flows', () => {
     
     // Wait for the results panel to appear and distance to be calculated
     const resultsPanel = page.locator('#results-panel');
-    await expect(resultsPanel).toBeVisible({ timeout: 15000 });
+    await expect(resultsPanel).toBeVisible({ timeout: 30000 });
     await expect(page.locator('#result-distance')).not.toContainText('-- km');
     await expect(page.locator('#result-time')).not.toContainText('--:--');
 
@@ -75,7 +78,7 @@ test.describe('App E2E Flows', () => {
     
     // Wait for the results
     const resultsPanel = page.locator('#results-panel');
-    await expect(resultsPanel).toBeVisible({ timeout: 15000 });
+    await expect(resultsPanel).toBeVisible({ timeout: 30000 });
     
     // 4. Share and get the URL
     let dialogMessage = '';

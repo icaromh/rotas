@@ -5,6 +5,8 @@
     "lib": ["ES2023", "DOM"],
     "types": ["vite/client", "vite-plugin-pwa/client"],
     "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "strict": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",

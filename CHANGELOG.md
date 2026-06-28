@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.0] - 2026-06-28
+### Changed
+- Migração completa da arquitetura vanilla TypeScript para React (v19).
+- Centralização do estado global utilizando `zustand`.
+- Modularização da interface (anteriormente no `index.html`) em diversos componentes isolados (e.g., `MapContainer`, `Sidebar`, `Toolbar`), melhorando a manutenibilidade e escalabilidade do código.
+- Testes end-to-end do Playwright ajustados para suportar o ciclo de vida dos componentes React.
 ## [1.7.0] - 2026-06-28
 ### Added
 - Configuração de testes E2E utilizando o Playwright (`@playwright/test`).
@@ -67,6 +73,23 @@
 ## v1.4.5
 - **Shared View UI Overhaul**: The sidebar in shared route view now shows the "Explore Every Inch" header at all times. Action buttons (Preview, GPX) are pinned to the bottom of the sidebar as a fixed footer alongside the "Viewing an external route" notice. In shared view, Preview and GPX appear side-by-side in a single row. The sidebar now has fully rounded corners on desktop via `overflow-hidden` clipping child elements. **New Plan** in shared view redirects to `/` to start fresh, instead of producing a broken in-place reset with stale UI.
 - **Speed/Pace Input Removed**: The speed and pace inputs have been replaced with fixed constants (`SPEED_BIKE = 17 km/h`, `PACE_WALK = 10 min/km`), simplifying the UI.
+
+## v1.10.1
+- **TypeScript Configuration**: Enabled `"strict": true` (which includes `"strictNullChecks"`) in `tsconfig.json` to satisfy TanStack Router's requirement for correct route parameter and search type inference, resolving the compiler error in `src/router.tsx`.
+
+## v1.10.0
+- **Zustand State Refactor**: Heavily cleaned up the global `useAppStore` by stripping out volatile routing and session data (`isSharedView`, `isDoneMode`, `currentPathData`).
+- **Strict Component Segregation**: Shifted the stripped state down to local component state within `Planner.tsx` and `Preview.tsx`, and passed them via standard React props to child components (`Sidebar.tsx`, `MapContainer.tsx`, `TopNav.tsx`, `Toolbar.tsx`). This resolves global state leakage across routes and enables automatic garbage-collection when navigating.
+
+## v1.9.0
+- **E2E Testing Stabilization**: Fixed flaky E2E tests caused by React component unmounts interrupting the Web Worker execution.
+- **Robust Route Parsing**: Adjusted TanStack Router Zod schemas (`z.coerce.string()`) to properly handle numbers from query params like distance to fix validation errors preventing the shared view from rendering.
+- **URL Encoding Fix**: Added a safety net to strictly `decodeURIComponent` on route decoding, preventing issues with browsers or clipboards accidentally double-encoding the URI string.
+
+## v1.8.0
+- **Router Migration**: Refactored the single-page monolithic application into a multi-route architecture powered by `@tanstack/react-router`.
+- **View Split**: Decoupled the creation workflow (`/`) from the route preview mode (`/preview`) to drastically reduce component complexity and heavy rendering logic when loading shared links.
+- **Enhanced Type Safety**: Added Zod schema validation directly into the router for strict URL query parameter parsing and safety.
 
 ## v1.4.4
 - **Accurate Shared Route Distance**: Fixed a regression where shared URLs displayed approximately double the real distance. The root cause was recalculating distance from node-to-node straight lines (losing intermediate street geometry). The original distance computed by the worker is now embedded in the shared URL (`?distance=...`) and used directly, with a fallback to point-to-point calculation for legacy links.

@@ -36,8 +36,11 @@ export function decodeRoute(encoded: string): Point[] {
   try {
     let polylineStr = '';
     
+    // Ensure we fully decode any remaining URL encoding (like %2B back to +)
+    let safeEncoded = decodeURIComponent(encoded);
+    
     // URLs may lose their '+' encoding and convert to spaces, fix them
-    const safeEncoded = encoded.replace(/ /g, '+');
+    safeEncoded = safeEncoded.replace(/ /g, '+');
     
     // LZString compressToEncodedURIComponent strictly uses A-Za-z0-9+-$
     // If the encoded string contains typical polyline ascii characters like ?, @, \, {, }
