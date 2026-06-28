@@ -1,20 +1,28 @@
 # Changelog
 
+## [1.10.5] - 2026-06-28
+### Fixed
+- Ajuste no layout mobile para alinhar o botão de configurações (`Settings`) verticalmente abaixo do ícone de esporte, acompanhando o fluxo do menu de desenho.
+
+## [1.10.4] - 2026-06-28
+### Changed
+- O selector de esporte na visualização mobile agora exibe ícones SVG dedicados (pessoa caminhando / bicicleta) em vez de texto, melhorando a experiência de usuário e ocupando menos espaço na tela.
+
+## [1.10.3] - 2026-06-28
+### Fixed
+- Selector de esporte (Ciclismo/Caminhada) e botão de configurações movidos da barra de navegação principal (`TopNav`) para flutuar diretamente sobre o mapa (`Toolbar`) na visualização mobile, garantindo uma interface mais limpa.
+
 ## [1.10.2] - 2026-06-28
+### Fixed
+- Correção no layout mobile onde o ícone da "Magic Wand" se sobrepunha ao menu de ferramentas de desenho do polígono (agora renderizam em coluna).
+
+## [1.10.1] - 2026-06-28
 ### Added
 - Criação de uma biblioteca de componentes de UI (`src/components/ui/Button.tsx`).
 - Criação de uma biblioteca de ícones centralizada (`src/components/icons/index.tsx`).
 
 ### Changed
 - Refatoração de todos os botões e SVGs inline da aplicação para utilizar os novos componentes padronizados, melhorando consistência visual e manutenibilidade.
-
-### Fixed
-- Correção no layout mobile onde o ícone da "Magic Wand" se sobrepunha ao menu de ferramentas de desenho do polígono (agora renderizam em coluna).
-- Selector de esporte (Ciclismo/Caminhada) e botão de configurações movidos da barra de navegação principal (`TopNav`) para flutuar diretamente sobre o mapa (`Toolbar`) na visualização mobile, garantindo uma interface mais limpa.
-- Ajuste no layout mobile para alinhar o botão de configurações (`Settings`) verticalmente abaixo do ícone de esporte, acompanhando o fluxo do menu de desenho.
-
-### Changed
-- O selector de esporte na visualização mobile agora exibe ícones SVG dedicados (pessoa caminhando / bicicleta) em vez de texto, melhorando a experiência de usuário e ocupando menos espaço na tela.
 
 ## [1.8.0] - 2026-06-28
 - Migração completa da arquitetura vanilla TypeScript para React (v19).
