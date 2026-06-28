@@ -1,6 +1,7 @@
 /**
  * Overpass API Cloudflare Worker Proxy
- * Intercepts requests, forwards them to Overpass API, and forces CORS headers on the response.
+ * Intercepts requests, forwards them to a list of public Overpass API endpoints
+ * with automatic fallback on 5xx errors and 429 rate-limits.
  */
 
 export interface Env {}
@@ -11,21 +12,44 @@ const ALLOWED_ORIGINS = [
 
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
-  
+
   // Allow localhost (any port)
   if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
     return true;
   }
-  
-  // Allow explicit domains
+
   return ALLOWED_ORIGINS.includes(origin);
+}
+
+/**
+ * Public Overpass API instances with global data coverage.
+ * Order matters — most reliable / highest capacity first.
+ *
+ * Sources: https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances
+ *
+ * 1. Main FOSSGIS instance — up to 10 000 req/day, 1 GB/day
+ * 2. VK Maps (Russia) — no stated rate limit
+ * 3. Private.coffee — no rate limit (formerly kumi.systems)
+ */
+const ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
+
+/**
+ * Returns true for status codes that should trigger a fallback to the next endpoint.
+ * - 5xx: server-side errors (timeouts, overloaded instances)
+ * - 429: rate-limited — try another instance instead of giving up
+ */
+function shouldFallback(status: number): boolean {
+  return status === 429 || status >= 500;
 }
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const origin = request.headers.get('Origin');
-    
-    // If there is an Origin header but it's not allowed, reject immediately
+
     if (origin && !isAllowedOrigin(origin)) {
       return new Response('Forbidden: CORS policy does not allow this origin.', { status: 403 });
     }
@@ -36,11 +60,8 @@ export default {
       'Access-Control-Allow-Headers': 'Content-Type',
     };
 
-    // Handle CORS preflight requests
     if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: corsHeaders,
-      });
+      return new Response(null, { headers: corsHeaders });
     }
 
     if (request.method !== 'POST') {
@@ -48,32 +69,27 @@ export default {
     }
 
     try {
-      const url = new URL(request.url);
-      const endpoints = [
-        'https://overpass-api.de/api/interpreter',
-        'https://lz4.overpass-api.de/api/interpreter',
-        'https://z.overpass-api.de/api/interpreter',
-        'https://overpass.kumi.systems/api/interpreter'
-      ];
-
       const bodyText = await request.text();
-      let lastResponse = null;
+      const contentType = request.headers.get('Content-Type') || 'application/x-www-form-urlencoded';
 
-      for (const targetUrl of endpoints) {
+      let lastResponse: Response | null = null;
+
+      for (const endpoint of ENDPOINTS) {
         try {
-          const overpassResponse = await fetch(targetUrl, {
+          const overpassResponse = await fetch(endpoint, {
             method: 'POST',
             headers: {
-              'Content-Type': request.headers.get('Content-Type') || 'application/x-www-form-urlencoded',
-              'Accept': '*/*',
+              'Content-Type': contentType,
+              'Accept': 'application/json',
+              // Identify the app as required by OSM usage policy
               'User-Agent': 'RotasOptimizer/1.0 (https://rotas-dusky.vercel.app/)',
+              'Referer': 'https://rotas-dusky.vercel.app/',
             },
             body: bodyText,
           });
 
-          // If the response is successful, or it's a client error (like 400 bad query), break and return it.
-          // If it's a 5xx error (504 timeout, 502 bad gateway), try the next endpoint.
-          if (overpassResponse.ok || (overpassResponse.status >= 400 && overpassResponse.status < 500)) {
+          if (!shouldFallback(overpassResponse.status)) {
+            // 2xx success OR a definitive client error (400, 403, etc.) — return as-is
             const responseBody = await overpassResponse.text();
             return new Response(responseBody, {
               status: overpassResponse.status,
@@ -83,16 +99,16 @@ export default {
               },
             });
           }
-          
-          // Store the last response in case all fail
+
+          console.warn(`[proxy] ${endpoint} returned ${overpassResponse.status} — trying next endpoint`);
           lastResponse = overpassResponse;
         } catch (err) {
-          // fetch error (e.g., DNS, connection refused), continue to next endpoint
-          console.error(`Failed fetching from ${targetUrl}:`, err);
+          // Network-level failure (DNS, connection refused, etc.)
+          console.error(`[proxy] fetch error for ${endpoint}:`, err);
         }
       }
 
-      // If all endpoints failed (either 5xx or fetch threw)
+      // All endpoints exhausted — return the last known response (or 502)
       if (lastResponse) {
         const responseBody = await lastResponse.text();
         return new Response(responseBody, {
@@ -107,14 +123,13 @@ export default {
       throw new Error('All Overpass API endpoints failed to respond.');
 
     } catch (error: any) {
-      // In case the worker itself fails to fetch from Overpass
-      return new Response(JSON.stringify({ error: 'Proxy fetch failed', details: error.message }), {
-        status: 502,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Proxy fetch failed', details: error.message }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
   },
 };

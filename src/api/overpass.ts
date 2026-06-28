@@ -1,7 +1,71 @@
-const PROXY_URL = 'https://rotas-overpass-proxy.icaro-mh.workers.dev/api/interpreter';
-const RAW_PROXY_URL = 'https://rotas-overpass-proxy.icaro-mh.workers.dev/';
+/**
+ * Overpass API client.
+ *
+ * All requests are routed through the Cloudflare Worker proxy which handles:
+ *  - CORS headers
+ *  - Fallback across multiple public Overpass instances
+ *  - 429 / 5xx retry logic
+ *
+ * The proxy itself forwards to (in order):
+ *   1. https://overpass-api.de (FOSSGIS — main instance)
+ *   2. https://maps.mail.ru/osm/tools/overpass (VK Maps — no rate limit)
+ *   3. https://overpass.private.coffee (Private.coffee — no rate limit)
+ */
 
-export async function fetchNeighborhoods(bbox: string) {
+const PROXY_URL = 'https://rotas-overpass-proxy.icaro-mh.workers.dev/api/interpreter';
+
+const TIMEOUT_MS = 60_000;
+
+export interface OverpassResponse {
+  elements: {
+    type: string;
+    id: number;
+    [key: string]: unknown;
+  }[];
+  [key: string]: unknown;
+}
+
+/**
+ * Sends an Overpass QL query through the proxy with a timeout and consistent
+ * form-encoded body (`data=<query>`).
+ */
+async function queryOverpass(query: string): Promise<OverpassResponse> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'data=' + encodeURIComponent(query),
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Overpass API request timed out after 60 s. Please try again.');
+    }
+    throw new Error(`Network error reaching Overpass proxy: ${err.message}`);
+  }
+
+  clearTimeout(timeoutId);
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('All Overpass API instances are rate-limiting right now. Please wait a minute and try again.');
+    }
+    throw new Error(`Overpass proxy returned HTTP ${response.status}.`);
+  }
+
+  return response.json() as Promise<OverpassResponse>;
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+export async function fetchNeighborhoods(bbox: string): Promise<OverpassResponse> {
   const query = `
     [out:json][timeout:25];
     (
@@ -11,21 +75,18 @@ export async function fetchNeighborhoods(bbox: string) {
     out geom;
   `;
 
-  const res = await fetch(PROXY_URL, {
-    method: 'POST',
-    body: 'data=' + encodeURIComponent(query)
-  });
-
-  if (!res.ok) {
-    throw new Error('Falha ao baixar bairros do OSM (Overpass).');
-  }
-
-  return await res.json();
+  return queryOverpass(query);
 }
 
-export async function fetchRoadNetwork(polygon: { lat: number, lng: number }[], mode: 'bike' | 'walk', bufferMeters: number = 20, safety: string = 'any') {
-  console.log(`[API] Step 1: Iniciando fetch do Overpass API para modo: ${mode}, buffer: ${bufferMeters}m, safety: ${safety}`);
+export async function fetchRoadNetwork(
+  polygon: { lat: number; lng: number }[],
+  mode: 'bike' | 'walk',
+  bufferMeters = 20,
+  safety = 'any'
+): Promise<OverpassResponse> {
+  console.log(`[API] fetchRoadNetwork — mode: ${mode}, buffer: ${bufferMeters}m, safety: ${safety}`);
 
+  // Build bounding box from polygon vertices + fetch buffer
   let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
   for (const p of polygon) {
     if (p.lat < minLat) minLat = p.lat;
@@ -34,102 +95,69 @@ export async function fetchRoadNetwork(polygon: { lat: number, lng: number }[], 
     if (p.lng > maxLng) maxLng = p.lng;
   }
 
-  const fetchBufferDegrees = Math.max(0.001, (bufferMeters * 0.00001) + 0.001);
-
+  const fetchBufferDegrees = Math.max(0.001, bufferMeters * 0.00001 + 0.001);
   minLat -= fetchBufferDegrees;
   maxLat += fetchBufferDegrees;
   minLng -= fetchBufferDegrees;
   maxLng += fetchBufferDegrees;
 
-  const bboxStr = `${minLat},${minLng},${maxLat},${maxLng}`;
+  const bbox = `${minLat},${minLng},${maxLat},${maxLng}`;
 
-  let wayFilter = `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"]`;
+  const query = buildRoadQuery(bbox, mode, safety);
+  console.log('[API] Overpass query:', query);
 
+  const data = await queryOverpass(query);
+  console.log(`[API] Received ${(data as any).elements?.length ?? 0} elements from Overpass.`);
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// Query builders
+// ---------------------------------------------------------------------------
+
+function buildRoadQuery(bbox: string, mode: 'bike' | 'walk', safety: string): string {
   if (mode === 'bike') {
     if (safety === 'safe') {
-      wayFilter = `["highway"~"^(secondary|tertiary|unclassified|residential|living_street|pedestrian|cycleway)$"]`;
-      const cyclewayFilter = `way["cycleway"](${bboxStr});`;
-      const explicitCycleFilter = `way["highway"="primary"]["cycleway"](${bboxStr});`;
-
-      const query = `
+      return `
         [out:json][timeout:25];
         (
-          way${wayFilter}(${bboxStr});
-          ${cyclewayFilter}
-          ${explicitCycleFilter}
+          way["highway"~"^(secondary|tertiary|unclassified|residential|living_street|pedestrian|cycleway)$"](${bbox});
+          way["cycleway"](${bbox});
+          way["highway"="primary"]["cycleway"](${bbox});
         );
         out body;
         >;
         out skel qt;
       `;
+    }
 
-      const res = await fetch(RAW_PROXY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'data=' + encodeURIComponent(query)
-      });
-      if (!res.ok) throw new Error('Falha ao baixar dados do OSM (Overpass).');
-      return await res.json();
-
-    } else if (safety === 'strict') {
-      wayFilter = `["highway"="cycleway"]`;
-      const cyclewayFilter = `way["cycleway"](${bboxStr});`;
-      const bicycleRoad = `way["bicycle_road"="yes"](${bboxStr});`;
-      const strictQuery = `
+    if (safety === 'strict') {
+      return `
         [out:json][timeout:25];
         (
-          way${wayFilter}(${bboxStr});
-          ${cyclewayFilter}
-          ${bicycleRoad}
+          way["highway"="cycleway"](${bbox});
+          way["cycleway"](${bbox});
+          way["bicycle_road"="yes"](${bbox});
         );
         out body;
         >;
         out skel qt;
       `;
-
-      const res = await fetch(RAW_PROXY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'data=' + encodeURIComponent(strictQuery)
-      });
-      if (!res.ok) throw new Error('Falha ao baixar dados do OSM (Overpass).');
-      return await res.json();
     }
   }
 
-  const query = `
+  // Default: walk or bike/any
+  const wayFilter = mode === 'bike'
+    ? `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian|cycleway)$"]`
+    : `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"]`;
+
+  return `
     [out:json][timeout:25];
     (
-      way${wayFilter}(${bboxStr});
+      way${wayFilter}(${bbox});
     );
     out body;
     >;
     out skel qt;
   `;
-
-  console.log('[API] Query enviada para Overpass API:', query);
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-  try {
-    const response = await fetch(RAW_PROXY_URL, {
-      method: 'POST',
-      body: query,
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`[API] Endpoint retornou erro: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(`[API] Dados recebidos do Overpass. Elementos: ${data.elements?.length || 0}`);
-    return data;
-  } catch (err) {
-    console.warn(`[API] Falha no endpoint (pode ser CORS/Timeout):`, err);
-    throw new Error('Falha ao obter dados do Overpass API. Tente novamente mais tarde.');
-  }
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.12.3] - 2026-06-29
+### Changed
+- **Proxy (`proxy/src/index.ts`)**: Lista de endpoints atualizada com base nas instâncias públicas oficiais do Overpass API:
+  - Adicionado `maps.mail.ru/osm/tools/overpass` (VK Maps — sem rate limit declarado).
+  - `overpass.kumi.systems` substituído pelo novo endereço `overpass.private.coffee`.
+  - Erros HTTP **429 (Too Many Requests)** agora acionam fallback para o próximo endpoint em vez de retornar imediatamente ao cliente.
+  - Adicionado header `Referer` em conformidade com a política de uso da OSM/FOSSGIS.
+- **API client (`src/api/overpass.ts`)**:
+  - Unificados todos os caminhos de fetch em um único helper `queryOverpass()` com `AbortController`, timeout de 60 s e form-encoding `data=` consistente.
+  - Mensagens de erro específicas para timeout e rate-limit (429).
+  - Exportado tipo `OverpassResponse` para tipagem correta dos consumidores.
+  - Separada a construção das queries em `buildRoadQuery()` para melhor legibilidade.
+
 ## [1.12.2] - 2026-06-29
 ### Refactored
 - Extraídos todos os SVGs inline que não são ícones React para arquivos dedicados em `public/icons/`:
