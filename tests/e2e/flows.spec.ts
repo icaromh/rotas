@@ -7,6 +7,9 @@ test.describe('App E2E Flows', () => {
   });
 
   test('Flow 1: Cycling path generation and share', async ({ page }) => {
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    page.on('pageerror', err => console.log('PAGE ERROR:', err.message));
+
     await page.goto('/');
 
     // 1. Choose cycling

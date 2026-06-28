@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.0] - 2026-06-28
+### Changed
+- Migração completa da arquitetura vanilla TypeScript para React (v19).
+- Centralização do estado global utilizando `zustand`.
+- Modularização da interface (anteriormente no `index.html`) em diversos componentes isolados (e.g., `MapContainer`, `Sidebar`, `Toolbar`), melhorando a manutenibilidade e escalabilidade do código.
+- Testes end-to-end do Playwright ajustados para suportar o ciclo de vida dos componentes React.
 ## [1.7.0] - 2026-06-28
 ### Added
 - Configuração de testes E2E utilizando o Playwright (`@playwright/test`).
