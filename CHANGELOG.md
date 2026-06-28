@@ -1,6 +1,10 @@
 # Changelog
 
-## [1.10.5] - 2026-06-28
+## [1.10.7] - 2026-06-28
+### Fixed
+- Correção de um espaçamento (gap) extra de 12px que aparecia no layout mobile entre as ferramentas de desenho e a "Magic Wand" quando o polígono ainda não havia sido desenhado, causado por elementos de UI invisíveis do Leaflet Draw.
+
+## [1.10.6] - 2026-06-28
 ### Fixed
 - Ajuste no layout mobile para alinhar o botão de configurações (`Settings`) verticalmente abaixo do ícone de esporte, acompanhando o fluxo do menu de desenho.
 
