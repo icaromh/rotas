@@ -156,14 +156,14 @@ export const Sidebar: React.FC<Props> = ({
               className="col-span-1 text-sm shadow-md"
             >
               <ShareIcon size={16} />
-              Share
+              {t('sidebar.actions.share')}
             </Button>
           )}
         </div>
 
         {isSharedView && (
           <div id="shared-notice" className={isSharedView ? "block" : "hidden"}>
-            <p className="text-sm font-medium text-gray-700">Viewing an external route. <Link to="/" className="text-[#4a6b46] hover:underline font-bold">Start over</Link>.</p>
+            <p className="text-sm font-medium text-gray-700">{t('sidebar.sharedNotice.text')} <Link to="/" className="text-[#4a6b46] hover:underline font-bold">{t('sidebar.sharedNotice.link')}</Link>.</p>
           </div>
         )}
       </div>

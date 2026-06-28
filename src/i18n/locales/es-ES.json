@@ -16,13 +16,18 @@
     "actions": {
       "stop": "Detener",
       "preview": "Vista previa",
-      "gpx": "GPX"
+      "gpx": "GPX",
+      "share": "Compartir"
     },
     "alerts": {
       "linkCopied": "¡Enlace de la ruta copiado al portapapeles!",
       "linkFailed": "No se pudo copiar el enlace.",
       "shareSuccess": "¡Ruta compartida con éxito!",
       "shareFailed": "Compartir cancelado o fallido."
+    },
+    "sharedNotice": {
+      "text": "Viendo una ruta externa.",
+      "link": "Empezar de nuevo"
     }
   },
   "toolbar": {

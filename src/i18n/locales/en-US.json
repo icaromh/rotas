@@ -16,13 +16,18 @@
     "actions": {
       "stop": "Stop",
       "preview": "Preview",
-      "gpx": "GPX"
+      "gpx": "GPX",
+      "share": "Share"
     },
     "alerts": {
       "linkCopied": "Route link copied to clipboard!",
       "linkFailed": "Failed to copy link.",
       "shareSuccess": "Route shared successfully!",
       "shareFailed": "Share cancelled or failed."
+    },
+    "sharedNotice": {
+      "text": "Viewing an external route.",
+      "link": "Start over"
     }
   },
   "toolbar": {
