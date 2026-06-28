@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { GitHubIcon } from './icons';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface Props {
 
 export const AboutModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isOpen) {
@@ -37,16 +39,16 @@ export const AboutModal: React.FC<Props> = ({ isOpen, onClose }) => {
           <span className="bg-[#4a6b46] text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold align-middle">Beta</span>
         </h2>
         <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-          Draw an area on the map and get an optimized GPX track to walk or ride through every single street inside it.
+          {t('about.description')}
         </p>
         <div className="bg-gray-50 rounded-2xl p-4 mt-2 flex flex-col items-center gap-3">
           <div>
-            <p className="text-sm font-bold text-gray-800">Developed by Icaro MH</p>
-            <p className="text-xs text-gray-500 mt-0.5">Open source path planner.</p>
+            <p className="text-sm font-bold text-gray-800">{t('about.developedBy')}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('about.openSource')}</p>
           </div>
           <a href="https://github.com/icaromh/rotas" target="_blank" rel="noreferrer" className="text-sm text-[#4a6b46] hover:text-[#395336] font-bold hover:underline flex items-center gap-1.5 transition-colors">
             <GitHubIcon size={16} />
-            View on GitHub
+            {t('about.viewOnGithub')}
           </a>
         </div>
         <Button 
@@ -57,7 +59,7 @@ export const AboutModal: React.FC<Props> = ({ isOpen, onClose }) => {
           fullWidth
           className="mt-4"
         >
-          Close
+          {t('about.close')}
         </Button>
       </div>
     </dialog>

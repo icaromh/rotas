@@ -4,6 +4,7 @@ import { StopCircleIcon, PlayCircleIcon, DownloadIcon, ShareIcon } from './icons
 import { Button } from './ui/Button';
 import { encodeRoute } from '../utils/routeSharing';
 import { Link } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onPreviewToggle: () => void;
@@ -27,6 +28,7 @@ export const Sidebar: React.FC<Props> = ({
   currentPathData
 }) => {
   const sportMode = useAppStore(state => state.sportMode);
+  const { t } = useTranslation();
 
   if (!isDoneMode && !isSharedView) return null;
 
@@ -59,16 +61,16 @@ export const Sidebar: React.FC<Props> = ({
     if (navigator.share) {
       try {
         await navigator.share({ url: shareUrl });
-        console.log('Rota compartilhada com sucesso!');
+        console.log(t('sidebar.alerts.shareSuccess'));
       } catch (err) {
-        console.log('Compartilhamento cancelado ou falhou.', err);
+        console.log(t('sidebar.alerts.shareFailed'), err);
       }
     } else {
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('Link da rota copiado para a área de transferência!');
+        alert(t('sidebar.alerts.linkCopied'));
       }).catch(err => {
-        console.error('Falha ao copiar link:', err);
-        alert('Não foi possível copiar o link.');
+        console.error(t('sidebar.alerts.linkFailed'), err);
+        alert(t('sidebar.alerts.linkFailed'));
       });
     }
   };
@@ -77,18 +79,18 @@ export const Sidebar: React.FC<Props> = ({
     <aside id="sidebar" className="fixed bottom-6 inset-x-4 md:inset-auto md:relative md:w-80 bg-white shadow-2xl md:shadow-xl flex flex-col pointer-events-auto h-auto max-h-[50vh] md:max-h-none md:h-full rounded-3xl overflow-hidden z-[1002] md:z-50">
 
       <div className="hidden md:block p-5 bg-white border-b border-gray-100 shrink-0">
-        <h1 className="text-xl font-bold text-gray-800 tracking-tight">Explore Every Inch</h1>
-        <p className="text-xs text-gray-400 mt-1">Draw an area on the map and get an optimized GPX track to walk or ride through every single street inside it.</p>
+        <h1 className="text-xl font-bold text-gray-800 tracking-tight">{t('sidebar.title')}</h1>
+        <p className="text-xs text-gray-400 mt-1">{t('sidebar.description')}</p>
       </div>
 
       <div className="p-4 md:p-5 flex-grow overflow-y-auto flex flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] custom-scrollbar">
         <div id="results-panel" className="flex-col gap-4 md:pt-4 md:border-t border-gray-100 flex-grow flex">
           <h2 id="neighborhood-title" className="flex justify-center items-center gap-2 mt-2 mb-1">
             <span id="neighborhood-name" className="text-xl font-extrabold text-gray-900">
-              {currentNeighborhoodName || 'Custom Route'}
+              {currentNeighborhoodName || t('sidebar.customRoute')}
             </span>
             <span id="sport-tag" className="bg-[#4a6b46] text-white text-[10px] px-2 py-1 rounded-md uppercase tracking-wider font-extrabold">
-              {sportMode === 'bike' ? 'Ride' : 'Walk'}
+              {sportMode === 'bike' ? t('sidebar.sport.bike') : t('sidebar.sport.walk')}
             </span>
           </h2>
           <div className="flex justify-around items-center pt-2 pb-1">
@@ -96,7 +98,7 @@ export const Sidebar: React.FC<Props> = ({
               <div className="text-2xl font-extrabold text-gray-900" id="result-distance">
                 {currentDistanceKm.toFixed(2)} <span className="text-sm font-medium text-gray-500">km</span>
               </div>
-              <div className="text-[12px] text-gray-500 font-medium mt-1">Distance</div>
+              <div className="text-[12px] text-gray-500 font-medium mt-1">{t('sidebar.distance')}</div>
             </div>
             <div className="flex flex-col items-center text-center">
               <div className="text-2xl font-extrabold text-gray-900" id="result-time">
@@ -106,7 +108,7 @@ export const Sidebar: React.FC<Props> = ({
                   <>{m} <span className="text-sm font-medium text-gray-500">min</span></>
                 )}
               </div>
-              <div className="text-[12px] text-gray-500 font-medium mt-1">Est. time</div>
+              <div className="text-[12px] text-gray-500 font-medium mt-1">{t('sidebar.estTime')}</div>
             </div>
           </div>
         </div>
@@ -124,12 +126,12 @@ export const Sidebar: React.FC<Props> = ({
             {isPreviewing ? (
               <>
                 <StopCircleIcon className="w-5 h-5 mr-1" />
-                Stop
+                {t('sidebar.actions.stop')}
               </>
             ) : (
               <>
                 <PlayCircleIcon className="w-5 h-5 mr-1" />
-                Preview
+                {t('sidebar.actions.preview')}
               </>
             )}
           </Button>
@@ -142,7 +144,7 @@ export const Sidebar: React.FC<Props> = ({
             className="col-span-1 text-sm"
           >
             <DownloadIcon size={16} />
-            GPX
+            {t('sidebar.actions.gpx')}
           </Button>
 
           {!isSharedView && (
@@ -154,14 +156,14 @@ export const Sidebar: React.FC<Props> = ({
               className="col-span-1 text-sm shadow-md"
             >
               <ShareIcon size={16} />
-              Share
+              {t('sidebar.actions.share')}
             </Button>
           )}
         </div>
 
         {isSharedView && (
           <div id="shared-notice" className={isSharedView ? "block" : "hidden"}>
-            <p className="text-sm font-medium text-gray-700">Viewing an external route. <Link to="/" className="text-[#4a6b46] hover:underline font-bold">Start over</Link>.</p>
+            <p className="text-sm font-medium text-gray-700">{t('sidebar.sharedNotice.text')} <Link to="/" className="text-[#4a6b46] hover:underline font-bold">{t('sidebar.sharedNotice.link')}</Link>.</p>
           </div>
         )}
       </div>

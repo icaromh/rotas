@@ -7,11 +7,13 @@ import { Toolbar } from '../components/Toolbar';
 import { PreferencesModal } from '../components/PreferencesModal';
 import { AboutModal } from '../components/AboutModal';
 import { Loader } from '../components/Loader';
+import { useTranslation } from 'react-i18next';
 
 export const Planner: React.FC = () => {
   const sportMode = useAppStore(state => state.sportMode);
   const bufferMeters = useAppStore(state => state.bufferMeters);
   const safetyPreference = useAppStore(state => state.safetyPreference);
+  const { t } = useTranslation();
 
   const [isDoneMode, setIsDoneMode] = useState(false);
   const [routeData, setRouteData] = useState<{
@@ -49,7 +51,7 @@ export const Planner: React.FC = () => {
         setLoader({ isLoading: false, title: '', subtitle: '' });
         setIsDoneMode(true);
       } else if (type === 'error') {
-        alert('Falha ao gerar a rota: ' + message);
+        alert(t('planner.errorGeneration') + ' ' + message);
         setLoader({ isLoading: false, title: '', subtitle: '' });
       }
     };
@@ -82,14 +84,14 @@ export const Planner: React.FC = () => {
     }
 
     if (!currentPolygonBounds.current) {
-      alert("Por favor, desenhe uma área no mapa primeiro ou use a Magic Wand para selecionar um bairro.");
+      alert(t('planner.errorNoArea'));
       return;
     }
 
     setLoader({
       isLoading: true,
-      title: 'Generating Route',
-      subtitle: sportMode === 'bike' ? 'Analyzing street network...' : 'Generating pedestrian paths...'
+      title: t('planner.generatingRoute'),
+      subtitle: sportMode === 'bike' ? t('planner.analyzingBike') : t('planner.analyzingWalk')
     });
 
     workerRef.current?.postMessage({

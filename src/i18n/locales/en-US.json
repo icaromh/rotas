@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "planner": "Planner",
+    "about": "About"
+  },
+  "sidebar": {
+    "title": "Explore Every Inch",
+    "description": "Draw an area on the map and get an optimized GPX track to walk or ride through every single street inside it.",
+    "customRoute": "Custom Route",
+    "distance": "Distance",
+    "estTime": "Est. time",
+    "sport": {
+      "bike": "Ride",
+      "walk": "Walk"
+    },
+    "actions": {
+      "stop": "Stop",
+      "preview": "Preview",
+      "gpx": "GPX",
+      "share": "Share"
+    },
+    "alerts": {
+      "linkCopied": "Route link copied to clipboard!",
+      "linkFailed": "Failed to copy link.",
+      "shareSuccess": "Route shared successfully!",
+      "shareFailed": "Share cancelled or failed."
+    },
+    "sharedNotice": {
+      "text": "Viewing an external route.",
+      "link": "Start over"
+    }
+  },
+  "toolbar": {
+    "newPlan": "New Plan",
+    "plan": "Plan",
+    "settings": "Settings"
+  },
+  "preferences": {
+    "title": "Route Settings",
+    "routeBuffer": "Polygon Expansion",
+    "bufferHelp": "Expand the generated area to include streets slightly outside your drawing.",
+    "meters": "m",
+    "safety": {
+      "title": "Cycling Preference",
+      "help": "Filter which types of streets are acceptable for riding.",
+      "strict": "Strict Cycleways Only",
+      "balanced": "Safer (Avoid busy avenues)",
+      "any": "Any Roads (Default)"
+    },
+    "sport": {
+      "title": "Sport",
+      "cycling": "Cycling",
+      "walking": "Walking"
+    },
+    "save": "Save Settings"
+  },
+  "about": {
+    "title": "About Rotas",
+    "description": "Draw an area on the map and get an optimized GPX track to walk or ride through every single street inside it.",
+    "developedBy": "Developed by Icaro MH",
+    "openSource": "Open source path planner.",
+    "viewOnGithub": "View on GitHub",
+    "close": "Close"
+  },
+  "pwa": {
+    "title": "Update Available",
+    "description": "A new version of Rotas is ready. Reload to apply.",
+    "reload": "Reload Now",
+    "later": "Later"
+  },
+  "loader": {
+    "defaultTitle": "Loading...",
+    "defaultSubtitle": "Please wait."
+  },
+  "planner": {
+    "errorGeneration": "Failed to generate route:",
+    "errorNoArea": "Please draw an area on the map first or use the Magic Wand to select a neighborhood.",
+    "generatingRoute": "Generating Route",
+    "analyzingBike": "Analyzing street network...",
+    "analyzingWalk": "Generating pedestrian paths..."
+  }
+}

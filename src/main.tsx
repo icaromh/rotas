@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 import { router } from './router';
 import './style.css';
+import './i18n/config';
 
 const container = document.getElementById('root');
 if (container) {

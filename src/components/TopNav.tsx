@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import { RefreshIcon, RouteIcon, InfoIcon } from './icons';
 import { Button } from './ui/Button';
+import { LanguageSelector } from './LanguageSelector';
 
 interface Props {
   onOpenAbout: () => void;
@@ -10,6 +12,7 @@ interface Props {
 }
 
 export const TopNav: React.FC<Props> = ({ onOpenAbout, onGenerate, isDoneMode }) => {
+  const { t } = useTranslation();
 
   return (
     <nav className="h-16 bg-[#f4f1ea] border-b border-[#e5e0d4] flex items-center justify-between px-6 z-[1000] shrink-0 shadow-sm relative">
@@ -19,11 +22,12 @@ export const TopNav: React.FC<Props> = ({ onOpenAbout, onGenerate, isDoneMode })
           <span className="hidden md:block text-2xl font-extrabold text-gray-800 tracking-tight">Rotas</span>
         </div>
         <div className="hidden md:flex gap-5 text-sm font-bold text-gray-700 mt-1">
-          <Link to="/" className="hover:text-[#4a6b46] transition-colors">Planner</Link>
-          <Button id="about-btn" variant="ghost-text" size="none" onClick={onOpenAbout}>About</Button>
+          <Link to="/" className="hover:text-[#4a6b46] transition-colors">{t('nav.planner')}</Link>
+          <Button id="about-btn" variant="ghost-text" size="none" onClick={onOpenAbout}>{t('nav.about')}</Button>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
+        <LanguageSelector />
 
         <Button
           id="mobile-generate-btn"
@@ -35,12 +39,12 @@ export const TopNav: React.FC<Props> = ({ onOpenAbout, onGenerate, isDoneMode })
           {isDoneMode ? (
             <>
               <RefreshIcon size={16} />
-              New Plan
+              {t('toolbar.newPlan')}
             </>
           ) : (
             <>
               <RouteIcon size={16} />
-              Plan
+              {t('toolbar.plan')}
             </>
           )}
         </Button>

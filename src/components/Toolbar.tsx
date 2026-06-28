@@ -2,6 +2,7 @@ import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { ChevronDownIcon, SettingsIcon, RefreshIcon, RouteIcon, BikeIcon, WalkIcon } from './icons';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onOpenSettings: () => void;
@@ -12,6 +13,7 @@ interface Props {
 export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMode }) => {
   const sportMode = useAppStore(state => state.sportMode);
   const setSportMode = useAppStore(state => state.setSportMode);
+  const { t } = useTranslation();
 
   return (
     <div className="flex-1 flex justify-between items-start pointer-events-none">
@@ -30,7 +32,7 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
             {/* Visual Label: Icon (Mobile) / Text (Desktop) */}
             <div className="pointer-events-none flex items-center md:pr-6">
               <span className="hidden md:inline text-sm font-extrabold text-gray-800">
-                {sportMode === 'bike' ? 'Cycling' : 'Walking'}
+                {sportMode === 'bike' ? t('preferences.sport.cycling') : t('preferences.sport.walking')}
               </span>
               <span className="md:hidden text-gray-800 flex items-center justify-center">
                 {sportMode === 'bike' ? <BikeIcon size={20} /> : <WalkIcon size={20} />}
@@ -46,8 +48,8 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
               onChange={(e) => setSportMode(e.target.value as any)}
               className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
             >
-              <option value="bike">Cycling</option>
-              <option value="walk">Walking</option>
+              <option value="bike">{t('preferences.sport.cycling')}</option>
+              <option value="walk">{t('preferences.sport.walking')}</option>
             </select>
           </div>
 
@@ -76,12 +78,12 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
           {isDoneMode ? (
             <>
               <RefreshIcon size={18} />
-              New Plan
+              {t('toolbar.newPlan')}
             </>
           ) : (
             <>
               <RouteIcon size={18} />
-              Plan Route
+              {t('toolbar.plan')}
             </>
           )}
         </Button>

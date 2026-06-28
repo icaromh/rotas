@@ -67,7 +67,7 @@ test.describe('App E2E Flows', () => {
     await page.locator('#share-btn').click();
     
     // Wait for clipboard alert
-    await expect.poll(() => dialogMessage).toBe('Link da rota copiado para a área de transferência!');
+    await expect.poll(() => dialogMessage).toBe('Route link copied to clipboard!');
 
     // Get the URL from mock clipboard
     const clipboardText = await page.evaluate(() => (window as any).__mockClipboard);
@@ -126,7 +126,7 @@ test.describe('App E2E Flows', () => {
     });
 
     await page.locator('#share-btn').click();
-    await expect.poll(() => dialogMessage).toBe('Link da rota copiado para a área de transferência!');
+    await expect.poll(() => dialogMessage).toBe('Route link copied to clipboard!');
 
     const sharedUrl = await page.evaluate(() => (window as any).__mockClipboard);
     expect(sharedUrl).toContain('mode=walk');

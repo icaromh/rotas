@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "planner": "Rutas",
+    "about": "Acerca de"
+  },
+  "sidebar": {
+    "title": "Explora Cada Centímetro",
+    "description": "Dibuja un área en el mapa y obtén una ruta GPX optimizada para caminar o pedalear por todas las calles en su interior.",
+    "customRoute": "Ruta Personalizada",
+    "distance": "Distancia",
+    "estTime": "Tiempo est.",
+    "sport": {
+      "bike": "Bici",
+      "walk": "Caminata"
+    },
+    "actions": {
+      "stop": "Detener",
+      "preview": "Vista previa",
+      "gpx": "GPX",
+      "share": "Compartir"
+    },
+    "alerts": {
+      "linkCopied": "¡Enlace de la ruta copiado al portapapeles!",
+      "linkFailed": "No se pudo copiar el enlace.",
+      "shareSuccess": "¡Ruta compartida con éxito!",
+      "shareFailed": "Compartir cancelado o fallido."
+    },
+    "sharedNotice": {
+      "text": "Viendo una ruta externa.",
+      "link": "Empezar de nuevo"
+    }
+  },
+  "toolbar": {
+    "newPlan": "Nueva Ruta",
+    "plan": "Planear",
+    "settings": "Ajustes"
+  },
+  "preferences": {
+    "title": "Ajustes de Ruta",
+    "routeBuffer": "Expansión del Polígono",
+    "bufferHelp": "Expanda el área generada para incluir calles un poco fuera de su dibujo.",
+    "meters": "m",
+    "safety": {
+      "title": "Preferencia de Ciclismo",
+      "help": "Filtre qué tipos de calles son aceptables para pedalear.",
+      "strict": "Solo Ciclovías",
+      "balanced": "Más Segura (Evitar avenidas)",
+      "any": "Cualquier Calle (Predeterminado)"
+    },
+    "sport": {
+      "title": "Deporte",
+      "cycling": "Ciclismo",
+      "walking": "Caminata"
+    },
+    "save": "Guardar Ajustes"
+  },
+  "about": {
+    "title": "Acerca de Rotas",
+    "description": "Dibuja un área en el mapa y obtén una ruta GPX optimizada para caminar o pedalear por todas las calles en su interior.",
+    "developedBy": "Desarrollado por Icaro MH",
+    "openSource": "Planificador de rutas de código abierto.",
+    "viewOnGithub": "Ver en GitHub",
+    "close": "Cerrar"
+  },
+  "pwa": {
+    "title": "Actualización Disponible",
+    "description": "Una nueva versión de Rotas está lista. Recarga para aplicar.",
+    "reload": "Recargar Ahora",
+    "later": "Más tarde"
+  },
+  "loader": {
+    "defaultTitle": "Cargando...",
+    "defaultSubtitle": "Por favor, espere."
+  },
+  "planner": {
+    "errorGeneration": "Fallo al generar la ruta:",
+    "errorNoArea": "Por favor, dibuje un área en el mapa primero o use la Varita Mágica para seleccionar un barrio.",
+    "generatingRoute": "Generando Ruta",
+    "analyzingBike": "Analizando la red de calles...",
+    "analyzingWalk": "Generando caminos para peatones..."
+  }
+}
