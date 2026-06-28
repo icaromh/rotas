@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.12.0] - 2026-06-28
+### Added
+- Refatoração das chamadas de rede (Fetch API) para a proxy do Overpass utilizando `@tanstack/react-query`.
+- Criação de um módulo externo de API (`src/api/overpass.ts`) para centralizar lógicas de rede, removendo dependência de rede de dentro dos web workers para focar o processamento exclusivamente na CPU.
+
 ## [1.11.1] - 2026-06-28
 ### Fixed
 - Correção de localização (i18n) pendente nos botões internos de desenho do mapa (Leaflet Draw) e nos textos do loader global (Busca de Bairros).
