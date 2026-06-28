@@ -996,12 +996,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = new URL(window.location.href);
     url.searchParams.set('route', encoded);
 
+    const mode = sportSelect ? sportSelect.value : 'bike';
     if (currentNeighborhoodName) {
-      const mode = sportSelect ? sportSelect.value : 'bike';
       url.searchParams.set('name', currentNeighborhoodName);
-      url.searchParams.set('mode', mode);
-      url.searchParams.set('distance', currentDistanceKm.toFixed(2));
     }
+    url.searchParams.set('mode', mode);
+    url.searchParams.set('distance', currentDistanceKm.toFixed(2));
 
     const shareUrl = url.toString();
 

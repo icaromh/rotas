@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0] - 2026-06-28
+### Added
+- Configuração de testes E2E utilizando o Playwright (`@playwright/test`).
+- Testes end-to-end (E2E) para garantir a integridade dos fluxos de criação e compartilhamento de rotas (caminhada e ciclismo) de forma automatizada.
+
+### Fixed
+- A modalidade de esporte escolhida (`mode`) e a distância agora são corretamente persistidas nas URLs compartilhadas mesmo quando o usuário desenha o polígono manualmente.
+
 ## [1.5.0] - 2026-06-27
 ### Added
 - Novas opções de personalização de rotas com botão "Settings" na interface:
