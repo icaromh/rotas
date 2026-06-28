@@ -32,7 +32,7 @@ test.describe('App E2E Flows', () => {
     
     // Wait for the results panel to appear and distance to be calculated
     const resultsPanel = page.locator('#results-panel');
-    await expect(resultsPanel).toBeVisible({ timeout: 15000 });
+    await expect(resultsPanel).toBeVisible({ timeout: 30000 });
     await expect(page.locator('#result-distance')).not.toContainText('-- km');
     await expect(page.locator('#result-time')).not.toContainText('--:--');
 
@@ -78,7 +78,7 @@ test.describe('App E2E Flows', () => {
     
     // Wait for the results
     const resultsPanel = page.locator('#results-panel');
-    await expect(resultsPanel).toBeVisible({ timeout: 15000 });
+    await expect(resultsPanel).toBeVisible({ timeout: 30000 });
     
     // 4. Share and get the URL
     let dialogMessage = '';

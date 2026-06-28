@@ -1,27 +1,23 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useAppStore } from './store/useAppStore';
-import { TopNav } from './components/TopNav';
-import { MapContainer } from './components/MapContainer';
-import { Sidebar } from './components/Sidebar';
-import { Toolbar } from './components/Toolbar';
-import { PreferencesModal } from './components/PreferencesModal';
-import { AboutModal } from './components/AboutModal';
-import { Loader } from './components/Loader';
-import { PwaToast } from './components/PwaToast';
-import { decodeRoute } from './utils/routeSharing';
+import { useAppStore } from '../store/useAppStore';
+import { TopNav } from '../components/TopNav';
+import { MapContainer } from '../components/MapContainer';
+import { Sidebar } from '../components/Sidebar';
+import { Toolbar } from '../components/Toolbar';
+import { PreferencesModal } from '../components/PreferencesModal';
+import { AboutModal } from '../components/AboutModal';
+import { Loader } from '../components/Loader';
 
-export const App: React.FC = () => {
+export const Planner: React.FC = () => {
   const isDoneMode = useAppStore(state => state.isDoneMode);
   const setDoneMode = useAppStore(state => state.setDoneMode);
   const setRouteData = useAppStore(state => state.setRouteData);
-  const setSharedView = useAppStore(state => state.setSharedView);
-  const isSharedView = useAppStore(state => state.isSharedView);
   const sportMode = useAppStore(state => state.sportMode);
-  const setSportMode = useAppStore(state => state.setSportMode);
   const currentPathData = useAppStore(state => state.currentPathData);
   const bufferMeters = useAppStore(state => state.bufferMeters);
   const safetyPreference = useAppStore(state => state.safetyPreference);
   const resetRoute = useAppStore(state => state.resetRoute);
+  const setSharedView = useAppStore(state => state.setSharedView);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -32,9 +28,13 @@ export const App: React.FC = () => {
   const currentNeighborhoodNameRef = useRef<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
-  // Initialize Worker and Handle URL params
+  // Reset any shared view state when entering planner
   useEffect(() => {
-    workerRef.current = new Worker(new URL('./workers/optimizer.worker.ts', import.meta.url), { type: 'module' });
+    setSharedView(false);
+  }, []);
+
+  useEffect(() => {
+    workerRef.current = new Worker(new URL('../workers/optimizer.worker.ts', import.meta.url), { type: 'module' });
 
     workerRef.current.onmessage = (e) => {
       const { type, path, distance, message } = e.data;
@@ -52,46 +52,10 @@ export const App: React.FC = () => {
       }
     };
 
-    // Check shared URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const routeParam = urlParams.get('route');
-    const nameParam = urlParams.get('name');
-    const modeParam = urlParams.get('mode');
-    const distanceParam = urlParams.get('distance');
-
-    if (routeParam) {
-      try {
-        const decodedPoints = decodeRoute(routeParam);
-        if (decodedPoints.length > 0) {
-          setRouteData({
-            path: decodedPoints,
-            distanceKm: parseFloat(distanceParam || '0'),
-            neighborhoodName: nameParam
-          });
-          if (modeParam === 'bike' || modeParam === 'walk') {
-            setSportMode(modeParam);
-          }
-          setSharedView(true);
-        }
-      } catch (err) {
-        console.error('Failed to decode shared route', err);
-      }
-    }
-
     return () => {
-      workerRef.current?.terminate();
+      // workerRef.current?.terminate();
     };
   }, []);
-
-  // Sync state if starting over from SharedView
-  useEffect(() => {
-    if (!isSharedView) {
-      // Clean up URL if we start over
-      if (window.location.search) {
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    }
-  }, [isSharedView]);
 
   const handlePolygonDrawn = (bounds: { lat: number, lng: number }[], neighborhoodName: string | null) => {
     currentPolygonBounds.current = bounds;
@@ -106,10 +70,9 @@ export const App: React.FC = () => {
   };
 
   const handleGenerate = () => {
-    if (isDoneMode || isSharedView) {
+    if (isDoneMode) {
       // Start over
       setDoneMode(false);
-      setSharedView(false);
       resetRoute();
       currentPolygonBounds.current = null;
       currentNeighborhoodNameRef.current = null;
@@ -160,7 +123,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-gray-50 text-gray-900 font-sans antialiased overflow-hidden">
+    <>
       <TopNav 
         onOpenSettings={() => setIsSettingsOpen(true)} 
         onOpenAbout={() => setIsAboutOpen(true)}
@@ -193,7 +156,6 @@ export const App: React.FC = () => {
       <PreferencesModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
       <Loader {...loader} />
-      <PwaToast />
-    </div>
+    </>
   );
 };

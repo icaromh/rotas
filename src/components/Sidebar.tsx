@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { encodeRoute } from '../utils/routeSharing';
+import { Link } from '@tanstack/react-router';
 
 interface Props {
   onPreviewToggle: () => void;
@@ -33,7 +34,7 @@ export const Sidebar: React.FC<Props> = ({ onPreviewToggle, onExportGpx, isPrevi
   const handleShare = async () => {
     if (currentPathData.length === 0) return;
     const encoded = encodeRoute(currentPathData);
-    const url = new URL(window.location.href);
+    const url = new URL(window.location.origin + '/preview');
     url.searchParams.set('route', encoded);
     
     if (currentNeighborhoodName) {
@@ -144,8 +145,8 @@ export const Sidebar: React.FC<Props> = ({ onPreviewToggle, onExportGpx, isPrevi
         </div>
 
         {isSharedView && (
-          <div id="shared-notice">
-            <p className="text-sm font-medium text-gray-700">Viewing an external route. <a href="/" className="text-[#4a6b46] hover:underline font-bold">Start over</a>.</p>
+          <div id="shared-notice" className={isSharedView ? "block" : "hidden"}>
+            <p className="text-sm font-medium text-gray-700">Viewing an external route. <Link to="/" className="text-[#4a6b46] hover:underline font-bold">Start over</Link>.</p>
           </div>
         )}
       </div>

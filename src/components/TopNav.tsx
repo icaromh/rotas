@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { Link } from '@tanstack/react-router';
 
 interface Props {
   onOpenSettings: () => void;
@@ -20,7 +21,7 @@ export const TopNav: React.FC<Props> = ({ onOpenSettings, onOpenAbout, onGenerat
           <span className="hidden md:block text-2xl font-extrabold text-gray-800 tracking-tight">Rotas</span>
         </div>
         <div className="hidden md:flex gap-5 text-sm font-bold text-gray-700 mt-1">
-          <a href="/" className="hover:text-[#4a6b46] transition-colors">Planner</a>
+          <Link to="/" className="hover:text-[#4a6b46] transition-colors">Planner</Link>
           <button id="about-btn" onClick={onOpenAbout} className="hover:text-[#4a6b46] transition-colors cursor-pointer">About</button>
         </div>
       </div>
