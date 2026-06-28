@@ -1,58 +1,101 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Visual Regression Tests', () => {
-  test('Initial Load UI', async ({ page }) => {
-    await page.goto('/');
-    
-    // Wait for Leaflet to initialize the map and draw controls
-    await page.waitForSelector('.leaflet-draw-toolbar');
-    
-    // Take a screenshot of the UI, masking the dynamic map background
-    await expect(page).toHaveScreenshot('initial-ui.png', {
-      mask: [page.locator('.leaflet-map-pane')],
-      fullPage: true,
+const LOCALES = ['en-US', 'pt-BR', 'es-ES'];
+
+for (const locale of LOCALES) {
+  test.describe(`Visual Regression Tests [${locale}]`, () => {
+
+    test.beforeEach(async ({ page }) => {
+      // Intercept and mock tile requests with a solid gray PNG
+      await page.route('**/*.basemaps.cartocdn.com/rastertiles/voyager/**/*.png', async route => {
+        await route.fulfill({
+          contentType: 'image/png',
+          body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mM88x8AAp0BzdNIl+IAAAAASUVORK5CYII=', 'base64')
+        });
+      });
+
+      await page.goto('/');
+      await page.evaluate((l) => {
+        localStorage.setItem('i18nextLng', l);
+      }, locale);
+      await page.reload();
+      await page.waitForSelector('.leaflet-draw-toolbar');
+    });
+
+    test('Initial Load UI', async ({ page }) => {
+      await expect(page).toHaveScreenshot(`initial-ui-${locale}.png`, {
+        mask: [
+          page.locator('.leaflet-control-attribution')
+        ],
+        fullPage: true,
+      });
+    });
+
+    test('Settings Modal', async ({ page }) => {
+      await page.locator('#settings-btn').click();
+
+      const settingsModal = page.locator('#preferences-modal');
+      await expect(settingsModal).toBeVisible();
+
+      await expect(page).toHaveScreenshot(`settings-modal-${locale}.png`, {
+        mask: [
+
+          page.locator('.leaflet-tile-pane'),
+          page.locator('.leaflet-control-attribution')
+        ],
+        fullPage: true,
+      });
+    });
+
+    test('Drawn Polygon UI State', async ({ page }) => {
+      await page.evaluate(() => {
+        const latlngs = [
+          [41.387, 2.168],
+          [41.387, 2.169],
+          [41.388, 2.169]
+        ];
+        const layer = (window as any).L.polygon(latlngs);
+        (window as any).map.fire('draw:created', { layerType: 'polygon', layer });
+      });
+
+      await expect(page).toHaveScreenshot(`drawn-polygon-ui-${locale}.png`, {
+        mask: [
+
+          page.locator('.leaflet-tile-pane'),
+          page.locator('.leaflet-control-attribution')
+        ],
+        fullPage: true,
+      });
+    });
+
+    test('Generated Route UI State', async ({ page }) => {
+      await page.evaluate(() => {
+        const latlngs = [
+          [41.387, 2.168],
+          [41.387, 2.169],
+          [41.388, 2.169]
+        ];
+        const layer = (window as any).L.polygon(latlngs);
+        (window as any).map.fire('draw:created', { layerType: 'polygon', layer });
+      });
+
+      if (await page.locator('#mobile-generate-fab').isVisible()) {
+        await page.locator('#mobile-generate-fab').click();
+      } else {
+        await page.locator('#generate-btn').click();
+      }
+
+      const resultsPanel = page.locator('#results-panel');
+      await expect(resultsPanel).toBeVisible({ timeout: 30000 });
+
+      await expect(page).toHaveScreenshot(`generated-route-ui-${locale}.png`, {
+        mask: [
+
+          page.locator('.leaflet-tile-pane'),
+          page.locator('.leaflet-control-attribution')
+        ],
+        fullPage: true,
+      });
     });
   });
-
-  test('Settings Modal', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('.leaflet-draw-toolbar');
-
-    // Open settings modal
-    await page.locator('#settings-btn').click();
-    
-    // Wait for the modal to be visible
-    const settingsModal = page.locator('#preferences-modal');
-    await expect(settingsModal).toBeVisible();
-
-    // Take screenshot of the modal overlay
-    await expect(page).toHaveScreenshot('settings-modal.png', {
-      mask: [page.locator('.leaflet-map-pane')],
-      fullPage: true,
-    });
-  });
-
-  test('Drawn Polygon UI State', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('.leaflet-draw-toolbar');
-
-    // Programmatically draw a polygon to reveal the edit/delete tools
-    await page.evaluate(() => {
-      const latlngs = [
-        [41.387, 2.168],
-        [41.387, 2.169],
-        [41.388, 2.169]
-      ];
-      const layer = (window as any).L.polygon(latlngs);
-      (window as any).map.fire('draw:created', { layerType: 'polygon', layer });
-    });
-
-    // Take screenshot
-    await expect(page).toHaveScreenshot('drawn-polygon-ui.png', {
-      mask: [
-        page.locator('.leaflet-map-pane'), 
-      ],
-      fullPage: true,
-    });
-  });
-});
+}

@@ -130,8 +130,6 @@ export const Planner: React.FC = () => {
     <>
       <TopNav 
         onOpenAbout={() => setIsAboutOpen(true)}
-        onGenerate={handleGenerate}
-        isDoneMode={isDoneMode}
       />
       
       <div className="flex-1 relative w-full h-full bg-gray-200 overflow-hidden">
@@ -156,6 +154,7 @@ export const Planner: React.FC = () => {
             currentDistanceKm={routeData.distanceKm}
             currentNeighborhoodName={routeData.neighborhoodName}
             currentPathData={routeData.path}
+            onReset={handleGenerate}
           />
           <Toolbar 
             onOpenSettings={() => setIsSettingsOpen(true)}

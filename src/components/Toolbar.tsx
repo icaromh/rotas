@@ -66,7 +66,7 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
         </div>
       </div>
 
-      {/* Right Side: Generate Button */}
+      {/* Right Side: Generate Button (Desktop) */}
       <div id="desktop-generate-wrapper" className="pointer-events-auto ml-auto hidden md:block">
         <Button 
           id="generate-btn" 
@@ -88,6 +88,22 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
           )}
         </Button>
       </div>
+
+      {/* Bottom Center: Generate FAB (Mobile) */}
+      {!isDoneMode && (
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto z-[1000] pb-env-safe">
+          <Button 
+            id="mobile-generate-fab" 
+            onClick={onGenerate}
+            variant="primary"
+            size="lg"
+            className="shadow-2xl px-8 rounded-full h-14 text-base tracking-wide"
+          >
+            <RouteIcon size={20} />
+            {t('toolbar.plan')}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

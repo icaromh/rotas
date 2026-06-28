@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { StopCircleIcon, PlayCircleIcon, DownloadIcon, ShareIcon } from './icons';
+import { StopCircleIcon, PlayCircleIcon, DownloadIcon, ShareIcon, RefreshIcon } from './icons';
 import { Button } from './ui/Button';
 import { encodeRoute } from '../utils/routeSharing';
 import { Link } from '@tanstack/react-router';
@@ -15,6 +15,7 @@ interface Props {
   currentDistanceKm: number;
   currentNeighborhoodName: string | null;
   currentPathData: { lat: number; lng: number }[];
+  onReset?: () => void;
 }
 
 export const Sidebar: React.FC<Props> = ({
@@ -25,7 +26,8 @@ export const Sidebar: React.FC<Props> = ({
   isSharedView,
   currentDistanceKm,
   currentNeighborhoodName,
-  currentPathData
+  currentPathData,
+  onReset
 }) => {
   const sportMode = useAppStore(state => state.sportMode);
   const { t } = useTranslation();
@@ -83,8 +85,20 @@ export const Sidebar: React.FC<Props> = ({
         <p className="text-xs text-gray-400 mt-1">{t('sidebar.description')}</p>
       </div>
 
-      <div className="p-4 md:p-5 flex-grow overflow-y-auto flex flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] custom-scrollbar">
-        <div id="results-panel" className="flex-col gap-4 md:pt-4 md:border-t border-gray-100 flex-grow flex">
+      <div className="p-4 md:p-5 flex-grow overflow-y-auto flex flex-col gap-4 md:gap-6 bg-white md:bg-[#f8f7f5] custom-scrollbar relative">
+        {!isSharedView && onReset && (
+          <Button 
+            id="mobile-new-plan-btn"
+            onClick={onReset}
+            variant="ghost" 
+            size="sm" 
+            className="md:hidden absolute top-2 right-2 text-xs font-bold text-gray-500 hover:text-gray-800 flex items-center gap-1 bg-white/80 rounded-full px-3 py-1 shadow-sm border border-gray-100"
+          >
+            <RefreshIcon size={14} />
+            {t('toolbar.newPlan')}
+          </Button>
+        )}
+        <div id="results-panel" className="flex-col gap-4 pt-6 md:pt-4 md:border-t border-gray-100 flex-grow flex">
           <h2 id="neighborhood-title" className="flex justify-center items-center gap-2 mt-2 mb-1">
             <span id="neighborhood-name" className="text-xl font-extrabold text-gray-900">
               {currentNeighborhoodName || t('sidebar.customRoute')}

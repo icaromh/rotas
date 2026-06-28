@@ -76,8 +76,6 @@ export const Preview: React.FC = () => {
     <>
       <TopNav 
         onOpenAbout={() => setIsAboutOpen(true)}
-        onGenerate={() => window.location.href = '/'}
-        isDoneMode={true}
       />
       
       <div className="flex-1 relative w-full h-full bg-gray-200 overflow-hidden">

@@ -1,17 +1,15 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { RefreshIcon, RouteIcon, InfoIcon } from './icons';
+import { InfoIcon } from './icons';
 import { Button } from './ui/Button';
 import { LanguageSelector } from './LanguageSelector';
 
 interface Props {
   onOpenAbout: () => void;
-  onGenerate: () => void;
-  isDoneMode: boolean;
 }
 
-export const TopNav: React.FC<Props> = ({ onOpenAbout, onGenerate, isDoneMode }) => {
+export const TopNav: React.FC<Props> = ({ onOpenAbout }) => {
   const { t } = useTranslation();
 
   return (
@@ -28,26 +26,6 @@ export const TopNav: React.FC<Props> = ({ onOpenAbout, onGenerate, isDoneMode })
       </div>
       <div className="flex items-center gap-4">
         <LanguageSelector />
-
-        <Button
-          id="mobile-generate-btn"
-          onClick={onGenerate}
-          variant="primary"
-          size="md"
-          className="md:hidden"
-        >
-          {isDoneMode ? (
-            <>
-              <RefreshIcon size={16} />
-              {t('toolbar.newPlan')}
-            </>
-          ) : (
-            <>
-              <RouteIcon size={16} />
-              {t('toolbar.plan')}
-            </>
-          )}
-        </Button>
 
         <Button id="mobile-about-btn" onClick={onOpenAbout} variant="icon-secondary" size="icon-sm" className="md:hidden p-2">
           <InfoIcon size={18} />
