@@ -41,9 +41,10 @@ const ENDPOINTS = [
  * Returns true for status codes that should trigger a fallback to the next endpoint.
  * - 5xx: server-side errors (timeouts, overloaded instances)
  * - 429: rate-limited — try another instance instead of giving up
+ * - 406: overpass-api.de anti-bot firewall — try another instance
  */
 function shouldFallback(status: number): boolean {
-  return status === 429 || status >= 500;
+  return status === 406 || status === 429 || status >= 500;
 }
 
 export default {
@@ -80,7 +81,7 @@ export default {
             method: 'POST',
             headers: {
               'Content-Type': contentType,
-              'Accept': 'application/json',
+              'Accept': '*/*',
               // Identify the app as required by OSM usage policy
               'User-Agent': 'RotasOptimizer/1.0 (https://rotas-dusky.vercel.app/)',
               'Referer': 'https://rotas-dusky.vercel.app/',

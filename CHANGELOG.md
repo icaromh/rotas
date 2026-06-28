@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.4] - 2026-06-29
+### Fixed
+- **Proxy hotfix**: regressão introduzida em v1.12.3 causava `406 Not Acceptable` ao chamar `overpass-api.de`.
+  - Header `Accept` revertido de `application/json` para `*/*` — o firewall anti-bot da FOSSGIS rejeita valores específicos de `Accept`.
+  - HTTP `406` adicionado ao `shouldFallback()`, garantindo que o proxy tente o próximo endpoint em vez de devolver o erro ao cliente.
+
 ## [1.12.3] - 2026-06-29
 ### Changed
 - **Proxy (`proxy/src/index.ts`)**: Lista de endpoints atualizada com base nas instâncias públicas oficiais do Overpass API:
