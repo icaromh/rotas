@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { RefreshIcon, RouteIcon, InfoIcon } from './icons';
+import { InfoIcon } from './icons';
 import { Button } from './ui/Button';
 import { LanguageSelector } from './LanguageSelector';
 
