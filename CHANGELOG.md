@@ -1,7 +1,14 @@
 # Changelog
 
-## [1.8.0] - 2026-06-28
+## [1.10.2] - 2026-06-28
+### Added
+- Criação de uma biblioteca de componentes de UI (`src/components/ui/Button.tsx`).
+- Criação de uma biblioteca de ícones centralizada (`src/components/icons/index.tsx`).
+
 ### Changed
+- Refatoração de todos os botões e SVGs inline da aplicação para utilizar os novos componentes padronizados, melhorando consistência visual e manutenibilidade.
+
+## [1.8.0] - 2026-06-28
 - Migração completa da arquitetura vanilla TypeScript para React (v19).
 - Centralização do estado global utilizando `zustand`.
 - Modularização da interface (anteriormente no `index.html`) em diversos componentes isolados (e.g., `MapContainer`, `Sidebar`, `Toolbar`), melhorando a manutenibilidade e escalabilidade do código.
