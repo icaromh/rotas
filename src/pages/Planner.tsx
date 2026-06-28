@@ -122,29 +122,6 @@ export const Planner: React.FC = () => {
     }
   };
 
-  const handleExportGpx = () => {
-    if (routeData.path.length === 0) return;
-
-    let gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    gpx += '<gpx version="1.1" creator="Rotas App">\n';
-    gpx += '  <trk>\n';
-    gpx += '    <name>Optimized Route</name>\n';
-    gpx += '    <trkseg>\n';
-    routeData.path.forEach(p => {
-      gpx += `      <trkpt lat="${p.lat}" lon="${p.lng}"></trkpt>\n`;
-    });
-    gpx += '    </trkseg>\n';
-    gpx += '  </trk>\n';
-    gpx += '</gpx>';
-
-    const blob = new Blob([gpx], { type: 'application/gpx+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'rotas-optimized.gpx';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <>
@@ -167,7 +144,6 @@ export const Planner: React.FC = () => {
         <div className="absolute inset-0 pointer-events-none p-4 md:p-6 z-[1000] flex items-start gap-4">
           <Sidebar 
             onPreviewToggle={() => setIsPreviewing(!isPreviewing)}
-            onExportGpx={handleExportGpx}
             isPreviewing={isPreviewing}
             isSharedView={false}
             isDoneMode={isDoneMode}

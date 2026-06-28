@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.12.1] - 2026-06-29
+### Refactored
+- Extração da lógica de exportação GPX do `Planner.tsx` e `Preview.tsx` para uma função utilitária pura (`src/utils/gpxExport.ts` — `buildGpxContent` / `downloadGpx`) e um componente React auto-contido (`ExportGpxButton`).
+- A prop `onExportGpx` foi removida da interface pública do `Sidebar`, que agora renderiza o `ExportGpxButton` diretamente recebendo apenas os dados do percurso.
+
 ## [1.12.0] - 2026-06-28
 ### Added
 - Refatoração das chamadas de rede (Fetch API) para a proxy do Overpass utilizando `@tanstack/react-query`.
