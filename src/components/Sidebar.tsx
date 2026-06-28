@@ -1,14 +1,14 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { StopCircleIcon, PlayCircleIcon, DownloadIcon, ShareIcon, RefreshIcon } from './icons';
+import { StopCircleIcon, PlayCircleIcon, ShareIcon, RefreshIcon } from './icons';
 import { Button } from './ui/Button';
+import { ExportGpxButton } from './ExportGpxButton';
 import { encodeRoute } from '../utils/routeSharing';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
   onPreviewToggle: () => void;
-  onExportGpx: () => void;
   isPreviewing: boolean;
   isDoneMode: boolean;
   isSharedView: boolean;
@@ -20,7 +20,6 @@ interface Props {
 
 export const Sidebar: React.FC<Props> = ({
   onPreviewToggle,
-  onExportGpx,
   isPreviewing,
   isDoneMode,
   isSharedView,
@@ -150,16 +149,10 @@ export const Sidebar: React.FC<Props> = ({
             )}
           </Button>
 
-          <Button
-            id="export-gpx-btn"
-            onClick={onExportGpx}
-            variant="dark"
-            size="sm"
+          <ExportGpxButton
+            path={currentPathData}
             className="col-span-1 text-sm"
-          >
-            <DownloadIcon size={16} />
-            {t('sidebar.actions.gpx')}
-          </Button>
+          />
 
           {!isSharedView && (
             <Button
