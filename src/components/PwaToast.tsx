@@ -2,8 +2,10 @@ import React from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { RefreshIcon } from './icons';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 
 export const PwaToast: React.FC = () => {
+  const { t } = useTranslation();
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -22,13 +24,13 @@ export const PwaToast: React.FC = () => {
           <RefreshIcon size={18} />
         </div>
         <div>
-          <h3 className="font-bold text-gray-900 text-sm">Update Available</h3>
-          <p className="text-xs text-gray-500 mt-0.5">A new version of Rotas is ready. Reload to apply.</p>
+          <h3 className="font-bold text-gray-900 text-sm">{t('pwa.title')}</h3>
+          <p className="text-xs text-gray-500 mt-0.5">{t('pwa.description')}</p>
         </div>
       </div>
       <div className="flex gap-2 justify-end mt-1">
-        <Button id="pwa-close-btn" onClick={() => setNeedRefresh(false)} variant="ghost" size="sm" className="text-xs">Later</Button>
-        <Button id="pwa-reload-btn" onClick={() => updateServiceWorker?.(true)} variant="primary" size="sm" className="text-xs shadow-sm">Reload Now</Button>
+        <Button id="pwa-close-btn" onClick={() => setNeedRefresh(false)} variant="ghost" size="sm" className="text-xs">{t('pwa.later')}</Button>
+        <Button id="pwa-reload-btn" onClick={() => updateServiceWorker?.(true)} variant="primary" size="sm" className="text-xs shadow-sm">{t('pwa.reload')}</Button>
       </div>
     </div>
   );
