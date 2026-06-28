@@ -78,5 +78,18 @@
     "generatingRoute": "Gerando Rota",
     "analyzingBike": "Analisando a rede de ruas...",
     "analyzingWalk": "Gerando caminhos para pedestres..."
+  },
+  "draw": {
+    "finish": "Finalizar",
+    "deleteLastPoint": "Apagar último ponto",
+    "cancel": "Cancelar",
+    "drawPolygon": "Desenhar polígono",
+    "clickToStart": "Clique para começar a desenhar.",
+    "clickToContinue": "Clique para continuar desenhando.",
+    "clickToEnd": "Clique no primeiro ponto para fechar a forma."
+  },
+  "neighborhood": {
+    "searching": "Buscando Bairros",
+    "fetching": "Obtendo limites do OpenStreetMap..."
   }
 }

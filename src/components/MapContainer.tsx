@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
 import osmtogeojson from 'osmtogeojson';
+import { useTranslation } from 'react-i18next';
 
 // Fix Leaflet's default icon paths for Vite
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -79,6 +80,7 @@ export const MapContainer: React.FC<Props> = ({
   isSharedView,
   isDoneMode
 }) => {
+  const { t, i18n } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
@@ -86,6 +88,25 @@ export const MapContainer: React.FC<Props> = ({
   const animPolylineRef = useRef<L.Polyline | null>(null);
   const animMarkerRef = useRef<L.CircleMarker | null>(null);
   const animReqIdRef = useRef<number | null>(null);
+
+  // Update Leaflet Draw Localization on language change
+  useEffect(() => {
+    L.drawLocal.draw.toolbar.actions.title = t('draw.cancel');
+    L.drawLocal.draw.toolbar.actions.text = t('draw.cancel');
+    L.drawLocal.draw.toolbar.finish.title = t('draw.finish');
+    L.drawLocal.draw.toolbar.finish.text = t('draw.finish');
+    L.drawLocal.draw.toolbar.undo.title = t('draw.deleteLastPoint');
+    L.drawLocal.draw.toolbar.undo.text = t('draw.deleteLastPoint');
+    L.drawLocal.draw.toolbar.buttons.polygon = t('draw.drawPolygon');
+    
+    L.drawLocal.draw.handlers.polygon.tooltip.start = t('draw.clickToStart');
+    L.drawLocal.draw.handlers.polygon.tooltip.cont = t('draw.clickToContinue');
+    L.drawLocal.draw.handlers.polygon.tooltip.end = t('draw.clickToEnd');
+
+    // Manually update the draw button title if it exists
+    const polyBtn = document.querySelector('.leaflet-draw-draw-polygon');
+    if (polyBtn) polyBtn.setAttribute('title', t('draw.drawPolygon'));
+  }, [i18n.language, t]);
 
   // Initialize Map
   useEffect(() => {
@@ -216,7 +237,7 @@ export const MapContainer: React.FC<Props> = ({
           }
 
           isLoadingNeighborhoods = true;
-          setGlobalLoader(true, 'Searching Neighborhoods', 'Fetching boundaries from OpenStreetMap...');
+          setGlobalLoader(true, t('neighborhood.searching'), t('neighborhood.fetching'));
 
           try {
             const bounds = map.getBounds();

@@ -78,5 +78,18 @@
     "generatingRoute": "Generating Route",
     "analyzingBike": "Analyzing street network...",
     "analyzingWalk": "Generating pedestrian paths..."
+  },
+  "draw": {
+    "finish": "Finish",
+    "deleteLastPoint": "Delete last point",
+    "cancel": "Cancel",
+    "drawPolygon": "Draw a polygon",
+    "clickToStart": "Click to start drawing shape.",
+    "clickToContinue": "Click to continue drawing shape.",
+    "clickToEnd": "Click first point to close this shape."
+  },
+  "neighborhood": {
+    "searching": "Searching Neighborhoods",
+    "fetching": "Fetching boundaries from OpenStreetMap..."
   }
 }
