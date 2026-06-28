@@ -77,6 +77,19 @@
     "errorNoArea": "Por favor, dibuje un área en el mapa primero o use la Varita Mágica para seleccionar un barrio.",
     "generatingRoute": "Generando Ruta",
     "analyzingBike": "Analizando la red de calles...",
-    "analyzingWalk": "Generando caminos para peatones..."
+    "analyzingWalk": "Generando rutas peatonales..."
+  },
+  "draw": {
+    "finish": "Finalizar",
+    "deleteLastPoint": "Borrar último punto",
+    "cancel": "Cancelar",
+    "drawPolygon": "Dibujar polígono",
+    "clickToStart": "Haz clic para empezar a dibujar.",
+    "clickToContinue": "Haz clic para continuar dibujando.",
+    "clickToEnd": "Haz clic en el primer punto para cerrar la forma."
+  },
+  "neighborhood": {
+    "searching": "Buscando Barrios",
+    "fetching": "Obteniendo límites de OpenStreetMap..."
   }
 }

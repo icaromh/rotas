@@ -39,8 +39,31 @@ for (const locale of LOCALES) {
 
       await expect(page).toHaveScreenshot(`settings-modal-${locale}.png`, {
         mask: [
+          page.locator('.leaflet-control-attribution')
+        ],
+        fullPage: true,
+      });
+    });
 
-          page.locator('.leaflet-tile-pane'),
+    test('Drawing In Progress UI State', async ({ page, isMobile }) => {
+      // Leaflet Draw touch simulation in Playwright can be flaky, skip on mobile
+      if (isMobile) {
+        test.skip();
+      }
+      // Start drawing
+      await page.locator('.leaflet-draw-draw-polygon').first().click();
+      
+      // Click on map to place two points so all drawing action buttons appear
+      await page.waitForTimeout(500);
+      await page.locator('.leaflet-container').click({ position: { x: 200, y: 200 }, force: true });
+      await page.waitForTimeout(500);
+      await page.locator('.leaflet-container').click({ position: { x: 300, y: 200 }, force: true });
+      
+      const actions = page.locator('.leaflet-draw-actions').first();
+      await expect(actions).toBeVisible();
+
+      await expect(page).toHaveScreenshot(`drawing-in-progress-ui-${locale}.png`, {
+        mask: [
           page.locator('.leaflet-control-attribution')
         ],
         fullPage: true,
