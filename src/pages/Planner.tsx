@@ -55,7 +55,7 @@ export const Planner: React.FC = () => {
     };
 
     return () => {
-      // workerRef.current?.terminate();
+      workerRef.current?.terminate();
     };
   }, []);
 
