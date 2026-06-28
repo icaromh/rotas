@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.11.0] - 2026-06-28
+### Added
+- Localização completa do aplicativo para Português (`pt-BR`), Inglês (`en-US`) e Espanhol (`es-ES`) utilizando a biblioteca `react-i18next`.
+- Componente seletor de idiomas (`LanguageSelector`) adicionado no cabeçalho (`TopNav`) para troca instantânea de idioma.
+- Detecção automática de idioma baseada no navegador do usuário.
+
 ## [1.10.8] - 2026-06-28
 ### Added
 - Introdução de testes E2E Mobile com suporte a Safari (WebKit) via Playwright.
