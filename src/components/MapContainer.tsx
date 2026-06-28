@@ -144,14 +144,7 @@ export const MapContainer: React.FC<Props> = ({
         container.style.justifyContent = 'center';
         container.title = 'Minha Localização (GPS)';
 
-        container.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M8 13A5 5 0 1 1 8 3a5 5 0 0 1 0 10zm0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"/>
-            <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
-            <path d="M8 1.5a.5.5 0 0 1 .5-.5h1V0H6.5v1h1a.5.5 0 0 1 .5.5v1H8v-1zM1.5 8a.5.5 0 0 1-.5.5v1H0V6.5h1v1a.5.5 0 0 1 .5.5H3V8H1.5zM16 8h-1.5v-.5H16v1h-1.5v-.5H16zm-8 8v-1.5h-.5V16h1v-1.5H8V16z"/>
-          </svg>
-        `;
+        container.innerHTML = `<img src="/icons/gps-locate.svg" width="16" height="16" alt="Locate me" />`;
 
         container.onclick = function (e: Event) {
           e.stopPropagation();
@@ -211,18 +204,7 @@ export const MapContainer: React.FC<Props> = ({
         magicWandBtn.style.display = 'flex';
         magicWandBtn.style.alignItems = 'center';
         magicWandBtn.style.justifyContent = 'center';
-        magicWandBtn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/>
-            <path d="m14 7 3 3"/>
-            <path d="M5 6v4"/>
-            <path d="M19 14v4"/>
-            <path d="M10 2v2"/>
-            <path d="M7 8H3"/>
-            <path d="M21 16h-4"/>
-            <path d="M11 3H9"/>
-          </svg>
-        `;
+        magicWandBtn.innerHTML = `<img src="/icons/magic-wand.svg" width="16" height="16" alt="Magic Wand" />`;
         drawToolsContainer.appendChild(magicWandControl);
 
         let activeNeighborhoodLayer: L.GeoJSON | null = null;

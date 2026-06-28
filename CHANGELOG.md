@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.12.2] - 2026-06-29
+### Refactored
+- Extraídos todos os SVGs inline que não são ícones React para arquivos dedicados em `public/icons/`:
+  - `gps-locate.svg` — ícone do botão GPS/Localização no mapa (Leaflet custom control)
+  - `magic-wand.svg` — ícone do seletor de bairros (Leaflet custom control)
+  - `draw-polygon.svg`, `edit-nodes.svg`, `delete-polygon.svg` — ícones personalizados da toolbar do Leaflet Draw
+- `MapContainer.tsx`: strings `.innerHTML` com SVG substituídas por tags `<img src="/icons/...">`.
+- `style.css`: data-URIs `background-image: url('data:image/svg+xml;...')` substituídas por `url('/icons/...')`, reduzindo o tamanho do CSS compilado.
+
 ## [1.12.1] - 2026-06-29
 ### Refactored
 - Extração da lógica de exportação GPX do `Planner.tsx` e `Preview.tsx` para uma função utilitária pura (`src/utils/gpxExport.ts` — `buildGpxContent` / `downloadGpx`) e um componente React auto-contido (`ExportGpxButton`).
