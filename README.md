@@ -1,35 +1,187 @@
-# Rotas Planner 🚴‍♂️🏃‍♀️
+<div align="center">
+  <img src="public/logo.svg" alt="Rotas logo" width="80" />
 
-Plan optimized routes to cover every single street in a drawn area! Perfect for running, cycling, or just exploring your neighborhood. 
+  <h1>Rotas</h1>
+  <p><strong>Explore Every Inch.</strong></p>
+  <p>Draw any area on the map and get a perfectly optimised GPX track that covers every single street inside it — ready to ride or run.</p>
+
+  ![Version](https://img.shields.io/badge/version-1.12.1-4a6b46?style=flat-square)
+  ![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=white)
+  ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178c6?style=flat-square&logo=typescript&logoColor=white)
+  ![PWA](https://img.shields.io/badge/PWA-ready-5a0fc8?style=flat-square&logo=pwa&logoColor=white)
+  ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+</div>
+
+---
 
 ![Rotas Planner UI](public/screenshot.png)
 
+---
+
+## What is Rotas?
+
+**Rotas** solves the classic "explore every street" problem. Draw a polygon over any neighbourhood, click **Generate**, and the app returns the shortest possible route that covers every road segment inside your area — no street skipped, no unnecessary backtracking.
+
+It's built for runners, cyclists, and anyone who wants to systematically explore a city block by block.
+
+---
+
 ## Features
-- **Draw Area:** Use the map tools to draw a custom polygon over any area.
-- **Optimized Eulerian Path:** The application calculates the most efficient route (Mixed Chinese Postman Problem) to traverse every street segment inside your selected area.
-- **Sport Modes:** Choose between Cycling or Walking to get accurate pace and time estimates.
-- **Export & Share:** Export the generated route as a GPX file for your Garmin/Wahoo/Strava, or share the route directly via a unique URL.
-- **Preview:** Animate the planned route directly on the map.
+
+| Feature | Description |
+|---|---|
+| 🖊️ **Draw or Pick** | Freehand polygon drawing *or* one-click neighbourhood picker powered by OSM administrative boundaries |
+| 🧮 **Eulerian Optimisation** | Solves the [Mixed Chinese Postman Problem](https://en.wikipedia.org/wiki/Route_inspection_problem) to find the shortest path through every edge |
+| 🚴 **Sport Modes** | Cycling and Walking, each with accurate speed/pace estimates |
+| 🗺️ **Animated Preview** | Watch the route animate step-by-step directly on the map |
+| 📤 **GPX Export** | One-click export compatible with Garmin, Wahoo, Komoot, Strava, etc. |
+| 🔗 **Share via URL** | Compressed, shareable links that reconstruct the full route in any browser |
+| 🌍 **i18n** | Full localisation in English, Portuguese (pt-BR) and Spanish (es-ES) with automatic browser language detection |
+| ⚡ **PWA** | Installable, offline-capable Progressive Web App |
+| 🔒 **Safety Preference** | Cyclists can restrict the query to safer roads or dedicated cycling infrastructure |
+| 📏 **Buffer Expansion** | Configurable polygon expansion (0–100 m) to capture streets at the boundary |
+
+---
+
+## How it works
+
+```
+User draws polygon
+       │
+       ▼
+Overpass API (via Cloudflare Worker proxy)
+  fetches OSM road network
+       │
+       ▼
+Web Worker  ──► Tarjan SCC (iterative)     builds connected graph
+            ──► MCPP / LP Solver           finds minimum deadheading
+            ──► Hierholzer's Algorithm     constructs Eulerian circuit
+       │
+       ▼
+React UI renders polyline + sidebar stats
+```
+
+- **All heavy computation runs in a Web Worker** so the UI stays responsive during processing.
+- The LP Solver falls back to a **greedy Dijkstra heuristic** for graphs > 1 000 edges to prevent out-of-memory crashes on large neighbourhoods.
+- Shared URLs use `@mapbox/polyline` + `lz-string` compression to keep links short enough to avoid HTTP 431 errors.
+
+---
 
 ## Technology Stack
-- **Frontend:** Vanilla TypeScript, Vite, Tailwind CSS
-- **Map:** Leaflet, OpenStreetMap, Overpass API
-- **Algorithms:** Hierholzer's Algorithm, LP Solver (Mixed Chinese Postman Problem)
-- **Web Workers:** Heavy graph processing and optimization runs in the background to keep the UI smooth.
+
+### Frontend
+| Library | Role |
+|---|---|
+| **React 19** | Component UI |
+| **TypeScript 6** | Type safety (`strict: true`) |
+| **Vite 8** | Build tool & dev server |
+| **TailwindCSS 4** | Styling |
+| **Zustand** | Global state (sport mode, preferences) |
+| **TanStack Router** | File-based routing with Zod-validated search params |
+| **TanStack Query** | Network layer for Overpass API calls |
+| **react-i18next** | Internationalisation |
+
+### Map & Geo
+| Library | Role |
+|---|---|
+| **Leaflet** | Interactive map |
+| **leaflet-draw** | Polygon drawing tools |
+| **OpenStreetMap / Overpass API** | Road network data |
+| **osmtogeojson** | Converts OSM relations to GeoJSON |
+| **@mapbox/polyline** | GPS path encoding |
+| **lz-string** | URL compression |
+
+### Algorithms
+| Algorithm | Purpose |
+|---|---|
+| **Tarjan SCC** (iterative) | Finds the largest connected component |
+| **Mixed Chinese Postman / LP Solver** | Minimises edge repetition |
+| **Dijkstra heuristic** | OOM-safe fallback for large graphs |
+| **Hierholzer's** | Builds the final Eulerian circuit |
+
+### Infrastructure
+| Tool | Role |
+|---|---|
+| **Cloudflare Worker** | CORS proxy + multi-endpoint fallback for Overpass |
+| **Vercel** | Hosting |
+| **Playwright** | E2E tests + visual regression |
+| **Vitest** | Unit tests |
+| **vite-plugin-pwa / Workbox** | Service worker & offline support |
+
+---
+
+## Project Structure
+
+```
+src/
+├── api/           # Network layer (Overpass queries via TanStack Query)
+├── components/    # Reusable UI components
+│   ├── ui/        # Button primitives
+│   └── icons/     # Centralised SVG icon library
+├── i18n/
+│   └── locales/   # en-US.json · pt-BR.json · es-ES.json
+├── pages/         # Planner.tsx · Preview.tsx (shared route view)
+├── store/         # Zustand global store
+├── utils/         # Pure utility functions (gpxExport, routeSharing)
+└── workers/       # optimizer.worker.ts (runs off-main-thread)
+```
+
+---
 
 ## Getting Started
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Prerequisites
+- Node.js ≥ 18
+- npm ≥ 9
 
-2. Run the development server:
-   ```bash
-   npm run dev
-   ```
+### Install & run
 
-3. Open `http://localhost:5173` in your browser.
+```bash
+# 1. Clone the repo
+git clone https://github.com/icaromh/rotas.git
+cd rotas
+
+# 2. Install dependencies
+npm install
+
+# 3. Start the dev server
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Other scripts
+
+```bash
+npm run build              # Production build (TypeScript + Vite)
+npm test                   # Unit tests (Vitest)
+npm run test:e2e           # E2E flow tests (Playwright)
+npm run test:e2e:visual    # Visual regression tests
+npm run deploy:proxy       # Deploy the Cloudflare Worker proxy
+```
+
+---
 
 ## Contributing
+
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repo and create a feature branch (`git checkout -b feat/my-feature`)
+2. Follow the existing code style and run `npm test` before submitting
+3. Keep string literals out of components — use `react-i18next` keys and update all three locale files (`en-US`, `pt-BR`, `es-ES`)
+4. Update `CHANGELOG.md` with a summary of your changes
+
+---
+
+## Acknowledgements
+
+- [OpenStreetMap](https://www.openstreetmap.org/) contributors for the map data
+- [Leaflet](https://leafletjs.com/) for the fantastic mapping library
+- [Overpass API](https://overpass-api.de/) for the road network queries
+- [javascript-lp-solver](https://github.com/JWally/jsLPSolver) for the linear programming engine
+
+---
+
+<div align="center">
+  Made with ❤️ by <a href="https://github.com/icaromh">Icaro MH</a>
+</div>
