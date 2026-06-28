@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.11.1] - 2026-06-28
+### Fixed
+- Correção de localização (i18n) pendente nos botões internos de desenho do mapa (Leaflet Draw) e nos textos do loader global (Busca de Bairros).
+- Adição de testes de regressão visual para o estado de desenho (Drawing In Progress).
+
 ## [1.11.0] - 2026-06-28
 ### Added
 - Localização completa do aplicativo para Português (`pt-BR`), Inglês (`en-US`) e Espanhol (`es-ES`) utilizando a biblioteca `react-i18next`.
