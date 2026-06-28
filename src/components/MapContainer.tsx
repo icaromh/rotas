@@ -4,7 +4,6 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
 import osmtogeojson from 'osmtogeojson';
-import { useAppStore } from '../store/useAppStore';
 
 // Fix Leaflet's default icon paths for Vite
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -66,6 +65,8 @@ interface Props {
   currentPolylineData: { lat: number, lng: number }[];
   isPreviewing: boolean;
   onPreviewFinished: () => void;
+  isSharedView: boolean;
+  isDoneMode: boolean;
 }
 
 export const MapContainer: React.FC<Props> = ({ 
@@ -74,7 +75,9 @@ export const MapContainer: React.FC<Props> = ({
   setGlobalLoader,
   currentPolylineData,
   isPreviewing,
-  onPreviewFinished
+  onPreviewFinished,
+  isSharedView,
+  isDoneMode
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
@@ -83,9 +86,6 @@ export const MapContainer: React.FC<Props> = ({
   const animPolylineRef = useRef<L.Polyline | null>(null);
   const animMarkerRef = useRef<L.CircleMarker | null>(null);
   const animReqIdRef = useRef<number | null>(null);
-
-  const isSharedView = useAppStore(state => state.isSharedView);
-  const isDoneMode = useAppStore(state => state.isDoneMode);
 
   // Initialize Map
   useEffect(() => {

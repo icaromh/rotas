@@ -4,12 +4,12 @@ import { useAppStore } from '../store/useAppStore';
 interface Props {
   onOpenSettings: () => void;
   onGenerate: () => void;
+  isDoneMode: boolean;
 }
 
-export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate }) => {
+export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMode }) => {
   const sportMode = useAppStore(state => state.sportMode);
   const setSportMode = useAppStore(state => state.setSportMode);
-  const isDoneMode = useAppStore(state => state.isDoneMode);
 
   return (
     <div className="flex-1 flex justify-between items-start pointer-events-none">

@@ -6,12 +6,12 @@ interface Props {
   onOpenSettings: () => void;
   onOpenAbout: () => void;
   onGenerate: () => void;
+  isDoneMode: boolean;
 }
 
-export const TopNav: React.FC<Props> = ({ onOpenSettings, onOpenAbout, onGenerate }) => {
+export const TopNav: React.FC<Props> = ({ onOpenSettings, onOpenAbout, onGenerate, isDoneMode }) => {
   const sportMode = useAppStore(state => state.sportMode);
   const setSportMode = useAppStore(state => state.setSportMode);
-  const isDoneMode = useAppStore(state => state.isDoneMode);
 
   return (
     <nav className="h-16 bg-[#f4f1ea] border-b border-[#e5e0d4] flex items-center justify-between px-6 z-[1000] shrink-0 shadow-sm relative">

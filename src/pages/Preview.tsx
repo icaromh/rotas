@@ -10,10 +10,17 @@ import { previewRoute } from '../router';
 export const Preview: React.FC = () => {
   const { route, name, mode, distance } = previewRoute.useSearch();
   
-  const setRouteData = useAppStore(state => state.setRouteData);
   const setSportMode = useAppStore(state => state.setSportMode);
-  const setSharedView = useAppStore(state => state.setSharedView);
-  const currentPathData = useAppStore(state => state.currentPathData);
+
+  const [routeData, setRouteData] = useState<{
+    path: { lat: number; lng: number }[];
+    distanceKm: number;
+    neighborhoodName: string | null;
+  }>({
+    path: [],
+    distanceKm: 0,
+    neighborhoodName: null,
+  });
 
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -34,7 +41,6 @@ export const Preview: React.FC = () => {
           if (mode === 'bike' || mode === 'walk') {
             setSportMode(mode);
           }
-          setSharedView(true);
         }
       } catch (err) {
         console.error('Failed to decode shared route', err);
@@ -43,14 +49,14 @@ export const Preview: React.FC = () => {
   }, [route, name, mode, distance]);
 
   const handleExportGpx = () => {
-    if (currentPathData.length === 0) return;
+    if (routeData.path.length === 0) return;
 
     let gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
     gpx += '<gpx version="1.1" creator="Rotas App">\n';
     gpx += '  <trk>\n';
     gpx += '    <name>Optimized Route</name>\n';
     gpx += '    <trkseg>\n';
-    currentPathData.forEach(p => {
+    routeData.path.forEach(p => {
       gpx += `      <trkpt lat="${p.lat}" lon="${p.lng}"></trkpt>\n`;
     });
     gpx += '    </trkseg>\n';
@@ -72,6 +78,7 @@ export const Preview: React.FC = () => {
         onOpenSettings={() => {}} // No settings in preview
         onOpenAbout={() => setIsAboutOpen(true)}
         onGenerate={() => {}} // No generate in preview
+        isDoneMode={true}
       />
       
       <div className="flex-1 relative w-full h-full bg-gray-200 overflow-hidden">
@@ -79,9 +86,11 @@ export const Preview: React.FC = () => {
           onPolygonDrawn={() => {}}
           onPolygonDeleted={() => {}}
           setGlobalLoader={() => {}}
-          currentPolylineData={currentPathData}
+          currentPolylineData={routeData.path}
           isPreviewing={isPreviewing}
           onPreviewFinished={() => setIsPreviewing(false)}
+          isSharedView={true}
+          isDoneMode={true}
         />
 
         <div className="absolute inset-0 pointer-events-none p-4 md:p-6 z-[1000] flex items-start gap-4">
@@ -89,6 +98,11 @@ export const Preview: React.FC = () => {
             onPreviewToggle={() => setIsPreviewing(!isPreviewing)}
             onExportGpx={handleExportGpx}
             isPreviewing={isPreviewing}
+            isSharedView={true}
+            isDoneMode={true}
+            currentDistanceKm={routeData.distanceKm}
+            currentNeighborhoodName={routeData.neighborhoodName}
+            currentPathData={routeData.path}
           />
         </div>
       </div>

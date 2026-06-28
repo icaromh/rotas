@@ -9,15 +9,20 @@ import { AboutModal } from '../components/AboutModal';
 import { Loader } from '../components/Loader';
 
 export const Planner: React.FC = () => {
-  const isDoneMode = useAppStore(state => state.isDoneMode);
-  const setDoneMode = useAppStore(state => state.setDoneMode);
-  const setRouteData = useAppStore(state => state.setRouteData);
   const sportMode = useAppStore(state => state.sportMode);
-  const currentPathData = useAppStore(state => state.currentPathData);
   const bufferMeters = useAppStore(state => state.bufferMeters);
   const safetyPreference = useAppStore(state => state.safetyPreference);
-  const resetRoute = useAppStore(state => state.resetRoute);
-  const setSharedView = useAppStore(state => state.setSharedView);
+
+  const [isDoneMode, setIsDoneMode] = useState(false);
+  const [routeData, setRouteData] = useState<{
+    path: { lat: number; lng: number }[];
+    distanceKm: number;
+    neighborhoodName: string | null;
+  }>({
+    path: [],
+    distanceKm: 0,
+    neighborhoodName: null,
+  });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -28,10 +33,7 @@ export const Planner: React.FC = () => {
   const currentNeighborhoodNameRef = useRef<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
-  // Reset any shared view state when entering planner
-  useEffect(() => {
-    setSharedView(false);
-  }, []);
+
 
   useEffect(() => {
     workerRef.current = new Worker(new URL('../workers/optimizer.worker.ts', import.meta.url), { type: 'module' });
@@ -45,7 +47,7 @@ export const Planner: React.FC = () => {
           neighborhoodName: currentNeighborhoodNameRef.current
         });
         setLoader({ isLoading: false, title: '', subtitle: '' });
-        setDoneMode(true);
+        setIsDoneMode(true);
       } else if (type === 'error') {
         alert('Falha ao gerar a rota: ' + message);
         setLoader({ isLoading: false, title: '', subtitle: '' });
@@ -65,15 +67,15 @@ export const Planner: React.FC = () => {
   const handlePolygonDeleted = () => {
     currentPolygonBounds.current = null;
     currentNeighborhoodNameRef.current = null;
-    resetRoute();
-    setDoneMode(false);
+    setRouteData({ path: [], distanceKm: 0, neighborhoodName: null });
+    setIsDoneMode(false);
   };
 
   const handleGenerate = () => {
     if (isDoneMode) {
       // Start over
-      setDoneMode(false);
-      resetRoute();
+      setIsDoneMode(false);
+      setRouteData({ path: [], distanceKm: 0, neighborhoodName: null });
       currentPolygonBounds.current = null;
       currentNeighborhoodNameRef.current = null;
       return;
@@ -99,14 +101,14 @@ export const Planner: React.FC = () => {
   };
 
   const handleExportGpx = () => {
-    if (currentPathData.length === 0) return;
+    if (routeData.path.length === 0) return;
 
     let gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
     gpx += '<gpx version="1.1" creator="Rotas App">\n';
     gpx += '  <trk>\n';
     gpx += '    <name>Optimized Route</name>\n';
     gpx += '    <trkseg>\n';
-    currentPathData.forEach(p => {
+    routeData.path.forEach(p => {
       gpx += `      <trkpt lat="${p.lat}" lon="${p.lng}"></trkpt>\n`;
     });
     gpx += '    </trkseg>\n';
@@ -128,6 +130,7 @@ export const Planner: React.FC = () => {
         onOpenSettings={() => setIsSettingsOpen(true)} 
         onOpenAbout={() => setIsAboutOpen(true)}
         onGenerate={handleGenerate}
+        isDoneMode={isDoneMode}
       />
       
       <div className="flex-1 relative w-full h-full bg-gray-200 overflow-hidden">
@@ -135,9 +138,11 @@ export const Planner: React.FC = () => {
           onPolygonDrawn={handlePolygonDrawn}
           onPolygonDeleted={handlePolygonDeleted}
           setGlobalLoader={(l, t, s) => setLoader({ isLoading: l, title: t || '', subtitle: s || '' })}
-          currentPolylineData={currentPathData}
+          currentPolylineData={routeData.path}
           isPreviewing={isPreviewing}
           onPreviewFinished={() => setIsPreviewing(false)}
+          isSharedView={false}
+          isDoneMode={isDoneMode}
         />
 
         <div className="absolute inset-0 pointer-events-none p-4 md:p-6 z-[1000] flex items-start gap-4">
@@ -145,10 +150,16 @@ export const Planner: React.FC = () => {
             onPreviewToggle={() => setIsPreviewing(!isPreviewing)}
             onExportGpx={handleExportGpx}
             isPreviewing={isPreviewing}
+            isSharedView={false}
+            isDoneMode={isDoneMode}
+            currentDistanceKm={routeData.distanceKm}
+            currentNeighborhoodName={routeData.neighborhoodName}
+            currentPathData={routeData.path}
           />
           <Toolbar 
             onOpenSettings={() => setIsSettingsOpen(true)}
             onGenerate={handleGenerate}
+            isDoneMode={isDoneMode}
           />
         </div>
       </div>

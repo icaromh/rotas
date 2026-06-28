@@ -7,15 +7,24 @@ interface Props {
   onPreviewToggle: () => void;
   onExportGpx: () => void;
   isPreviewing: boolean;
+  isDoneMode: boolean;
+  isSharedView: boolean;
+  currentDistanceKm: number;
+  currentNeighborhoodName: string | null;
+  currentPathData: { lat: number; lng: number }[];
 }
 
-export const Sidebar: React.FC<Props> = ({ onPreviewToggle, onExportGpx, isPreviewing }) => {
-  const isDoneMode = useAppStore(state => state.isDoneMode);
-  const isSharedView = useAppStore(state => state.isSharedView);
+export const Sidebar: React.FC<Props> = ({ 
+  onPreviewToggle, 
+  onExportGpx, 
+  isPreviewing,
+  isDoneMode,
+  isSharedView,
+  currentDistanceKm,
+  currentNeighborhoodName,
+  currentPathData
+}) => {
   const sportMode = useAppStore(state => state.sportMode);
-  const currentDistanceKm = useAppStore(state => state.currentDistanceKm);
-  const currentNeighborhoodName = useAppStore(state => state.currentNeighborhoodName);
-  const currentPathData = useAppStore(state => state.currentPathData);
 
   if (!isDoneMode && !isSharedView) return null;
 

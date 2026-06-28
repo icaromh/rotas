@@ -74,6 +74,10 @@
 - **Shared View UI Overhaul**: The sidebar in shared route view now shows the "Explore Every Inch" header at all times. Action buttons (Preview, GPX) are pinned to the bottom of the sidebar as a fixed footer alongside the "Viewing an external route" notice. In shared view, Preview and GPX appear side-by-side in a single row. The sidebar now has fully rounded corners on desktop via `overflow-hidden` clipping child elements. **New Plan** in shared view redirects to `/` to start fresh, instead of producing a broken in-place reset with stale UI.
 - **Speed/Pace Input Removed**: The speed and pace inputs have been replaced with fixed constants (`SPEED_BIKE = 17 km/h`, `PACE_WALK = 10 min/km`), simplifying the UI.
 
+## v1.10.0
+- **Zustand State Refactor**: Heavily cleaned up the global `useAppStore` by stripping out volatile routing and session data (`isSharedView`, `isDoneMode`, `currentPathData`).
+- **Strict Component Segregation**: Shifted the stripped state down to local component state within `Planner.tsx` and `Preview.tsx`, and passed them via standard React props to child components (`Sidebar.tsx`, `MapContainer.tsx`, `TopNav.tsx`, `Toolbar.tsx`). This resolves global state leakage across routes and enables automatic garbage-collection when navigating.
+
 ## v1.9.0
 - **E2E Testing Stabilization**: Fixed flaky E2E tests caused by React component unmounts interrupting the Web Worker execution.
 - **Robust Route Parsing**: Adjusted TanStack Router Zod schemas (`z.coerce.string()`) to properly handle numbers from query params like distance to fix validation errors preventing the shared view from rendering.
