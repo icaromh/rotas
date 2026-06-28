@@ -5,6 +5,8 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
 import osmtogeojson from 'osmtogeojson';
 import { useTranslation } from 'react-i18next';
+import { useMutation } from '@tanstack/react-query';
+import { fetchNeighborhoods } from '../api/overpass';
 
 // Fix Leaflet's default icon paths for Vite
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -84,6 +86,8 @@ export const MapContainer: React.FC<Props> = ({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
+  
+  const neighborhoodsMutation = useMutation({ mutationFn: fetchNeighborhoods });
   const pathLayerRef = useRef<L.Polyline | null>(null);
   const animPolylineRef = useRef<L.Polyline | null>(null);
   const animMarkerRef = useRef<L.CircleMarker | null>(null);
@@ -242,28 +246,8 @@ export const MapContainer: React.FC<Props> = ({
           try {
             const bounds = map.getBounds();
             const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
-            const query = `
-              [out:json][timeout:25];
-              (
-                relation["admin_level"~"9|10"](${bbox});
-                relation["place"~"neighbourhood|suburb"](${bbox});
-              );
-              out geom;
-            `;
 
-            const cacheKeyUrl = 'https://rotas-overpass-proxy.icaro-mh.workers.dev/api/interpreter?bbox=' + encodeURIComponent(bbox);
-            const cache = await caches.open('rotas-neighborhoods-cache');
-            let res = await cache.match(cacheKeyUrl);
-
-            if (!res) {
-              res = await fetch('https://rotas-overpass-proxy.icaro-mh.workers.dev/api/interpreter', {
-                method: 'POST',
-                body: 'data=' + encodeURIComponent(query)
-              });
-              if (res.ok) await cache.put(cacheKeyUrl, res.clone());
-            }
-
-            const data = await res.json();
+            const data = await neighborhoodsMutation.mutateAsync(bbox);
             if (!data.elements || data.elements.length === 0) {
               alert('No neighborhoods found in this area. Try moving or zooming out the map.');
               return;

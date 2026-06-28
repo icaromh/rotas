@@ -8,6 +8,8 @@ import { PreferencesModal } from '../components/PreferencesModal';
 import { AboutModal } from '../components/AboutModal';
 import { Loader } from '../components/Loader';
 import { useTranslation } from 'react-i18next';
+import { useMutation } from '@tanstack/react-query';
+import { fetchRoadNetwork } from '../api/overpass';
 
 export const Planner: React.FC = () => {
   const sportMode = useAppStore(state => state.sportMode);
@@ -34,6 +36,11 @@ export const Planner: React.FC = () => {
   const currentPolygonBounds = useRef<{ lat: number, lng: number }[] | null>(null);
   const currentNeighborhoodNameRef = useRef<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
+
+  const roadNetworkMutation = useMutation({
+    mutationFn: ({ polygon, mode, bufferMeters, safety }: any) =>
+      fetchRoadNetwork(polygon, mode, bufferMeters, safety)
+  });
 
 
 
@@ -73,7 +80,7 @@ export const Planner: React.FC = () => {
     setIsDoneMode(false);
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (isDoneMode) {
       // Start over
       setIsDoneMode(false);
@@ -94,12 +101,25 @@ export const Planner: React.FC = () => {
       subtitle: sportMode === 'bike' ? t('planner.analyzingBike') : t('planner.analyzingWalk')
     });
 
-    workerRef.current?.postMessage({
-      polygon: currentPolygonBounds.current,
-      mode: sportMode,
-      bufferMeters,
-      safety: safetyPreference
-    });
+    try {
+      const overpassData = await roadNetworkMutation.mutateAsync({
+        polygon: currentPolygonBounds.current,
+        mode: sportMode,
+        bufferMeters,
+        safety: safetyPreference
+      });
+
+      workerRef.current?.postMessage({
+        overpassData,
+        polygon: currentPolygonBounds.current,
+        mode: sportMode,
+        bufferMeters,
+        safety: safetyPreference
+      });
+    } catch (err: any) {
+      alert(t('planner.errorGeneration') + ' ' + err.message);
+      setLoader({ isLoading: false, title: '', subtitle: '' });
+    }
   };
 
   const handleExportGpx = () => {

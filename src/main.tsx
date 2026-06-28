@@ -4,8 +4,16 @@ import { router } from './router';
 import './style.css';
 import './i18n/config';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
 const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
-  root.render(<RouterProvider router={router} />);
+  root.render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
 }
