@@ -12,11 +12,22 @@ const ALLOWED_ORIGINS = [
   'https://www.rotas.cc',
 ];
 
+/**
+ * Matches Vercel preview deployments for the rotas project.
+ * e.g. https://rotas-git-feat-issue-11-walk-boun-44e607-icaro-heimigs-projects.vercel.app
+ */
+const VERCEL_PREVIEW_RE = /^https:\/\/rotas[a-z0-9-]*\.vercel\.app$/;
+
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
 
   // Allow localhost (any port)
   if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+    return true;
+  }
+
+  // Allow Vercel preview deployments (branch previews, PR previews, etc.)
+  if (VERCEL_PREVIEW_RE.test(origin)) {
     return true;
   }
 

@@ -12,6 +12,38 @@
   - Verifica que origens não autorizadas (`https://evil.com`, variantes HTTP) são bloqueadas.
   - Verifica comportamento de edge cases (`null`, string vazia).
 
+## [1.14.0] - 2026-06-29
+### Added
+- **Walk mode boundary sticking** (`feat/issue-11-walk-boundary-sticking`, closes #11): Routes generated in
+  Walk mode are now strictly constrained to the drawn polygon.
+  - **Root cause**: the MCPP algorithm adds "deadhead" edges to balance the Eulerian graph; these edges
+    were previously free to travel outside the polygon boundary.
+  - **Fix** (`optimizer.worker.ts`):
+    - `solveMCPPHeuristic` now accepts an optional `polygon` parameter. When `mode === 'walk'`, each
+      edge in the Dijkstra adjacency list is given a `10 000×` distance penalty if its destination node
+      lies outside the original polygon (checked with the existing `isPointInPolygon` ray-casting
+      utility). This makes the greedy heuristic strongly prefer in-polygon backtracking (180° turns)
+      over shortcuts that exit the drawn area.
+    - `solveMCPPAndBuildEulerianGraph` receives the same `polygon` parameter and applies the same
+      `10 000×` cost multiplier to `rev_*` (reverse/deadhead) LP variables whose source node is outside
+      the polygon, steering the LP solver likewise.
+    - The polygon is propagated from the message handler only for `mode === 'walk'`; bike mode is
+      completely unaffected.
+  - **Tests** (`src/workers/optimizer.worker.test.ts`, 11 new tests):
+    - `isPointInPolygon` — point inside, outside, negative quadrant, triangle variants.
+    - `buildBaseData` — bike vs walk oneway handling, distance calculation.
+    - Walk-mode boundary containment — synthetic grid with an outside "shortcut" node that the solver
+      must ignore; asserts zero out-of-polygon nodes in the result and a non-empty Eulerian circuit.
+  - `vite.config.ts`: vitest `include` pattern extended to `src/**/*.test.ts` so co-located worker
+    tests are discovered automatically alongside `tests/**/*.test.ts`.
+
+### Fixed
+- **Proxy (`proxy/src/index.ts`)**: suporte a subdomínios de preview do Vercel adicionado para facilitar testes por PRs.
+  - Adicionado `VERCEL_PREVIEW_RE = /^https:\/\/rotas[a-z0-9-]*\.vercel\.app$/` para aceitar qualquer preview de branch do projeto (ex: `rotas-git-feat-issue-11-walk-boun-*.vercel.app`).
+  - `https://rotas.cc` e `https://www.rotas.cc` também adicionados ao `ALLOWED_ORIGINS`.
+  - `User-Agent` e `Referer` atualizados para `https://rotas.cc/`.
+  - 17 testes unitários adicionados em `tests/proxy.test.ts` cobrindo todos os cenários da allow-list.
+
 ## [1.13.0] - 2026-06-29
 ### Added
 - **Vitest unit test suite** — comprehensive test coverage for all core algorithmic and utility modules:

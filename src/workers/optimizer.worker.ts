@@ -327,7 +327,7 @@ export function buildBaseData(overpassData: any, mode: string, polygon: {lat: nu
   return { nodes, baseEdges };
 }
 
-function solveMCPPHeuristic(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string): CustomMultiGraph {
+function solveMCPPHeuristic(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string, polygon?: {lat: number, lng: number}[]): CustomMultiGraph {
   const eulerGraph = new CustomMultiGraph();
   
   const balances = new Map<string, number>();
@@ -347,9 +347,25 @@ function solveMCPPHeuristic(nodes: Map<number, any>, sccGraph: CustomMultiGraph,
       balances.set(e.v, balances.get(e.v)! + 1);
     }
     
-    adj.get(e.u)!.push({ to: e.v, dist: e.dist, id: e.id, penalty: 1 });
-    const penalty = (e.isOneway && mode === 'bike') ? 2000 : 1;
-    adj.get(e.v)!.push({ to: e.u, dist: e.dist * penalty, id: e.id, penalty: penalty });
+    // For walk mode, compute a polygon-boundary penalty for each edge direction.
+    // If an edge endpoint is outside the original polygon, deadhead traversal of that edge
+    // is penalized heavily so the Dijkstra heuristic prefers backtracking within the polygon.
+    const walkPenaltyFwd = (mode === 'walk' && polygon)
+      ? (() => {
+          const posV = nodes.get(Number(e.v));
+          return posV && !isPointInPolygon({ lat: posV.lat, lng: posV.lon }, polygon) ? 10000 : 1;
+        })()
+      : 1;
+    const walkPenaltyRev = (mode === 'walk' && polygon)
+      ? (() => {
+          const posU = nodes.get(Number(e.u));
+          return posU && !isPointInPolygon({ lat: posU.lat, lng: posU.lon }, polygon) ? 10000 : 1;
+        })()
+      : 1;
+
+    adj.get(e.u)!.push({ to: e.v, dist: e.dist * walkPenaltyFwd, id: e.id, penalty: walkPenaltyFwd });
+    const reversePenalty = (e.isOneway && mode === 'bike') ? 2000 : walkPenaltyRev;
+    adj.get(e.v)!.push({ to: e.u, dist: e.dist * reversePenalty, id: e.id, penalty: reversePenalty });
   });
 
   // Calculate shortest path trees from every node that needs outgoing edges (balance > 0)
@@ -430,14 +446,14 @@ function solveMCPPHeuristic(nodes: Map<number, any>, sccGraph: CustomMultiGraph,
   return eulerGraph;
 }
 
-export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string): CustomMultiGraph {
+export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph: CustomMultiGraph, baseEdges: BaseEdge[], mode: string, polygon?: {lat: number, lng: number}[]): CustomMultiGraph {
   console.log('[Worker] Step 4: Resolvendo o Mixed Chinese Postman Problem com LP Solver');
   
   const sccEdges = baseEdges.filter(e => sccGraph.hasNode(e.u) && sccGraph.hasNode(e.v));
   
   if (sccEdges.length > 1000) {
     console.log('[Worker] Grafo muito grande. Usando Heurística Gulosa para MCPP...');
-    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode);
+    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode, polygon);
   }
 
   const model: any = {
@@ -460,7 +476,20 @@ export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph
       [`bal_${e.u}`]: -1,
       [`bal_${e.v}`]: 1
     };
-    const penalty = (e.isOneway && mode === 'bike') ? 2000 : 1;
+
+    // In walk mode, penalize reverse (deadhead) traversals that lead to nodes outside the polygon.
+    // Pedestrians can backtrack freely (180° turns), so any out-of-polygon path should be
+    // avoided in favour of in-polygon backtracking. A 10000× multiplier makes the LP solver
+    // choose in-polygon alternatives whenever they exist.
+    let penalty: number;
+    if (mode === 'walk' && polygon) {
+      const posU = nodes.get(Number(e.u));
+      const outOfPolygon = posU && !isPointInPolygon({ lat: posU.lat, lng: posU.lon }, polygon);
+      penalty = outOfPolygon ? 10000 : 1;
+    } else {
+      penalty = (e.isOneway && mode === 'bike') ? 2000 : 1;
+    }
+
     model.variables[`rev_${e.id}`] = {
       cost: e.dist * penalty,
       [`req_${e.id}`]: 1,
@@ -475,12 +504,12 @@ export function solveMCPPAndBuildEulerianGraph(nodes: Map<number, any>, sccGraph
     result = solver.Solve(model) as Record<string, number>;
   } catch (err) {
     console.log('[Worker] Falha no LP Solver. Caindo para Heurística Gulosa...', err);
-    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode);
+    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode, polygon);
   }
   
   if (!result.feasible) {
     console.log('[Worker] LP Solver insolúvel. Caindo para Heurística Gulosa...');
-    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode);
+    return solveMCPPHeuristic(nodes, sccGraph, baseEdges, mode, polygon);
   }
   
   console.log(`[Worker] Solver finalizado com sucesso! Custo ótimo (distância): ${(result.result / 1000).toFixed(2)} km`);
@@ -768,7 +797,7 @@ self.onmessage = async (e: MessageEvent<any>) => {
     }
     
     // 4. Solve MCPP using LP Solver
-    const eulerGraph = solveMCPPAndBuildEulerianGraph(nodes, sccGraph, baseEdges, mode);
+    const eulerGraph = solveMCPPAndBuildEulerianGraph(nodes, sccGraph, baseEdges, mode, mode === 'walk' ? polygon : undefined);
     
     // Conecta componentes desconexos para resolver o problema de polígonos que picotam as ruas
     connectEulerianComponents(eulerGraph, sccGraph);
