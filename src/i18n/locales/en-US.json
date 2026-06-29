@@ -91,5 +91,10 @@
   "neighborhood": {
     "searching": "Searching Neighborhoods",
     "fetching": "Fetching boundaries from OpenStreetMap..."
+  },
+  "map": {
+    "areaLimitTitle": "Area limit exceeded",
+    "polygonTooLarge": "The polygon covers {{areaKm2}} km², exceeding the {{maxArea}} km² limit. Please draw a smaller area.",
+    "polygonEditedTooLarge": "The edited polygon exceeds the area limit. Selection cancelled."
   }
 }

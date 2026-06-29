@@ -42,12 +42,29 @@ export default defineConfig({
     }),
   ],
   test: {
-    // Run unit tests in Node.js — avoids the need for a DOM/browser shim
-    // while still being able to import the optimizer worker (pure TS logic).
-    environment: 'node',
-    // Include files under tests/ that end with .test.ts
-    include: ['tests/**/*.test.ts'],
-    // Enable vitest globals (describe, it, expect) without explicit imports
-    globals: true,
+    // Use Vitest workspace projects to support both Node and jsdom environments.
+    // Project 1: Node environment for pure-logic unit tests (optimizer, gpx, etc.)
+    // Project 2: jsdom environment for React component tests under src/
+    projects: [
+      {
+        test: {
+          name: 'unit',
+          environment: 'node',
+          include: ['tests/**/*.test.ts'],
+          globals: true,
+        },
+      },
+      {
+        plugins: [react()],
+        test: {
+          name: 'components',
+          environment: 'jsdom',
+          include: ['src/**/*.test.tsx'],
+          globals: true,
+          setupFiles: [],
+        },
+      },
+    ],
   },
 } satisfies UserConfig);
+
