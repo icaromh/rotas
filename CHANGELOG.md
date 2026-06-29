@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.14.0] - 2026-06-29
+### Fixed
+- **Proxy (`proxy/src/index.ts`)**: `ALLOWED_ORIGINS` atualizado para incluir os domínios de produção `https://rotas.cc` e `https://www.rotas.cc` (#12).
+  - Antes, apenas `https://rotas-dusky.vercel.app` estava na lista; novos deploys quebrariam a produção porque o domínio havia sido adicionado apenas manualmente no painel do Cloudflare.
+  - Headers `User-Agent` e `Referer` atualizados para referenciar `https://rotas.cc/` em vez da URL do Vercel, cumprindo a política de uso da OSM/FOSSGIS com o domínio correto.
+### Tests
+- Adicionado `tests/proxy.test.ts` com 11 testes unitários para a função `isAllowedOrigin`:
+  - Verifica que `rotas.cc`, `www.rotas.cc` e `rotas-dusky.vercel.app` são aceitos.
+  - Verifica que `localhost` (qualquer porta) e `127.0.0.1` são aceitos.
+  - Verifica que origens não autorizadas (`https://evil.com`, variantes HTTP) são bloqueadas.
+  - Verifica comportamento de edge cases (`null`, string vazia).
+
 ## [1.13.0] - 2026-06-29
 ### Added
 - **Vitest unit test suite** — comprehensive test coverage for all core algorithmic and utility modules:
