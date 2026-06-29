@@ -11,7 +11,7 @@
  * These tests run in a jsdom environment (see vite.config.ts projects[1]).
  */
 
-import React from 'react';
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AlertModal } from './AlertModal';
