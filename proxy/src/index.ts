@@ -7,7 +7,9 @@
 export interface Env {}
 
 const ALLOWED_ORIGINS = [
-  'https://rotas-dusky.vercel.app'
+  'https://rotas-dusky.vercel.app',
+  'https://rotas.cc',
+  'https://www.rotas.cc',
 ];
 
 function isAllowedOrigin(origin: string | null): boolean {
@@ -83,8 +85,8 @@ export default {
               'Content-Type': contentType,
               'Accept': '*/*',
               // Identify the app as required by OSM usage policy
-              'User-Agent': 'RotasOptimizer/1.0 (https://rotas-dusky.vercel.app/)',
-              'Referer': 'https://rotas-dusky.vercel.app/',
+              'User-Agent': 'RotasOptimizer/1.0 (https://rotas.cc/)',
+              'Referer': 'https://rotas.cc/',
             },
             body: bodyText,
           });
