@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.14.0] - 2026-06-29
+## [1.13.1] - 2026-06-29
 ### Fixed
 - **Proxy (`proxy/src/index.ts`)**: `ALLOWED_ORIGINS` atualizado para incluir os domínios de produção `https://rotas.cc` e `https://www.rotas.cc` (#12).
   - Antes, apenas `https://rotas-dusky.vercel.app` estava na lista; novos deploys quebrariam a produção porque o domínio havia sido adicionado apenas manualmente no painel do Cloudflare.
