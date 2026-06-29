@@ -45,8 +45,8 @@ export default defineConfig({
     // Run unit tests in Node.js — avoids the need for a DOM/browser shim
     // while still being able to import the optimizer worker (pure TS logic).
     environment: 'node',
-    // Include files under tests/ that end with .test.ts
-    include: ['tests/**/*.test.ts'],
+    // Include files under tests/ AND co-located test files in src/ (e.g. *.test.ts next to worker files)
+    include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
     // Enable vitest globals (describe, it, expect) without explicit imports
     globals: true,
   },
