@@ -91,5 +91,10 @@
   "neighborhood": {
     "searching": "Buscando Bairros",
     "fetching": "Obtendo limites do OpenStreetMap..."
+  },
+  "map": {
+    "areaLimitTitle": "Limite de área",
+    "polygonTooLarge": "O polígono possui {{areaKm2}} km², excedendo o limite de {{maxArea}} km². Desenhe uma área menor.",
+    "polygonEditedTooLarge": "O polígono editado excede o limite de área. Seleção cancelada."
   }
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AlertModal } from './AlertModal';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -86,7 +87,11 @@ export const MapContainer: React.FC<Props> = ({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
-  
+
+  // AlertModal state — lifted above Leaflet event scope so it can trigger a React re-render
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+
   const neighborhoodsMutation = useMutation({ mutationFn: fetchNeighborhoods });
   const pathLayerRef = useRef<L.Polyline | null>(null);
   const animPolylineRef = useRef<L.Polyline | null>(null);
@@ -295,7 +300,8 @@ export const MapContainer: React.FC<Props> = ({
         const areaKm2 = areaM2 / 1_000_000;
 
         if (areaKm2 > MAX_AREA_KM2) {
-          alert(`O polígono possui ${areaKm2.toFixed(2)} km², excedendo o limite de ${MAX_AREA_KM2} km². Desenhe uma área menor.`);
+          setAlertMessage(t('map.polygonTooLarge', { areaKm2: areaKm2.toFixed(2), maxArea: MAX_AREA_KM2 }));
+          setIsAlertOpen(true);
           return;
         }
 
@@ -311,7 +317,8 @@ export const MapContainer: React.FC<Props> = ({
         const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
         const areaKm2 = areaM2 / 1_000_000;
         if (areaKm2 > MAX_AREA_KM2) {
-          alert(`O polígono editado possui ${areaKm2.toFixed(2)} km², excedendo o limite. Seleção cancelada.`);
+          setAlertMessage(t('map.polygonEditedTooLarge'));
+          setIsAlertOpen(true);
           drawnItems.clearLayers();
           onPolygonDeleted();
         } else {
@@ -435,5 +442,15 @@ export const MapContainer: React.FC<Props> = ({
     };
   }, [isPreviewing, currentPolylineData, onPreviewFinished]);
 
-  return <div className="absolute inset-0 z-0 pointer-events-auto" ref={mapRef} id="map-container"></div>;
+  return (
+    <>
+      <div className="absolute inset-0 z-0 pointer-events-auto" ref={mapRef} id="map-container" />
+      <AlertModal
+        isOpen={isAlertOpen}
+        title={t('map.areaLimitTitle')}
+        message={alertMessage}
+        onClose={() => setIsAlertOpen(false)}
+      />
+    </>
+  );
 };
