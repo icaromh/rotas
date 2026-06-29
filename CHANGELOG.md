@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.13.1] - 2026-06-29
+## [1.13.2] - 2026-06-29
 ### Fixed
 - **i18n: replace hardcoded `alert()` calls with localized custom modal (#13)**
   - Replaced 2 native `alert()` calls in `src/components/MapContainer.tsx` (polygon draw and edit over-area checks) with a custom `AlertModal` component.
