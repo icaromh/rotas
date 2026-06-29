@@ -1,16 +1,18 @@
 # Changelog
 
-## [1.13.1] - 2026-06-29
+## [1.13.2] - 2026-06-29
 ### Fixed
-- **Proxy (`proxy/src/index.ts`)**: `ALLOWED_ORIGINS` atualizado para incluir os domínios de produção `https://rotas.cc` e `https://www.rotas.cc` (#12).
-  - Antes, apenas `https://rotas-dusky.vercel.app` estava na lista; novos deploys quebrariam a produção porque o domínio havia sido adicionado apenas manualmente no painel do Cloudflare.
-  - Headers `User-Agent` e `Referer` atualizados para referenciar `https://rotas.cc/` em vez da URL do Vercel, cumprindo a política de uso da OSM/FOSSGIS com o domínio correto.
-### Tests
-- Adicionado `tests/proxy.test.ts` com 11 testes unitários para a função `isAllowedOrigin`:
-  - Verifica que `rotas.cc`, `www.rotas.cc` e `rotas-dusky.vercel.app` são aceitos.
-  - Verifica que `localhost` (qualquer porta) e `127.0.0.1` são aceitos.
-  - Verifica que origens não autorizadas (`https://evil.com`, variantes HTTP) são bloqueadas.
-  - Verifica comportamento de edge cases (`null`, string vazia).
+- **i18n: replace hardcoded `alert()` calls with localized custom modal (closes #13)**
+  - Replaced 2 native `alert()` calls in `src/components/MapContainer.tsx` (polygon draw and edit over-area checks) with a custom `AlertModal` component.
+  - `AlertModal` features glassmorphism design consistent with the project, smooth open/close animations (`open:animate-in fade-in zoom-in-95`), and full ARIA accessibility (`role="dialog"`, `aria-modal`, `aria-labelledby`, `aria-describedby`).
+  - Added i18n keys under the `map` namespace in all 3 locale files (`en-US.json`, `pt-BR.json`, `es-ES.json`): `map.areaLimitTitle`, `map.polygonTooLarge` (with `{{areaKm2}}` and `{{maxArea}}` interpolation), `map.polygonEditedTooLarge`.
+  - State for modal open/message is hoisted to component level (above Leaflet event scope) so it correctly triggers React re-renders.
+  - No hardcoded strings remain in the polygon area validation code paths.
+### Added
+- **`src/components/AlertModal.tsx`** — reusable modal component with props `isOpen`, `message`, `onClose`, `title?`.
+- **`src/components/AlertModal.test.tsx`** — 8 Vitest unit tests (jsdom environment) covering: render when open, hidden when closed, X-button close, OK-button close, Escape key (dialog `close` event), message content, accessibility attributes, optional title.
+- `jsdom` and `@testing-library/jest-dom` added as dev dependencies.
+- `vite.config.ts` extended with Vitest workspace projects: `unit` (Node, `tests/**/*.test.ts`) and `components` (jsdom, `src/**/*.test.tsx`) — all 67 tests pass.
 
 ## [1.13.0] - 2026-06-29
 ### Added
