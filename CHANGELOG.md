@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.13.0] - 2026-06-29
+### Added
+- **Vitest unit test suite** — comprehensive test coverage for all core algorithmic and utility modules:
+  - `tests/optimizer.test.ts` (39 tests): Full assertion-driven coverage of the MCPP pipeline —
+    `CustomMultiGraph` data structure, `extractLargestSCC` (Tarjan's algorithm), `isPointInPolygon`
+    (ray-casting), `buildBaseData` (OSM parsing), `hierholzer` (Eulerian circuit extraction) and
+    `solveMCPPAndBuildEulerianGraph` (LP/heuristic MCPP solver). Includes two fixture-driven
+    integration tests that validate the closed-circuit invariant on real OSM data.
+    Every complex algorithm suite includes explanatory comments describing what the algorithm does,
+    why it is needed, and what invariant the test verifies.
+  - `tests/gpxExport.test.ts` (10 tests): Validates `buildGpxContent` XML structure, coordinate
+    embedding, default/custom route names, and edge cases (empty path, single point).
+  - `tests/routeSharing.test.ts` (10 tests): Enhanced coverage for encode/decode round-trips —
+    URL-safety, single-point paths, legacy uncompressed polyline URLs, 200-point large path
+    round-trip, and compression ratio assertion.
+- Vitest `test` block added to `vite.config.ts` (Node environment, `globals: true`, `include` pattern).
+
 ## [1.12.4] - 2026-06-29
 ### Fixed
 - **Proxy hotfix**: regressão introduzida em v1.12.3 causava `406 Not Acceptable` ao chamar `overpass-api.de`.
