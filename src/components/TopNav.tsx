@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { InfoIcon } from './icons';
 import { Button } from './ui/Button';
 import { LanguageSelector } from './LanguageSelector';
+import { StravaUserMenu } from './StravaUserMenu';
 
 interface Props {
   onOpenAbout: () => void;
@@ -25,6 +26,7 @@ export const TopNav: React.FC<Props> = ({ onOpenAbout }) => {
         </div>
       </div>
       <div className="flex items-center gap-4">
+        <StravaUserMenu />
         <LanguageSelector />
 
         <Button id="mobile-about-btn" onClick={onOpenAbout} variant="icon-secondary" size="icon-sm" className="md:hidden p-2">

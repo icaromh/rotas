@@ -23,8 +23,11 @@ export const AuthCallback: React.FC = () => {
         .then(res => res.json())
         .then(data => {
             if (data.error) throw new Error(data.error);
-            // Save user ID to localStorage
+            // Save user ID and profile picture to localStorage
             localStorage.setItem('strava_user_id', data.user.id);
+            if (data.athlete && data.athlete.profile_medium) {
+                localStorage.setItem('strava_profile_url', data.athlete.profile_medium);
+            }
             setStatus('Authentication successful! Redirecting...');
             setTimeout(() => navigate({ to: '/' }), 1500);
         })

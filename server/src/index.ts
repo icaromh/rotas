@@ -75,7 +75,7 @@ app.post('/api/auth/callback', async (req, res) => {
             return res.status(500).json({ error: 'Failed to save user data' });
         }
 
-        res.json({ user, message: 'Authentication successful' });
+        res.json({ user, athlete: data.athlete, message: 'Authentication successful' });
     } catch (error: any) {
         console.error('Strava Auth Error:', error.response?.data || error.message);
         res.status(500).json({ error: 'Failed to authenticate with Strava' });
