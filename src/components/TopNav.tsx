@@ -14,7 +14,7 @@ export const TopNav: React.FC<Props> = ({ onOpenAbout }) => {
   const { t } = useTranslation();
 
   return (
-    <nav className="h-16 bg-[#f4f1ea] border-b border-[#e5e0d4] flex items-center justify-between px-6 z-[1000] shrink-0 shadow-sm relative">
+    <nav className="h-16 bg-[#f4f1ea] border-b border-[#e5e0d4] flex items-center justify-between px-6 z-[9999] shrink-0 shadow-sm relative">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="Rotas Logo" className="h-8 w-auto drop-shadow-sm" />
