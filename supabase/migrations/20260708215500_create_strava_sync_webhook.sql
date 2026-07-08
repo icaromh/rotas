@@ -10,12 +10,16 @@ AS $$
 DECLARE
   request_url text;
 BEGIN
-  -- We default to kong:8000 for local docker development. 
-  -- In production, this can be overridden via database settings.
-  request_url := coalesce(
-    current_setting('app.settings.edge_function_url', true), 
-    'http://kong:8000/functions/v1/strava-sync'
-  );
+  -- Try to read the production webhook URL from Supabase Vault secrets
+  SELECT secret INTO request_url
+  FROM vault.decrypted_secrets 
+  WHERE name = 'STRAVA_SYNC_WEBHOOK_URL' 
+  LIMIT 1;
+
+  -- Fallback to local development URL if no secret is found
+  IF request_url IS NULL OR request_url = '' THEN
+    request_url := 'http://kong:8000/functions/v1/strava-sync';
+  END IF;
 
   PERFORM net.http_post(
     url := request_url,
