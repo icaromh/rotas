@@ -34,6 +34,8 @@ export const Planner: React.FC = () => {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [loader, setLoader] = useState({ isLoading: false, title: '', subtitle: '' });
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [stravaPaths, setStravaPaths] = useState<any>(null);
+  const [showStravaPaths, setShowStravaPaths] = useState(false);
 
   const currentPolygonBounds = useRef<{ lat: number, lng: number }[] | null>(null);
   const currentNeighborhoodNameRef = useRef<string | null>(null);
@@ -155,6 +157,8 @@ export const Planner: React.FC = () => {
           onPreviewFinished={() => setIsPreviewing(false)}
           isSharedView={false}
           isDoneMode={isDoneMode}
+          stravaPaths={stravaPaths}
+          showStravaPaths={showStravaPaths}
         />
 
         <div className="absolute inset-0 pointer-events-none p-4 md:p-6 z-[1000] flex items-start gap-4">
@@ -172,6 +176,9 @@ export const Planner: React.FC = () => {
             onOpenSettings={() => setIsSettingsOpen(true)}
             onGenerate={handleGenerate}
             isDoneMode={isDoneMode}
+            onStravaPathsFetched={setStravaPaths}
+            showStravaPaths={showStravaPaths}
+            setShowStravaPaths={setShowStravaPaths}
           />
         </div>
       </div>

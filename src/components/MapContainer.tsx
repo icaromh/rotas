@@ -71,6 +71,8 @@ interface Props {
   onPreviewFinished: () => void;
   isSharedView: boolean;
   isDoneMode: boolean;
+  stravaPaths?: any;
+  showStravaPaths?: boolean;
 }
 
 export const MapContainer: React.FC<Props> = ({ 
@@ -81,7 +83,9 @@ export const MapContainer: React.FC<Props> = ({
   isPreviewing,
   onPreviewFinished,
   isSharedView,
-  isDoneMode
+  isDoneMode,
+  stravaPaths,
+  showStravaPaths
 }) => {
   const { t, i18n } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -97,6 +101,7 @@ export const MapContainer: React.FC<Props> = ({
   const animPolylineRef = useRef<L.Polyline | null>(null);
   const animMarkerRef = useRef<L.CircleMarker | null>(null);
   const animReqIdRef = useRef<number | null>(null);
+  const stravaLayerRef = useRef<L.GeoJSON | null>(null);
 
   // Update Leaflet Draw Localization on language change
   useEffect(() => {
@@ -441,6 +446,38 @@ export const MapContainer: React.FC<Props> = ({
       }
     };
   }, [isPreviewing, currentPolylineData, onPreviewFinished]);
+
+  // Handle Strava Paths rendering
+  useEffect(() => {
+    if (!mapInstance.current) return;
+    const map = mapInstance.current;
+
+    // Remove old layer
+    if (stravaLayerRef.current) {
+      map.removeLayer(stravaLayerRef.current);
+      stravaLayerRef.current = null;
+    }
+
+    // Render new layer if we should show them and data exists
+    if (showStravaPaths && stravaPaths && stravaPaths.features) {
+      stravaLayerRef.current = L.geoJSON(stravaPaths, {
+        style: {
+          color: '#fc4c02', // Strava orange
+          weight: 3,
+          opacity: 0.6,
+          lineJoin: 'round'
+        }
+      }).addTo(map);
+
+      // Optional: zoom to bounds if there's data
+      if (stravaPaths.features.length > 0) {
+        const bounds = stravaLayerRef.current.getBounds();
+        if (bounds.isValid()) {
+           map.fitBounds(bounds, { padding: [20, 20], maxZoom: 14 });
+        }
+      }
+    }
+  }, [stravaPaths, showStravaPaths]);
 
   return (
     <>

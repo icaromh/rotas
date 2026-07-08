@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.16.0] - 2026-07-08
+### Added
+- **Strava Integration (POC)**:
+  - Added a Node.js Express backend (`/server`) for Strava OAuth and API integration.
+  - Setup PostGIS database schema in Supabase for storing Strava activities.
+  - Implemented Strava Sync to fetch and store covered paths as GeoJSON.
+  - Added UI in the planner to connect to Strava and toggle "Show My Paths".
+  - Rendered covered paths on the Leaflet map using GeoJSON layer.
+
 ## [1.15.0] - 2026-07-08
 ### Added
 - **PostHog analytics integration**:
