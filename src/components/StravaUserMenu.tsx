@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
+import { useAppStore } from '../store/useAppStore';
 
 interface Props {
   onPathsFetched?: (paths: any) => void;
@@ -14,6 +15,11 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const stravaColor = useAppStore(state => state.stravaColor);
+  const stravaOpacity = useAppStore(state => state.stravaOpacity);
+  const setStravaColor = useAppStore(state => state.setStravaColor);
+  const setStravaOpacity = useAppStore(state => state.setStravaOpacity);
 
   useEffect(() => {
     const userId = localStorage.getItem('strava_user_id');
@@ -163,6 +169,32 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
                   <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showPaths ? 'transform translate-x-4' : ''}`}></div>
                 </div>
               </label>
+
+              {showPaths && (
+                <div className="flex flex-col gap-2 p-2 bg-gray-50 border border-gray-200 rounded">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-600">Color</span>
+                    <input 
+                      type="color" 
+                      value={stravaColor} 
+                      onChange={(e) => setStravaColor(e.target.value)} 
+                      className="w-6 h-6 p-0 border-0 rounded cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-gray-600">Opacity</span>
+                    <input 
+                      type="range" 
+                      min="0.1" 
+                      max="1" 
+                      step="0.1" 
+                      value={stravaOpacity} 
+                      onChange={(e) => setStravaOpacity(parseFloat(e.target.value))} 
+                      className="w-24 accent-[#fc4c02]"
+                    />
+                  </div>
+                </div>
+              )}
 
               <Button onClick={handleSync} disabled={isSyncing} variant="primary" size="sm" className="w-full justify-center bg-[#fc4c02] text-white hover:bg-[#e34402]">
                 {isSyncing ? 'Syncing...' : 'Sync Now'}

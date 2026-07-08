@@ -8,6 +8,7 @@ import osmtogeojson from 'osmtogeojson';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { fetchNeighborhoods } from '../api/overpass';
+import { useAppStore } from '../store/useAppStore';
 
 // Fix Leaflet's default icon paths for Vite
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -95,6 +96,9 @@ export const MapContainer: React.FC<Props> = ({
   // AlertModal state — lifted above Leaflet event scope so it can trigger a React re-render
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  
+  const stravaOpacity = useAppStore(state => state.stravaOpacity);
+  const stravaColor = useAppStore(state => state.stravaColor);
 
   const neighborhoodsMutation = useMutation({ mutationFn: fetchNeighborhoods });
   const pathLayerRef = useRef<L.Polyline | null>(null);
@@ -462,14 +466,24 @@ export const MapContainer: React.FC<Props> = ({
     if (showStravaPaths && stravaPaths && stravaPaths.features) {
       stravaLayerRef.current = L.geoJSON(stravaPaths, {
         style: {
-          color: '#fc4c02', // Strava orange
+          color: stravaColor,
           weight: 3,
-          opacity: 0.6,
+          opacity: stravaOpacity,
           lineJoin: 'round'
         }
       }).addTo(map);
     }
-  }, [stravaPaths, showStravaPaths]);
+  }, [stravaPaths, showStravaPaths]); // intentional: don't re-render entire layer when only color/opacity changes
+
+  // Update Strava styles dynamically
+  useEffect(() => {
+    if (stravaLayerRef.current) {
+      stravaLayerRef.current.setStyle({
+        color: stravaColor,
+        opacity: stravaOpacity
+      });
+    }
+  }, [stravaColor, stravaOpacity]);
 
   return (
     <>
