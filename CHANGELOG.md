@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.1] - 2026-07-08
+### Fixed
+- **Supabase Queues Webhook**: Wired up the `pgmq` queue to automatically trigger the `strava-sync` Edge Function using a native Postgres database webhook (`pg_net`), replacing the need for an external cron/polling worker.
+- **Queue Cleanup**: Updated the `strava-sync` Edge Function to explicitly delete messages from the `pgmq` queue upon successful execution, preventing infinite retries.
+- **Local Permissions**: Added a database migration granting `SELECT`, `INSERT`, and `UPDATE` privileges on `users` and `activities` tables to the `anon`, `authenticated`, and `service_role` to prevent `42501` permission errors during local development.
+- **Documentation**: Added instructions to `README.md` and `.agents/AGENTS.md` on using `npx supabase db reset` to resolve stuck local queues or stale database states.
+
 ## [1.19.0] - 2026-07-08
 ### Changed
 - **Architecture**:
