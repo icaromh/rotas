@@ -14,7 +14,6 @@ type Bindings = {
 
 type SyncMessage = {
   userId: string;
-  accessToken: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -84,8 +83,8 @@ app.post('/api/auth/callback', async (c) => {
 
 // 3. Initiate Sync (Producer)
 app.post('/api/sync', async (c) => {
-  const { userId, accessToken } = await c.req.json();
-  if (!userId || !accessToken) return c.json({ error: 'Missing credentials' }, 400);
+  const { userId } = await c.req.json();
+  if (!userId) return c.json({ error: 'Missing credentials' }, 400);
 
   const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -96,9 +95,9 @@ app.post('/api/sync', async (c) => {
     .eq('id', userId);
 
   // Send message to the Cloudflare Queue
-  await c.env.STRAVA_SYNC_QUEUE.send({ userId, accessToken });
+  await c.env.STRAVA_SYNC_QUEUE.send({ userId });
 
-  return c.json({ status: 'queued', inserted: 0 });
+  return c.json({ status: 'queued', inserted: 0 }, 202);
 });
 
 // 4. Check Sync Status
@@ -150,17 +149,23 @@ export default {
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
     for (const msg of batch.messages) {
-      const { userId, accessToken } = msg.body;
+      const { userId } = msg.body;
 
       try {
         // 1. Check Rate Limit status before starting
         const { data: userRecord } = await supabase
           .from('users')
-          .select('rate_limit_reset_at, sync_status, sync_progress')
+          .select('rate_limit_reset_at, sync_status, sync_progress, strava_access_token')
           .eq('id', userId)
           .single();
 
-        if (userRecord?.rate_limit_reset_at) {
+        if (!userRecord || !userRecord.strava_access_token) {
+          throw new Error('User not found or missing access token');
+        }
+        
+        const accessToken = userRecord.strava_access_token;
+
+        if (userRecord.rate_limit_reset_at) {
           const resetTime = new Date(userRecord.rate_limit_reset_at).getTime();
           if (Date.now() < resetTime) {
             console.log(`Rate limited until ${userRecord.rate_limit_reset_at}. Re-queuing.`);
