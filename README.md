@@ -102,8 +102,10 @@ React UI renders polyline + sidebar stats
 ### Infrastructure
 | Tool | Role |
 |---|---|
-| **Cloudflare Worker** | CORS proxy + multi-endpoint fallback for Overpass |
-| **Vercel** | Hosting |
+| **Supabase Edge Functions** | Stateless API and OAuth handling |
+| **Supabase Postgres + pgmq** | Durable background task queues for heavy Strava synchronisation |
+| **Cloudflare Worker** | CORS proxy + multi-endpoint fallback for Overpass (`rotas-overpass-proxy`) |
+| **Vercel** | Frontend Hosting |
 | **Playwright** | E2E tests + visual regression |
 | **Vitest** | Unit tests |
 | **vite-plugin-pwa / Workbox** | Service worker & offline support |
@@ -133,8 +135,20 @@ src/
 ### Prerequisites
 - Node.js ≥ 18
 - npm ≥ 9
+- **Docker Desktop** (required for local Supabase)
+- **Supabase CLI** (installed automatically via npx)
 
-### Install & run
+### Environment Setup
+
+Create a `.env` file in the `supabase/` directory and populate it with your Strava API credentials:
+
+```bash
+STRAVA_CLIENT_ID="your_strava_client_id"
+STRAVA_CLIENT_SECRET="your_strava_client_secret"
+STRAVA_REDIRECT_URI="http://localhost:5173/auth/callback"
+```
+
+### Local Development
 
 ```bash
 # 1. Clone the repo
@@ -144,11 +158,20 @@ cd rotas
 # 2. Install dependencies
 npm install
 
-# 3. Start the dev server
+# 3. Start local Supabase (Database, Auth, Edge Functions & Queues)
+# Note: Ensure Docker is running before executing this
+npx supabase start
+
+# 4. Apply database migrations (including pgmq extension for queues)
+npm run db:push
+
+# 5. Start the Vite dev server
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+> **Note on Edge Functions:** The API and background queues (like Strava sync) run on Supabase Edge Functions. The local Supabase stack automatically serves these at `http://127.0.0.1:54321/functions/v1/`, and Vite automatically proxies `/api` requests to them.
 
 ### Other scripts
 
@@ -158,6 +181,7 @@ npm test                   # Unit tests (Vitest)
 npm run test:e2e           # E2E flow tests (Playwright)
 npm run test:e2e:visual    # Visual regression tests
 npm run deploy:proxy       # Deploy the Cloudflare Worker proxy
+npm run deploy:functions   # Deploy Supabase Edge Functions to production
 ```
 
 ---
