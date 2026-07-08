@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2022",
-    "module": "commonjs",
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

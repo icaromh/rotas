@@ -1,7 +1,16 @@
 # Changelog
 
-## [1.17.0] - 2026-07-08
+## [1.18.0] - 2026-07-08
 ### Changed
+- **Serverless API Migration**:
+  - Migrated the entire Node.js Express backend to a global, edge-optimized Cloudflare Worker (`/api`).
+  - Rewrote API routing using the lightweight `Hono` web framework for maximum performance.
+  - Replaced in-memory background polling with enterprise-grade **Cloudflare Queues**, completely decoupling the heavy Strava synchronization process from the HTTP request cycle.
+  - Implemented intelligent Strava Rate Limiting: the Queue Consumer actively parses `X-RateLimit-Limit` and `X-RateLimit-Usage` headers, automatically backing off and re-queuing sync messages if the 15-minute or daily quota is nearing exhaustion.
+  - Status polling now accurately queries the Supabase `users` table as the single source of truth across the entire distributed Cloudflare network.
+  - Consolidated and organized all Supabase database migrations into a standard `supabase/migrations/` directory structure.
+
+## [1.17.0] - 2026-07-08
 - **Strava Sync Improvements**:
   - Moved Strava synchronization to a non-blocking background job, keeping the HTTP requests responsive.
   - Added real-time frontend UI polling to display live background sync status without blocking the UI.

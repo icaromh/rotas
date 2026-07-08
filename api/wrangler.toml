@@ -1,0 +1,20 @@
+name = "rotas-api"
+main = "src/index.ts"
+compatibility_date = "2024-03-20"
+
+[vars]
+SUPABASE_URL = "https://qreqypwzhltargnejprw.supabase.co"
+STRAVA_CLIENT_ID = "225161"
+STRAVA_REDIRECT_URI = "http://localhost:5173/auth/callback"
+
+# Cloudflare Queue Bindings
+[[queues.producers]]
+queue = "strava-sync-queue"
+binding = "STRAVA_SYNC_QUEUE"
+
+[[queues.consumers]]
+queue = "strava-sync-queue"
+# One user at a time to prevent blasting Strava Rate Limits
+max_batch_size = 1
+max_batch_timeout = 5
+max_retries = 3

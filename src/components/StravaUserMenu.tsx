@@ -87,8 +87,15 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
         const res = await fetch(`/api/sync/status?userId=${userId}`);
         const data = await res.json();
         
-        if (data.status === 'running') {
+        if (data.status === 'queued') {
+          setSyncStatus('In Queue...');
+        } else if (data.status === 'syncing') {
           setSyncStatus(`Syncing... (${data.inserted} inserted)`);
+        } else if (data.status === 'rate_limited') {
+          clearInterval(interval);
+          const resetTime = new Date(data.rateLimitResetAt).toLocaleTimeString();
+          setSyncStatus(`Strava limit reached. Queued for ${resetTime}.`);
+          setIsSyncing(false);
         } else if (data.status === 'completed') {
           clearInterval(interval);
           setSyncStatus(`Complete! ${data.inserted} activities inserted.`);
@@ -96,10 +103,10 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
           setTimeout(() => setSyncStatus(null), 5000);
         } else if (data.status === 'error') {
           clearInterval(interval);
-          setSyncStatus(`Sync failed. ${data.error}`);
+          setSyncStatus(`Sync failed. ${data.error || ''}`);
           setIsSyncing(false);
           setTimeout(() => setSyncStatus(null), 5000);
-        } else {
+        } else if (data.status === 'idle') {
            clearInterval(interval);
            setIsSyncing(false);
         }
