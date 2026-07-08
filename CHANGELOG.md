@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.19.0] - 2026-07-08
+### Changed
+- **Architecture**:
+  - Migrated the entire Strava sync backend from Cloudflare Workers to **Supabase Edge Functions**.
+  - Migrated the background task architecture from Cloudflare Queues to Supabase native durable queues via the **pgmq** PostgreSQL extension.
+  - Replaced wrangler CLI with Supabase CLI for deployment and local development.
+  - Configured Vite Proxy to resolve API routes directly to the local Edge Functions environment.
+
 ## [1.18.0] - 2026-07-08
 ### Changed
 - **Serverless API Migration**:
