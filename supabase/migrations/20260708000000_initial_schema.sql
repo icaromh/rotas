@@ -39,6 +39,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_users_modtime ON public.users;
 CREATE TRIGGER update_users_modtime
     BEFORE UPDATE ON public.users
     FOR EACH ROW
