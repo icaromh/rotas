@@ -6,11 +6,13 @@ import { Sidebar } from '../components/Sidebar';
 import { AboutModal } from '../components/AboutModal';
 import { decodeRoute } from '../utils/routeSharing';
 import { previewRoute } from '../router';
+import { usePostHog } from 'posthog-js/react';
 
 export const Preview: React.FC = () => {
   const { route, name, mode, distance } = previewRoute.useSearch();
-  
+
   const setSportMode = useAppStore(state => state.setSportMode);
+  const posthog = usePostHog();
 
   const [routeData, setRouteData] = useState<{
     path: { lat: number; lng: number }[];
@@ -41,9 +43,16 @@ export const Preview: React.FC = () => {
           if (mode === 'bike' || mode === 'walk') {
             setSportMode(mode);
           }
+          posthog.capture('shared_route_viewed', {
+            sport_mode: mode,
+            distance_km: parseFloat(distance || '0'),
+            neighborhood_name: name || null,
+            waypoint_count: decodedPoints.length,
+          });
         }
       } catch (err) {
         console.error('Failed to decode shared route', err);
+        posthog.captureException(err);
       }
     }
   }, [route, name, mode, distance]);

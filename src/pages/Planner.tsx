@@ -10,12 +10,14 @@ import { Loader } from '../components/Loader';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { fetchRoadNetwork } from '../api/overpass';
+import { usePostHog } from 'posthog-js/react';
 
 export const Planner: React.FC = () => {
   const sportMode = useAppStore(state => state.sportMode);
   const bufferMeters = useAppStore(state => state.bufferMeters);
   const safetyPreference = useAppStore(state => state.safetyPreference);
   const { t } = useTranslation();
+  const posthog = usePostHog();
 
   const [isDoneMode, setIsDoneMode] = useState(false);
   const [routeData, setRouteData] = useState<{
@@ -57,9 +59,23 @@ export const Planner: React.FC = () => {
         });
         setLoader({ isLoading: false, title: '', subtitle: '' });
         setIsDoneMode(true);
+        posthog.capture('route_generated', {
+          sport_mode: sportMode,
+          distance_km: distance,
+          neighborhood_name: currentNeighborhoodNameRef.current,
+          buffer_meters: bufferMeters,
+          safety_preference: safetyPreference,
+          waypoint_count: path.length,
+        });
       } else if (type === 'error') {
         alert(t('planner.errorGeneration') + ' ' + message);
         setLoader({ isLoading: false, title: '', subtitle: '' });
+        posthog.capture('route_generation_failed', {
+          sport_mode: sportMode,
+          buffer_meters: bufferMeters,
+          safety_preference: safetyPreference,
+          error_message: message,
+        });
       }
     };
 

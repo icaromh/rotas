@@ -3,6 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { ChevronDownIcon, SettingsIcon, RefreshIcon, RouteIcon, BikeIcon, WalkIcon } from './icons';
 import { Button } from './ui/Button';
 import { useTranslation } from 'react-i18next';
+import { usePostHog } from 'posthog-js/react';
 
 interface Props {
   onOpenSettings: () => void;
@@ -14,6 +15,7 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
   const sportMode = useAppStore(state => state.sportMode);
   const setSportMode = useAppStore(state => state.setSportMode);
   const { t } = useTranslation();
+  const posthog = usePostHog();
 
   return (
     <div className="flex-1 flex justify-between items-start pointer-events-none">
@@ -42,10 +44,17 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
             <ChevronDownIcon className="hidden md:block w-4 h-4 text-gray-500 absolute right-3 pointer-events-none" />
 
             {/* Invisible Native Select Overlay */}
-            <select 
+            <select
               id="sport-select"
               value={sportMode}
-              onChange={(e) => setSportMode(e.target.value as any)}
+              onChange={(e) => {
+                const newMode = e.target.value as 'bike' | 'walk';
+                posthog.capture('sport_mode_changed', {
+                  from_mode: sportMode,
+                  to_mode: newMode,
+                });
+                setSportMode(newMode);
+              }}
               className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
             >
               <option value="bike">{t('preferences.sport.cycling')}</option>

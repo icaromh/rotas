@@ -43,6 +43,7 @@
     "leaflet-draw": "^1.0.4",
     "lz-string": "^1.5.0",
     "osmtogeojson": "^3.0.0-beta.5",
+    "posthog-js": "^1.398.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-i18next": "^17.0.8",

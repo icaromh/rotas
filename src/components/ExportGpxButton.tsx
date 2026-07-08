@@ -4,6 +4,7 @@ import { Button } from './ui/Button';
 import { downloadGpx } from '../utils/gpxExport';
 import { useTranslation } from 'react-i18next';
 import type { Point } from '../utils/routeSharing';
+import { usePostHog } from 'posthog-js/react';
 
 interface Props {
   path: Point[];
@@ -17,8 +18,14 @@ interface Props {
  */
 export const ExportGpxButton: React.FC<Props> = ({ path, filename, className }) => {
   const { t } = useTranslation();
+  const posthog = usePostHog();
 
-  const handleClick = () => downloadGpx(path, filename);
+  const handleClick = () => {
+    posthog.capture('gpx_exported', {
+      waypoint_count: path.length,
+    });
+    downloadGpx(path, filename);
+  };
 
   return (
     <Button
