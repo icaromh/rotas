@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.15.0] - 2026-07-08
+### Added
+- **PostHog analytics integration**:
+  - Integrated PostHog analytics (`posthog-js` and `posthog-js/react`) for user behavior tracking and exception capture.
+  - Configured `PostHogProvider` and `PageViewTracker` in `src/lib/posthog.tsx`.
+  - Added tracking for 8 business-critical user events:
+    - `route_generated` and `route_generation_failed` in `src/pages/Planner.tsx`.
+    - `route_shared` and `route_preview_toggled` in `src/components/Sidebar.tsx`.
+    - `gpx_exported` in `src/components/ExportGpxButton.tsx`.
+    - `sport_mode_changed` in `src/components/Toolbar.tsx`.
+    - `preferences_saved` in `src/components/PreferencesModal.tsx`.
+    - `shared_route_viewed` in `src/pages/Preview.tsx`.
+### Changed
+- **PostHog ingestion endpoint**:
+  - Configured `posthog` to send events directly to the official PostHog EU ingestion URL (`https://eu.i.posthog.com`) rather than proxying through the Vite development server.
+
 ## [1.13.2] - 2026-06-29
 ### Fixed
 - **i18n: replace hardcoded `alert()` calls with localized custom modal (closes #13)**
