@@ -11,8 +11,7 @@
  *   2. https://maps.mail.ru/osm/tools/overpass (VK Maps — no rate limit)
  *   3. https://overpass.private.coffee (Private.coffee — no rate limit)
  */
-
-const PROXY_URL = 'https://rotas-overpass-proxy.icaro-mh.workers.dev/api/interpreter';
+const PROXY_URL = 'https://api.rotas.cc/proxy';
 
 const TIMEOUT_MS = 60_000;
 

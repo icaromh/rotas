@@ -2,5 +2,9 @@ name = "rotas-overpass-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-03-20"
 
+routes = [
+  { pattern = "api.rotas.cc/proxy", zone_name = "rotas.cc" }
+]
+
 # Optional: Disable default subdomain or customize routes
 # workers_dev = true

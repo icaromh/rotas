@@ -2,10 +2,14 @@ name = "rotas-api"
 main = "src/index.ts"
 compatibility_date = "2024-03-20"
 
+routes = [
+  { pattern = "api.rotas.cc/*", zone_name = "rotas.cc" }
+]
+
 [vars]
 SUPABASE_URL = "https://qreqypwzhltargnejprw.supabase.co"
 STRAVA_CLIENT_ID = "225161"
-STRAVA_REDIRECT_URI = "http://localhost:5173/auth/callback"
+STRAVA_REDIRECT_URI = "https://rotas.cc/auth/callback"
 
 # Cloudflare Queue Bindings
 [[queues.producers]]
