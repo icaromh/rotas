@@ -2,7 +2,7 @@ import { Hono } from 'npm:hono';
 import { cors } from 'npm:hono/cors';
 import { createClient } from 'npm:@supabase/supabase-js';
 
-const app = new Hono().basePath('/functions/v1');
+const app = new Hono();
 app.use('*', cors());
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';

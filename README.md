@@ -173,6 +173,12 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 > **Note on Edge Functions:** The API and background queues (like Strava sync) run on Supabase Edge Functions. The local Supabase stack automatically serves these at `http://127.0.0.1:54321/functions/v1/`, and Vite automatically proxies `/api` requests to them.
 
+### Troubleshooting Local Database
+If your local background queues (pgmq) get stuck or you experience permission denied errors on local tables after writing new migrations, resetting the local database will often clear out the stale state and re-apply all roles/triggers:
+```bash
+npx supabase db reset
+```
+
 ### Other scripts
 
 ```bash

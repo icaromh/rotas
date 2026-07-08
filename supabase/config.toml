@@ -382,8 +382,10 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+[edge_runtime.secrets]
+STRAVA_CLIENT_ID = "env(STRAVA_CLIENT_ID)"
+STRAVA_CLIENT_SECRET = "env(STRAVA_CLIENT_SECRET)"
+STRAVA_REDIRECT_URI = "env(STRAVA_REDIRECT_URI)"
 
 [analytics]
 enabled = true

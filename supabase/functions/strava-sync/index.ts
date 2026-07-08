@@ -158,6 +158,12 @@ Deno.serve(async (req) => {
       }).eq('id', userId);
       
       console.log(`Sync completed for user: ${userId}. Inserted ${totalInserted} activities.`);
+
+      // Delete message from queue upon success
+      if (msg.msg_id) {
+        await supabase.rpc('delete_strava_sync_message', { msg_id: msg.msg_id });
+        console.log(`Removed message ${msg.msg_id} from queue.`);
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
