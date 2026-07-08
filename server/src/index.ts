@@ -23,6 +23,9 @@ const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID || '';
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET || '';
 const STRAVA_REDIRECT_URI = process.env.STRAVA_REDIRECT_URI || 'http://localhost:5173/auth/callback';
 
+// Track sync background jobs in memory
+const syncJobs: Record<string, { status: 'running' | 'completed' | 'error', inserted: number, error?: string }> = {};
+
 /**
  * 1. Auth: Redirect to Strava
  */
@@ -88,95 +91,105 @@ app.post('/api/sync', async (req, res) => {
         return res.status(400).json({ error: 'User ID is required' });
     }
 
-    try {
-        // Get user from DB to get the access token
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-        if (userError || !user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // TODO: Handle Token Refresh logic here if token_expires_at is in the past
-        const accessToken = user.strava_access_token;
-
-        let page = 1;
-        const perPage = 200;
-        let hasMore = true;
-        let totalInserted = 0;
-
-        while (hasMore) {
-            console.log(`Fetching Strava activities page ${page}...`);
-            const response = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
-                headers: { Authorization: `Bearer ${accessToken}` },
-                params: { page, per_page: perPage }
-            });
-
-            const activities = response.data;
-            if (activities.length === 0) {
-                hasMore = false;
-                break;
-            }
-
-            for (const activity of activities) {
-                // We only care about activities with a map
-                if (!activity.map || !activity.map.summary_polyline) {
-                    continue;
-                }
-
-                // Decode polyline to GeoJSON LineString format [longitude, latitude]
-                const decoded = polyline.decode(activity.map.summary_polyline);
-                const coordinates = decoded.map(([lat, lng]) => `${lng} ${lat}`).join(', ');
-                
-                // Create PostGIS LineString WKT
-                const lineStringWKT = `LINESTRING(${coordinates})`;
-
-                // Insert into DB using RPC or raw insert.
-                // Supabase doesn't natively support WKT inserts easily via the standard JS client unless we use PostGIS functions.
-                // The easiest way via standard REST is to use GeoJSON if the column is castable, 
-                // OR we can create a stored procedure, OR use a raw query if available.
-                // For Supabase REST, passing a GeoJSON object to a Geometry column works automatically if configured properly.
-                
-                const geoJSONLineString = {
-                    type: 'LineString',
-                    coordinates: decoded.map(([lat, lng]) => [lng, lat]) // GeoJSON is [lon, lat]
-                };
-
-                const { error: insertError } = await supabase
-                    .from('activities')
-                    .upsert({
-                        user_id: user.id,
-                        strava_activity_id: activity.id,
-                        name: activity.name,
-                        start_date: activity.start_date,
-                        distance: activity.distance,
-                        moving_time: activity.moving_time,
-                        path: geoJSONLineString // PostgREST handles GeoJSON to Geometry conversion natively!
-                    }, { onConflict: 'strava_activity_id' });
-
-                if (insertError) {
-                    console.error('Insert error for activity', activity.id, insertError);
-                } else {
-                    totalInserted++;
-                }
-            }
-
-            if (activities.length < perPage) {
-                hasMore = false;
-            } else {
-                page++;
-            }
-        }
-
-        res.json({ message: 'Sync complete', activitiesInserted: totalInserted });
-
-    } catch (error: any) {
-        console.error('Sync Error:', error.response?.data || error.message);
-        res.status(500).json({ error: 'Failed to sync activities' });
+    if (syncJobs[userId] && syncJobs[userId].status === 'running') {
+        return res.status(409).json({ error: 'Sync already in progress' });
     }
+
+    // Immediately respond that processing started
+    res.status(202).json({ message: 'Sync started in background' });
+
+    // Run sync in background (fire and forget)
+    syncJobs[userId] = { status: 'running', inserted: 0 };
+
+    (async () => {
+        try {
+            const { data: user, error: userError } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (userError || !user) {
+                syncJobs[userId] = { status: 'error', inserted: 0, error: 'User not found' };
+                return;
+            }
+
+            const accessToken = user.strava_access_token;
+            let page = 1;
+            const perPage = 200;
+            let hasMore = true;
+            let totalInserted = 0;
+
+            while (hasMore) {
+                console.log(`Fetching Strava activities page ${page}...`);
+                const response = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                    params: { page, per_page: perPage }
+                });
+
+                const activities = response.data;
+                if (activities.length === 0) {
+                    hasMore = false;
+                    break;
+                }
+
+                for (const activity of activities) {
+                    if (!activity.map || !activity.map.summary_polyline) continue;
+
+                    const decoded = polyline.decode(activity.map.summary_polyline);
+                    const geoJSONLineString = {
+                        type: 'LineString',
+                        coordinates: decoded.map(([lat, lng]) => [lng, lat])
+                    };
+
+                    const { error: insertError } = await supabase
+                        .from('activities')
+                        .upsert({
+                            user_id: user.id,
+                            strava_activity_id: activity.id,
+                            name: activity.name,
+                            start_date: activity.start_date,
+                            distance: activity.distance,
+                            moving_time: activity.moving_time,
+                            path: geoJSONLineString
+                        }, { onConflict: 'strava_activity_id' });
+
+                    if (!insertError) {
+                        totalInserted++;
+                        syncJobs[userId].inserted = totalInserted; // Update live count
+                    } else {
+                        console.error('Insert error for activity', activity.id, insertError);
+                    }
+                }
+
+                if (activities.length < perPage) {
+                    hasMore = false;
+                } else {
+                    page++;
+                }
+            }
+
+            syncJobs[userId] = { status: 'completed', inserted: totalInserted };
+            console.log(`Sync completed for ${userId}: ${totalInserted} paths inserted`);
+
+        } catch (error: any) {
+            console.error('Background Sync Error:', error.response?.data || error.message);
+            syncJobs[userId] = { status: 'error', inserted: syncJobs[userId]?.inserted || 0, error: 'Failed to sync activities' };
+        }
+    })();
+});
+
+/**
+ * 3.5 Sync Status Check
+ */
+app.get('/api/sync/status', (req, res) => {
+    const userId = req.query.userId as string;
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const job = syncJobs[userId] || { status: 'idle', inserted: 0 };
+    res.json(job);
 });
 
 /**

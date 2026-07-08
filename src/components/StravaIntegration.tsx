@@ -37,28 +37,63 @@ export const StravaIntegration: React.FC<Props> = ({ onPathsFetched, showPaths, 
     if (!userId) return;
 
     setIsSyncing(true);
-    setSyncStatus('Syncing in background... You can keep using the app.');
+    setSyncStatus('Starting sync...');
+    
     try {
       const res = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
       });
-      const data = await res.json();
-      setSyncStatus(`Sync complete! ${data.activitiesInserted || 0} activities inserted.`);
       
-      // If currently showing paths, refresh them
-      if (showPaths) {
-        fetchPaths();
+      if (res.status === 202) {
+        setSyncStatus('Syncing in background... You can keep using the app.');
+        pollSyncStatus(userId);
+      } else if (res.status === 409) {
+        setSyncStatus('Sync already in progress.');
+        pollSyncStatus(userId);
+      } else {
+        const data = await res.json();
+        setSyncStatus(`Sync failed: ${data.error}`);
+        setIsSyncing(false);
       }
     } catch (err) {
-      console.error('Failed to sync', err);
-      setSyncStatus('Sync failed.');
-    } finally {
+      console.error('Failed to start sync', err);
+      setSyncStatus('Sync failed to start.');
       setIsSyncing(false);
-      // Clear status message after 5 seconds
-      setTimeout(() => setSyncStatus(null), 5000);
     }
+  };
+
+  const pollSyncStatus = (userId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/sync/status?userId=${userId}`);
+        const data = await res.json();
+        
+        if (data.status === 'running') {
+          setSyncStatus(`Syncing in background... (${data.inserted} inserted)`);
+        } else if (data.status === 'completed') {
+          clearInterval(interval);
+          setSyncStatus(`Sync complete! ${data.inserted} activities inserted.`);
+          setIsSyncing(false);
+          if (showPaths) fetchPaths();
+          setTimeout(() => setSyncStatus(null), 5000);
+        } else if (data.status === 'error') {
+          clearInterval(interval);
+          setSyncStatus(`Sync failed. ${data.error}`);
+          setIsSyncing(false);
+          setTimeout(() => setSyncStatus(null), 5000);
+        } else {
+           // idle or unknown
+           clearInterval(interval);
+           setIsSyncing(false);
+        }
+      } catch (err) {
+        console.error('Failed to poll status', err);
+        clearInterval(interval);
+        setIsSyncing(false);
+      }
+    }, 2500);
   };
 
   const fetchPaths = async () => {
