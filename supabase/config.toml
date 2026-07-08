@@ -435,6 +435,3 @@ entrypoint = "./functions/strava-sync/index.ts"
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/strava-sync/*.html" ]
 
-[queues.strava_sync]
-type = "pgmq"
-worker = "strava-sync"
