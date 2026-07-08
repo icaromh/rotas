@@ -141,18 +141,18 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
           </div>
 
           {!isAuthenticated ? (
-            <div className="flex flex-col gap-3 text-sm text-gray-500">
-              <p>Connect your Strava account to view your past activities on the map.</p>
+            <div className="flex flex-col gap-3">
               <Button onClick={handleConnect} variant="primary" size="sm" className="bg-[#fc4c02] text-white hover:bg-[#e34402] w-full justify-center">
                 Connect Strava
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-3 text-sm text-gray-500">
-              <p>Your account is connected. Keep your local map data up to date by syncing.</p>
-
-              <label className="flex items-center justify-between cursor-pointer p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 transition-colors">
-                <span className="font-medium text-gray-700">Show My Paths</span>
+            <div className="flex flex-col gap-4 text-sm">
+              {/* Map Settings Section */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Map Overlay</span>
+                <label className="flex items-center justify-between cursor-pointer p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 transition-colors">
+                  <span className="font-medium text-gray-700 text-sm">Show My Paths</span>
                 <div className="relative">
                   <input type="checkbox" className="sr-only" checked={showPaths} onChange={() => {
                     if (!showPaths) {
@@ -195,18 +195,27 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
                   </div>
                 </div>
               )}
+              </div>
 
-              <Button onClick={handleSync} disabled={isSyncing} variant="primary" size="sm" className="w-full justify-center bg-[#fc4c02] text-white hover:bg-[#e34402]">
-                {isSyncing ? 'Syncing...' : 'Sync Now'}
-              </Button>
-              {syncStatus && (
-                <div className="p-2 bg-gray-50 rounded text-xs text-center border border-gray-100">
-                  {syncStatus}
-                </div>
-              )}
-              <Button onClick={handleLogout} variant="ghost" size="sm" className="w-full justify-center text-red-500 hover:text-red-600 hover:bg-red-50 mt-1">
-                Disconnect
-              </Button>
+              {/* Data Sync Section */}
+              <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Data Sync</span>
+                <Button onClick={handleSync} disabled={isSyncing} variant="primary" size="sm" className="w-full justify-center bg-[#fc4c02] text-white hover:bg-[#e34402]">
+                  {isSyncing ? 'Syncing...' : 'Sync Now'}
+                </Button>
+                {syncStatus && (
+                  <div className="p-2 bg-gray-50 rounded text-xs text-center border border-gray-100 text-gray-600">
+                    {syncStatus}
+                  </div>
+                )}
+              </div>
+
+              {/* Account Section */}
+              <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
+                <Button onClick={handleLogout} variant="ghost" size="sm" className="w-full justify-center text-red-500 hover:text-red-600 hover:bg-red-50">
+                  Disconnect
+                </Button>
+              </div>
             </div>
           )}
         </div>
