@@ -7,12 +7,15 @@
   - Added real-time frontend UI polling to display live background sync status without blocking the UI.
   - Implemented an intelligent cache using the latest `start_date` to only fetch new activities from Strava.
 - **Strava UI Refactoring**:
-  - Moved Strava connection and sync buttons to a dedicated user menu popover in the top navigation header.
+  - Moved Strava connection and sync buttons to a dedicated user menu popover in the top navigation header, organized into logical sections.
   - Added Strava profile picture fetching and display for authenticated users.
   - Added a "Disconnect" button to easily log out and clear the local Strava session.
+  - Added dynamic Color Picker and Opacity Slider controls for the Strava path overlay.
+  - Disabled PostHog analytics capture when running in the local development environment.
 ### Fixed
 - Map now respects the user's current view and zoom level when toggling Strava paths instead of zooming out globally.
 - Fixed an issue where the top navigation menu popovers were hidden behind the Leaflet map controls by adjusting the `z-index`.
+- Fixed visual pollution and opacity stacking of overlapping Strava paths by implementing a unified Canvas renderer overlay.
 
 ## [1.16.0] - 2026-07-08
 ### Added
