@@ -3,6 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { SettingsIcon, XIcon, ChevronDownIcon } from './icons';
 import { Button } from './ui/Button';
 import { useTranslation } from 'react-i18next';
+import { usePostHog } from 'posthog-js/react';
 
 interface Props {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const PreferencesModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const setSafetyPreference = useAppStore(state => state.setSafetyPreference);
   const sportMode = useAppStore(state => state.sportMode);
   const { t } = useTranslation();
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (isOpen) {
@@ -28,6 +30,11 @@ export const PreferencesModal: React.FC<Props> = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const handleSave = () => {
+    posthog.capture('preferences_saved', {
+      buffer_meters: bufferMeters,
+      safety_preference: safetyPreference,
+      sport_mode: sportMode,
+    });
     onClose();
   };
 

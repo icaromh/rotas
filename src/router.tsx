@@ -3,14 +3,17 @@ import { PwaToast } from './components/PwaToast';
 import { Planner } from './pages/Planner';
 import { Preview } from './pages/Preview';
 import { z } from 'zod';
+import { PostHogProvider } from './lib/posthog';
 
 const rootRoute = createRootRoute({
   component: () => {
     return (
-      <div className="flex flex-col h-screen w-screen bg-gray-50 text-gray-900 font-sans antialiased overflow-hidden">
-        <Outlet />
-        <PwaToast />
-      </div>
+      <PostHogProvider>
+        <div className="flex flex-col h-screen w-screen bg-gray-50 text-gray-900 font-sans antialiased overflow-hidden">
+          <Outlet />
+          <PwaToast />
+        </div>
+      </PostHogProvider>
     );
   },
 });

@@ -6,6 +6,7 @@ import { ExportGpxButton } from './ExportGpxButton';
 import { encodeRoute } from '../utils/routeSharing';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { usePostHog } from 'posthog-js/react';
 
 interface Props {
   onPreviewToggle: () => void;
@@ -30,6 +31,7 @@ export const Sidebar: React.FC<Props> = ({
 }) => {
   const sportMode = useAppStore(state => state.sportMode);
   const { t } = useTranslation();
+  const posthog = usePostHog();
 
   if (!isDoneMode && !isSharedView) return null;
 
@@ -58,6 +60,14 @@ export const Sidebar: React.FC<Props> = ({
     url.searchParams.set('distance', currentDistanceKm.toFixed(2));
 
     const shareUrl = url.toString();
+    const shareMethod = 'share' in navigator ? 'native' : 'clipboard';
+
+    posthog.capture('route_shared', {
+      sport_mode: sportMode,
+      distance_km: currentDistanceKm,
+      neighborhood_name: currentNeighborhoodName,
+      share_method: shareMethod,
+    });
 
     if (navigator.share) {
       try {
@@ -131,7 +141,14 @@ export const Sidebar: React.FC<Props> = ({
         <div className="grid grid-cols-2 gap-2">
           <Button
             id="preview-btn"
-            onClick={onPreviewToggle}
+            onClick={() => {
+              posthog.capture('route_preview_toggled', {
+                action: isPreviewing ? 'stopped' : 'started',
+                sport_mode: sportMode,
+                distance_km: currentDistanceKm,
+              });
+              onPreviewToggle();
+            }}
             variant="secondary"
             size="md"
             className={isSharedView ? 'col-span-1' : 'col-span-2'}
