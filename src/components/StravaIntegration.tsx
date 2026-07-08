@@ -116,7 +116,7 @@ export const StravaIntegration: React.FC<Props> = ({ onPathsFetched, showPaths, 
   };
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="relative flex flex-col items-end gap-1">
       <div className="flex items-center gap-2">
         {!isAuthenticated ? (
           <Button onClick={handleConnect} variant="primary" size="sm" className="bg-[#fc4c02] text-white hover:bg-[#e34402]">
@@ -134,7 +134,7 @@ export const StravaIntegration: React.FC<Props> = ({ onPathsFetched, showPaths, 
         )}
       </div>
       {syncStatus && (
-        <div className="text-xs text-gray-500 font-medium absolute -bottom-5 right-0 whitespace-nowrap bg-white px-2 py-0.5 rounded shadow-sm border border-gray-100 z-50">
+        <div className="text-xs text-gray-500 font-medium absolute top-full mt-1 right-0 whitespace-nowrap bg-white px-2 py-1 rounded shadow-md border border-gray-100 z-[9999]">
           {syncStatus}
         </div>
       )}
