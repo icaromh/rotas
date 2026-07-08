@@ -468,14 +468,6 @@ export const MapContainer: React.FC<Props> = ({
           lineJoin: 'round'
         }
       }).addTo(map);
-
-      // Optional: zoom to bounds if there's data
-      if (stravaPaths.features.length > 0) {
-        const bounds = stravaLayerRef.current.getBounds();
-        if (bounds.isValid()) {
-           map.fitBounds(bounds, { padding: [20, 20], maxZoom: 14 });
-        }
-      }
     }
   }, [stravaPaths, showStravaPaths]);
 
