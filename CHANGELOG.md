@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.13.2] - 2026-06-29
+### Fixed
+- **i18n: replace hardcoded `alert()` calls with localized custom modal (closes #13)**
+  - Replaced 2 native `alert()` calls in `src/components/MapContainer.tsx` (polygon draw and edit over-area checks) with a custom `AlertModal` component.
+  - `AlertModal` features glassmorphism design consistent with the project, smooth open/close animations (`open:animate-in fade-in zoom-in-95`), and full ARIA accessibility (`role="dialog"`, `aria-modal`, `aria-labelledby`, `aria-describedby`).
+  - Added i18n keys under the `map` namespace in all 3 locale files (`en-US.json`, `pt-BR.json`, `es-ES.json`): `map.areaLimitTitle`, `map.polygonTooLarge` (with `{{areaKm2}}` and `{{maxArea}}` interpolation), `map.polygonEditedTooLarge`.
+  - State for modal open/message is hoisted to component level (above Leaflet event scope) so it correctly triggers React re-renders.
+  - No hardcoded strings remain in the polygon area validation code paths.
+### Added
+- **`src/components/AlertModal.tsx`** — reusable modal component with props `isOpen`, `message`, `onClose`, `title?`.
+- **`src/components/AlertModal.test.tsx`** — 8 Vitest unit tests (jsdom environment) covering: render when open, hidden when closed, X-button close, OK-button close, Escape key (dialog `close` event), message content, accessibility attributes, optional title.
+- `jsdom` and `@testing-library/jest-dom` added as dev dependencies.
+- `vite.config.ts` extended with Vitest workspace projects: `unit` (Node, `tests/**/*.test.ts`) and `components` (jsdom, `src/**/*.test.tsx`) — all 67 tests pass.
+
 ## [1.13.0] - 2026-06-29
 ### Added
 - **Vitest unit test suite** — comprehensive test coverage for all core algorithmic and utility modules:
