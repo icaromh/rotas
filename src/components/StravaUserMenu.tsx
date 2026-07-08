@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
+import { RefreshIcon } from './icons';
 import { useAppStore } from '../store/useAppStore';
 
 interface Props {
@@ -174,12 +175,23 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
                 <div className="flex flex-col gap-2 p-2 bg-gray-50 border border-gray-200 rounded">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-600">Color</span>
-                    <input 
-                      type="color" 
-                      value={stravaColor} 
-                      onChange={(e) => setStravaColor(e.target.value)} 
-                      className="w-6 h-6 p-0 border-0 rounded cursor-pointer"
-                    />
+                    <div className="flex items-center gap-2">
+                      {stravaColor !== '#fc4c02' && (
+                        <button 
+                          onClick={() => setStravaColor('#fc4c02')}
+                          className="text-gray-400 hover:text-gray-600 transition-colors outline-none"
+                          title="Reset to Strava Orange"
+                        >
+                          <RefreshIcon size={14} />
+                        </button>
+                      )}
+                      <input 
+                        type="color" 
+                        value={stravaColor} 
+                        onChange={(e) => setStravaColor(e.target.value)} 
+                        className="w-6 h-6 p-0 border-0 rounded cursor-pointer"
+                      />
+                    </div>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-gray-600">Opacity</span>
