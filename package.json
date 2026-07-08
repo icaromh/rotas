@@ -11,7 +11,9 @@
     "test:e2e": "playwright test tests/e2e/flows.spec.ts",
     "test:e2e:visual": "playwright test tests/e2e/visual.spec.ts",
     "test:e2e:visual:update": "playwright test tests/e2e/visual.spec.ts --update-snapshots",
-    "deploy:proxy": "wrangler deploy -c proxy/wrangler.toml"
+    "deploy:proxy": "wrangler deploy -c proxy/wrangler.toml",
+    "db:push": "supabase db push",
+    "db:migrate": "supabase migration up"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
