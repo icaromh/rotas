@@ -145,6 +145,9 @@ export const Planner: React.FC = () => {
     <>
       <TopNav 
         onOpenAbout={() => setIsAboutOpen(true)}
+        onStravaPathsFetched={setStravaPaths}
+        showStravaPaths={showStravaPaths}
+        setShowStravaPaths={setShowStravaPaths}
       />
       
       <div className="flex-1 relative w-full h-full bg-gray-200 overflow-hidden">
@@ -176,9 +179,6 @@ export const Planner: React.FC = () => {
             onOpenSettings={() => setIsSettingsOpen(true)}
             onGenerate={handleGenerate}
             isDoneMode={isDoneMode}
-            onStravaPathsFetched={setStravaPaths}
-            showStravaPaths={showStravaPaths}
-            setShowStravaPaths={setShowStravaPaths}
           />
         </div>
       </div>

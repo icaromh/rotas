@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
 
-export const StravaUserMenu: React.FC = () => {
+interface Props {
+  onPathsFetched?: (paths: any) => void;
+  showPaths?: boolean;
+  setShowPaths?: (show: boolean) => void;
+}
+
+export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = false, setShowPaths }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -138,6 +144,26 @@ export const StravaUserMenu: React.FC = () => {
           ) : (
             <div className="flex flex-col gap-3 text-sm text-gray-500">
               <p>Your account is connected. Keep your local map data up to date by syncing.</p>
+
+              <label className="flex items-center justify-between cursor-pointer p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 transition-colors">
+                <span className="font-medium text-gray-700">Show My Paths</span>
+                <div className="relative">
+                  <input type="checkbox" className="sr-only" checked={showPaths} onChange={() => {
+                    if (!showPaths) {
+                      fetch('/api/paths')
+                        .then(res => res.json())
+                        .then(data => onPathsFetched && onPathsFetched(data))
+                        .catch(err => console.error('Failed to fetch paths', err));
+                    } else {
+                      if (onPathsFetched) onPathsFetched({ type: 'FeatureCollection', features: [] });
+                    }
+                    if (setShowPaths) setShowPaths(!showPaths);
+                  }} />
+                  <div className={`block w-10 h-6 rounded-full transition-colors ${showPaths ? 'bg-[#fc4c02]' : 'bg-gray-300'}`}></div>
+                  <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showPaths ? 'transform translate-x-4' : ''}`}></div>
+                </div>
+              </label>
+
               <Button onClick={handleSync} disabled={isSyncing} variant="primary" size="sm" className="w-full justify-center bg-[#fc4c02] text-white hover:bg-[#e34402]">
                 {isSyncing ? 'Syncing...' : 'Sync Now'}
               </Button>

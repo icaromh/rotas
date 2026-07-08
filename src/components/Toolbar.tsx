@@ -4,24 +4,17 @@ import { ChevronDownIcon, SettingsIcon, RefreshIcon, RouteIcon, BikeIcon, WalkIc
 import { Button } from './ui/Button';
 import { useTranslation } from 'react-i18next';
 import { usePostHog } from 'posthog-js/react';
-import { StravaIntegration } from './StravaIntegration';
 
 interface Props {
   onOpenSettings: () => void;
   onGenerate: () => void;
   isDoneMode: boolean;
-  onStravaPathsFetched: (paths: any) => void;
-  showStravaPaths: boolean;
-  setShowStravaPaths: (show: boolean) => void;
 }
 
 export const Toolbar: React.FC<Props> = ({ 
   onOpenSettings, 
-  onGenerate, 
+  onGenerate,
   isDoneMode,
-  onStravaPathsFetched,
-  showStravaPaths,
-  setShowStravaPaths
 }) => {
   const sportMode = useAppStore(state => state.sportMode);
   const setSportMode = useAppStore(state => state.setSportMode);
@@ -40,12 +33,6 @@ export const Toolbar: React.FC<Props> = ({
 
         <div className="flex flex-col md:flex-row items-center gap-3">
           
-          {/* Strava Integration */}
-          <StravaIntegration 
-            onPathsFetched={onStravaPathsFetched}
-            showPaths={showStravaPaths}
-            setShowPaths={setShowStravaPaths}
-          />
           {/* Sport Dropdown */}
           <div className="flex relative bg-white rounded-full shadow-lg border border-gray-200 items-center justify-center h-11 w-11 md:w-auto md:pl-4 md:pr-3 hover:bg-gray-50 transition-colors cursor-pointer group">
             
