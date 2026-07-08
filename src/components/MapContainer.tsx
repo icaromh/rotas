@@ -106,6 +106,7 @@ export const MapContainer: React.FC<Props> = ({
   const animMarkerRef = useRef<L.CircleMarker | null>(null);
   const animReqIdRef = useRef<number | null>(null);
   const stravaLayerRef = useRef<L.GeoJSON | null>(null);
+  const stravaRendererRef = useRef<L.Canvas | null>(null);
 
   // Update Leaflet Draw Localization on language change
   useEffect(() => {
@@ -464,14 +465,26 @@ export const MapContainer: React.FC<Props> = ({
 
     // Render new layer if we should show them and data exists
     if (showStravaPaths && stravaPaths && stravaPaths.features) {
+      if (!stravaRendererRef.current) {
+        stravaRendererRef.current = L.canvas({ pane: 'overlayPane' });
+      }
+
       stravaLayerRef.current = L.geoJSON(stravaPaths, {
+        renderer: stravaRendererRef.current,
         style: {
           color: stravaColor,
           weight: 3,
-          opacity: stravaOpacity,
+          opacity: 1, // We draw at full opacity to avoid overlapping line darkness
           lineJoin: 'round'
         }
-      }).addTo(map);
+      } as any).addTo(map);
+
+      // Apply the user's selected opacity to the entire canvas container
+      const container = (stravaRendererRef.current as any)._container as HTMLElement;
+      if (container) {
+        container.style.opacity = stravaOpacity.toString();
+        // Use CSS mix-blend-mode for a cleaner look if desired, e.g. container.style.mixBlendMode = 'multiply';
+      }
     }
   }, [stravaPaths, showStravaPaths]); // intentional: don't re-render entire layer when only color/opacity changes
 
@@ -480,8 +493,14 @@ export const MapContainer: React.FC<Props> = ({
     if (stravaLayerRef.current) {
       stravaLayerRef.current.setStyle({
         color: stravaColor,
-        opacity: stravaOpacity
+        opacity: 1 // Keep paths fully opaque
       });
+    }
+    if (stravaRendererRef.current) {
+      const container = (stravaRendererRef.current as any)._container as HTMLElement;
+      if (container) {
+        container.style.opacity = stravaOpacity.toString();
+      }
     }
   }, [stravaColor, stravaOpacity]);
 
