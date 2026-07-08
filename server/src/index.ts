@@ -115,6 +115,25 @@ app.post('/api/sync', async (req, res) => {
             }
 
             const accessToken = user.strava_access_token;
+            
+            // 1. Get the most recent activity's start_date for this user
+            const { data: latestActivity } = await supabase
+                .from('activities')
+                .select('start_date')
+                .eq('user_id', user.id)
+                .order('start_date', { ascending: false })
+                .limit(1)
+                .single();
+
+            let afterParam: number | undefined;
+            if (latestActivity && latestActivity.start_date) {
+                // Convert ISO string to Unix epoch seconds
+                afterParam = Math.floor(new Date(latestActivity.start_date).getTime() / 1000);
+                console.log(`Found latest activity. Only fetching activities after ${latestActivity.start_date} (${afterParam})`);
+            } else {
+                console.log('No previous activities found. Fetching all activities.');
+            }
+
             let page = 1;
             const perPage = 200;
             let hasMore = true;
@@ -122,9 +141,14 @@ app.post('/api/sync', async (req, res) => {
 
             while (hasMore) {
                 console.log(`Fetching Strava activities page ${page}...`);
+                const params: any = { page, per_page: perPage };
+                if (afterParam) {
+                    params.after = afterParam;
+                }
+
                 const response = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
                     headers: { Authorization: `Bearer ${accessToken}` },
-                    params: { page, per_page: perPage }
+                    params
                 });
 
                 const activities = response.data;
