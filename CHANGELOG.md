@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.17.0] - 2026-07-08
+### Changed
+- **Strava Sync Improvements**:
+  - Moved Strava synchronization to a non-blocking background job, keeping the HTTP requests responsive.
+  - Added real-time frontend UI polling to display live background sync status without blocking the UI.
+  - Implemented an intelligent cache using the latest `start_date` to only fetch new activities from Strava.
+### Fixed
+- Map now respects the user's current view and zoom level when toggling Strava paths instead of zooming out globally.
+
 ## [1.16.0] - 2026-07-08
 ### Added
 - **Strava Integration (POC)**:
