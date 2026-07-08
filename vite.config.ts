@@ -44,25 +44,6 @@ export default defineConfig(({ mode }) => {
         }
       }),
     ],
-    server: {
-      proxy: {
-        '/ingest/static': {
-          target: 'https://eu-assets.i.posthog.com',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/ingest/, ''),
-        },
-        '/ingest/array': {
-          target: 'https://eu-assets.i.posthog.com',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/ingest/, ''),
-        },
-        '/ingest': {
-          target: env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/ingest/, ''),
-        },
-      },
-    },
     test: {
       // Use Vitest workspace projects to support both Node and jsdom environments.
       // Project 1: Node environment for pure-logic unit tests (optimizer, gpx, etc.)
