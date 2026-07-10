@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.20.0] - 2026-07-10
+### Added
+- **Fog of World Visualization**:
+  - Implemented a "Fog of War" rendering mode for synchronized Strava activities.
+  - Added a custom HTML5 Canvas Leaflet Layer (`FogOverlayLayer`) that covers the map in a dark overlay and reveals the underlying map tiles along the paths using the `destination-out` composite operation.
+  - Added UI controls in the Strava User Menu to toggle Fog Mode, adjust Fog Darkness, and modify the Brush Size of the revealed paths.
 ## [1.19.1] - 2026-07-08
 ### Fixed
 - **Supabase Queues Webhook**: Wired up the `pgmq` queue to automatically trigger the `strava-sync` Edge Function using a native Postgres database webhook (`pg_net`), replacing the need for an external cron/polling worker.

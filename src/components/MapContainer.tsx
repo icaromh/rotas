@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { fetchNeighborhoods } from '../api/overpass';
 import { useAppStore } from '../store/useAppStore';
+import { FogOverlayLayer } from './FogOverlayLayer';
 
 // Fix Leaflet's default icon paths for Vite
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -99,6 +100,9 @@ export const MapContainer: React.FC<Props> = ({
   
   const stravaOpacity = useAppStore(state => state.stravaOpacity);
   const stravaColor = useAppStore(state => state.stravaColor);
+  const isFogModeEnabled = useAppStore(state => state.isFogModeEnabled);
+  const fogOpacity = useAppStore(state => state.fogOpacity);
+  const fogBrushSize = useAppStore(state => state.fogBrushSize);
 
   const neighborhoodsMutation = useMutation({ mutationFn: fetchNeighborhoods });
   const pathLayerRef = useRef<L.Polyline | null>(null);
@@ -107,6 +111,7 @@ export const MapContainer: React.FC<Props> = ({
   const animReqIdRef = useRef<number | null>(null);
   const stravaLayerRef = useRef<L.GeoJSON | null>(null);
   const stravaRendererRef = useRef<L.Canvas | null>(null);
+  const fogLayerRef = useRef<any>(null);
 
   // Update Leaflet Draw Localization on language change
   useEffect(() => {
@@ -457,52 +462,69 @@ export const MapContainer: React.FC<Props> = ({
     if (!mapInstance.current) return;
     const map = mapInstance.current;
 
-    // Remove old layer
+    // Remove old layers
     if (stravaLayerRef.current) {
       map.removeLayer(stravaLayerRef.current);
       stravaLayerRef.current = null;
     }
+    if (fogLayerRef.current) {
+      map.removeLayer(fogLayerRef.current);
+      fogLayerRef.current = null;
+    }
 
     // Render new layer if we should show them and data exists
     if (showStravaPaths && stravaPaths && stravaPaths.features) {
-      if (!stravaRendererRef.current) {
-        stravaRendererRef.current = L.canvas({ pane: 'overlayPane' });
-      }
-
-      stravaLayerRef.current = L.geoJSON(stravaPaths, {
-        renderer: stravaRendererRef.current,
-        style: {
-          color: stravaColor,
-          weight: 3,
-          opacity: 1, // We draw at full opacity to avoid overlapping line darkness
-          lineJoin: 'round'
+      if (isFogModeEnabled) {
+        fogLayerRef.current = new (FogOverlayLayer as any)(stravaPaths, {
+          fogColor: '#000000',
+          fogOpacity: fogOpacity,
+          fogBrushSize: fogBrushSize
+        }).addTo(map);
+      } else {
+        if (!stravaRendererRef.current) {
+          stravaRendererRef.current = L.canvas({ pane: 'overlayPane' });
         }
-      } as any).addTo(map);
 
-      // Apply the user's selected opacity to the entire canvas container
-      const container = (stravaRendererRef.current as any)._container as HTMLElement;
-      if (container) {
-        container.style.opacity = stravaOpacity.toString();
-        // Use CSS mix-blend-mode for a cleaner look if desired, e.g. container.style.mixBlendMode = 'multiply';
+        stravaLayerRef.current = L.geoJSON(stravaPaths, {
+          renderer: stravaRendererRef.current,
+          style: {
+            color: stravaColor,
+            weight: 3,
+            opacity: 1, // We draw at full opacity to avoid overlapping line darkness
+            lineJoin: 'round'
+          }
+        } as any).addTo(map);
+
+        // Apply the user's selected opacity to the entire canvas container
+        const container = (stravaRendererRef.current as any)._container as HTMLElement;
+        if (container) {
+          container.style.opacity = stravaOpacity.toString();
+        }
       }
     }
-  }, [stravaPaths, showStravaPaths]); // intentional: don't re-render entire layer when only color/opacity changes
+  }, [stravaPaths, showStravaPaths, isFogModeEnabled]); // intentional: don't re-render entire layer when only color/opacity changes, except when toggling modes
 
   // Update Strava styles dynamically
   useEffect(() => {
-    if (stravaLayerRef.current) {
+    if (stravaLayerRef.current && !isFogModeEnabled) {
       stravaLayerRef.current.setStyle({
         color: stravaColor,
         opacity: 1 // Keep paths fully opaque
       });
     }
-    if (stravaRendererRef.current) {
+    if (stravaRendererRef.current && !isFogModeEnabled) {
       const container = (stravaRendererRef.current as any)._container as HTMLElement;
       if (container) {
         container.style.opacity = stravaOpacity.toString();
       }
     }
-  }, [stravaColor, stravaOpacity]);
+    if (fogLayerRef.current && isFogModeEnabled) {
+      fogLayerRef.current.setOptions({
+        fogOpacity: fogOpacity,
+        fogBrushSize: fogBrushSize
+      });
+    }
+  }, [stravaColor, stravaOpacity, fogOpacity, fogBrushSize, isFogModeEnabled]);
 
   return (
     <>

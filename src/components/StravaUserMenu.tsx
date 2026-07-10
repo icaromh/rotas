@@ -22,6 +22,13 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
   const stravaOpacity = useAppStore(state => state.stravaOpacity);
   const setStravaColor = useAppStore(state => state.setStravaColor);
   const setStravaOpacity = useAppStore(state => state.setStravaOpacity);
+  
+  const isFogModeEnabled = useAppStore(state => state.isFogModeEnabled);
+  const setIsFogModeEnabled = useAppStore(state => state.setIsFogModeEnabled);
+  const fogOpacity = useAppStore(state => state.fogOpacity);
+  const setFogOpacity = useAppStore(state => state.setFogOpacity);
+  const fogBrushSize = useAppStore(state => state.fogBrushSize);
+  const setFogBrushSize = useAppStore(state => state.setFogBrushSize);
 
   useEffect(() => {
     const userId = localStorage.getItem('strava_user_id');
@@ -181,6 +188,17 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
               </label>
 
               {showPaths && (
+                <label className="flex items-center justify-between cursor-pointer p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 transition-colors mt-2">
+                  <span className="font-medium text-gray-700 text-sm">Fog of World Mode</span>
+                  <div className="relative">
+                    <input type="checkbox" className="sr-only" checked={isFogModeEnabled} onChange={() => setIsFogModeEnabled(!isFogModeEnabled)} />
+                    <div className={`block w-10 h-6 rounded-full transition-colors ${isFogModeEnabled ? 'bg-[#1f2937]' : 'bg-gray-300'}`}></div>
+                    <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isFogModeEnabled ? 'transform translate-x-4' : ''}`}></div>
+                  </div>
+                </label>
+              )}
+
+              {showPaths && !isFogModeEnabled && (
                 <div className="flex flex-col gap-2 p-2 bg-gray-50 border border-gray-200 rounded">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-600">Color</span>
@@ -212,6 +230,35 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
                       value={stravaOpacity} 
                       onChange={(e) => setStravaOpacity(parseFloat(e.target.value))} 
                       className="w-24 accent-[#fc4c02]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {showPaths && isFogModeEnabled && (
+                <div className="flex flex-col gap-2 p-2 bg-gray-50 border border-gray-200 rounded">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-gray-600">Fog Darkness</span>
+                    <input 
+                      type="range" 
+                      min="0.1" 
+                      max="1" 
+                      step="0.1" 
+                      value={fogOpacity} 
+                      onChange={(e) => setFogOpacity(parseFloat(e.target.value))} 
+                      className="w-24 accent-[#1f2937]"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-gray-600">Brush Size</span>
+                    <input 
+                      type="range" 
+                      min="5" 
+                      max="50" 
+                      step="1" 
+                      value={fogBrushSize} 
+                      onChange={(e) => setFogBrushSize(parseInt(e.target.value, 10))} 
+                      className="w-24 accent-[#1f2937]"
                     />
                   </div>
                 </div>
