@@ -4,7 +4,7 @@ compatibility_date = "2024-04-05"
 
 # Define the route for rotas.cc
 routes = [
-  { pattern = "rotas.cc/api/*", zone_name = "rotas.cc" }
+  { pattern = "*rotas.cc/api/*", zone_name = "rotas.cc" }
 ]
 
 [vars]
