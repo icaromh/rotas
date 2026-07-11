@@ -1,0 +1,12 @@
+name = "rotas-api-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-04-05"
+
+# Define the route for rotas.cc
+routes = [
+  { pattern = "*rotas.cc/api/*", zone_name = "rotas.cc" }
+]
+
+[vars]
+# You must set your Supabase URL here or via wrangler secret put
+# SUPABASE_URL = "https://<YOUR_REF>.supabase.co/functions/v1"

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
 import { RefreshIcon } from './icons';
 import { useAppStore } from '../store/useAppStore';
-import { API_BASE_URL } from '../api/config';
 
 interface Props {
   onPathsFetched?: (paths: any) => void;
@@ -48,7 +47,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
 
   const handleConnect = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/strava`);
+      const res = await fetch('/api/auth/strava');
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch (err) {
@@ -65,7 +64,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
     setSyncStatus('Starting sync...');
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/sync`, {
+      const res = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
@@ -92,7 +91,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
   const pollSyncStatus = (userId: string) => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/sync/status?userId=${userId}`);
+        const res = await fetch(`/api/sync/status?userId=${userId}`);
         const data = await res.json();
         
         if (data.status === 'queued') {
@@ -173,7 +172,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
                   <input type="checkbox" className="sr-only" checked={showPaths} onChange={() => {
                     if (!showPaths) {
                       const userId = localStorage.getItem('strava_user_id');
-                      fetch(`${API_BASE_URL}/api/paths?userId=${userId}`)
+                      fetch(`/api/paths?userId=${userId}`)
                         .then(res => res.json())
                         .then(data => onPathsFetched && onPathsFetched(data))
                         .catch(err => console.error('Failed to fetch paths', err));

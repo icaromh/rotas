@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Loader } from '../components/Loader';
-import { API_BASE_URL } from '../api/config';
 
 export const AuthCallback: React.FC = () => {
     const search: any = useSearch({ strict: false });
@@ -16,7 +15,7 @@ export const AuthCallback: React.FC = () => {
             return;
         }
 
-        fetch(`${API_BASE_URL}/api/auth/callback`, {
+        fetch('/api/auth/callback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code })

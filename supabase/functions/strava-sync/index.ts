@@ -9,11 +9,9 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json();
-    // pgmq webhooks / edge function triggers usually send an array of messages or a single wrapped message
     const messages = Array.isArray(payload) ? payload : [payload];
 
     for (const msg of messages) {
-      // Safely extract the userId depending on how pgmq wraps the payload
       const userId = msg.message?.userId || msg.userId || msg.record?.message?.userId;
       
       if (!userId) {
@@ -23,10 +21,9 @@ Deno.serve(async (req) => {
 
       console.log(`Processing sync for user: ${userId}`);
 
-      // 1. Check Rate Limit status before starting
       const { data: userRecord } = await supabase
         .from('users')
-        .select('rate_limit_reset_at, sync_status, sync_progress, strava_access_token')
+        .select('rate_limit_reset_at, sync_status, sync_progress, strava_access_token, historical_sync_completed')
         .eq('id', userId)
         .single();
 
@@ -41,8 +38,6 @@ Deno.serve(async (req) => {
         const resetTime = new Date(userRecord.rate_limit_reset_at).getTime();
         if (Date.now() < resetTime) {
           console.log(`Rate limited until ${userRecord.rate_limit_reset_at}. Skipping for now.`);
-          // In pgmq, if we fail the function (return 500), it might retry automatically.
-          // Or we can manually modify visibility timeout via pgmq, but for simplicity, we throw to trigger retry
           throw new Error('Rate limit active. Retrying later.');
         }
       }
@@ -50,36 +45,15 @@ Deno.serve(async (req) => {
       // Set status to syncing
       await supabase.from('users').update({ sync_status: 'syncing' }).eq('id', userId);
 
-      // Fetch latest activity to determine 'after' parameter
-      const { data: latestActivity } = await supabase
-        .from('activities')
-        .select('start_date')
-        .eq('user_id', userId)
-        .order('start_date', { ascending: false })
-        .limit(1)
-        .single();
-
-      let afterParam: number | undefined;
-      if (latestActivity && latestActivity.start_date) {
-        afterParam = Math.floor(new Date(latestActivity.start_date).getTime() / 1000);
-      }
-
-      let page = 1;
+      let totalInserted = userRecord.sync_progress || 0;
+      let shouldEnqueueMore = false;
       const perPage = 200;
-      let hasMore = true;
-      let totalInserted = userRecord?.sync_progress || 0;
 
-      while (hasMore) {
-        const url = new URL('https://www.strava.com/api/v3/athlete/activities');
-        url.searchParams.append('page', page.toString());
-        url.searchParams.append('per_page', perPage.toString());
-        if (afterParam) url.searchParams.append('after', afterParam.toString());
-
-        const response = await fetch(url.toString(), {
+      const fetchAndProcessPage = async (pageUrl: URL) => {
+        const response = await fetch(pageUrl.toString(), {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        // Check Rate Limits
         const limitHeader = response.headers.get('X-RateLimit-Limit');
         const usageHeader = response.headers.get('X-RateLimit-Usage');
         
@@ -87,19 +61,13 @@ Deno.serve(async (req) => {
           const limits = limitHeader.split(',').map(Number);
           const usages = usageHeader.split(',').map(Number);
           
-          // 15-minute limits are index 0, daily are index 1
-          const fifteenMinUsage = usages[0];
-          const fifteenMinLimit = limits[0];
-          
-          if (fifteenMinUsage >= fifteenMinLimit - 10) {
+          if (usages[0] >= limits[0] - 10) {
             console.warn('Approaching Strava 15-min rate limit. Backing off.');
-            // 15 min cooldown
             const resetAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
             await supabase.from('users').update({ 
               sync_status: 'rate_limited',
               rate_limit_reset_at: resetAt
             }).eq('id', userId);
-            
             throw new Error('Strava rate limit reached. Backing off.');
           }
         }
@@ -109,10 +77,7 @@ Deno.serve(async (req) => {
         }
 
         const activities = (await response.json()) as any[];
-        if (activities.length === 0) {
-          hasMore = false;
-          break;
-        }
+        let insertedInPage = 0;
 
         for (const activity of activities) {
           if (!activity.map || !activity.map.summary_polyline) continue;
@@ -136,33 +101,81 @@ Deno.serve(async (req) => {
             }, { onConflict: 'strava_activity_id' });
 
           if (!insertError) {
-            totalInserted++;
+            insertedInPage++;
           }
         }
 
-        // Update progress in DB after each page
-        await supabase.from('users').update({ sync_progress: totalInserted }).eq('id', userId);
+        return { countReturned: activities.length, insertedInPage };
+      };
 
-        if (activities.length < perPage) {
-          hasMore = false;
-        } else {
-          page++;
+      // 1. Sync NEW activities
+      const { data: latestActivity } = await supabase
+        .from('activities')
+        .select('start_date')
+        .eq('user_id', userId)
+        .order('start_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestActivity) {
+        const afterParam = Math.floor(new Date(latestActivity.start_date).getTime() / 1000);
+        const url = new URL('https://www.strava.com/api/v3/athlete/activities');
+        url.searchParams.append('per_page', perPage.toString());
+        url.searchParams.append('after', afterParam.toString());
+
+        const { countReturned, insertedInPage } = await fetchAndProcessPage(url);
+        totalInserted += insertedInPage;
+
+        if (countReturned === perPage) {
+          shouldEnqueueMore = true; 
         }
       }
 
-      // Sync completed
-      await supabase.from('users').update({ 
-        sync_status: 'completed', 
-        sync_progress: totalInserted,
-        last_sync_at: new Date().toISOString()
-      }).eq('id', userId);
-      
-      console.log(`Sync completed for user: ${userId}. Inserted ${totalInserted} activities.`);
+      // 2. Sync HISTORICAL activities (backfill)
+      if (!userRecord.historical_sync_completed && !shouldEnqueueMore) {
+        const { data: oldestActivity } = await supabase
+          .from('activities')
+          .select('start_date')
+          .eq('user_id', userId)
+          .order('start_date', { ascending: true }) // Oldest first
+          .limit(1)
+          .single();
 
-      // Delete message from queue upon success
+        const url = new URL('https://www.strava.com/api/v3/athlete/activities');
+        url.searchParams.append('per_page', perPage.toString());
+        if (oldestActivity) {
+          const beforeParam = Math.floor(new Date(oldestActivity.start_date).getTime() / 1000);
+          url.searchParams.append('before', beforeParam.toString());
+        }
+
+        const { countReturned, insertedInPage } = await fetchAndProcessPage(url);
+        totalInserted += insertedInPage;
+
+        if (countReturned < perPage) {
+          await supabase.from('users').update({ historical_sync_completed: true }).eq('id', userId);
+        } else {
+          shouldEnqueueMore = true;
+        }
+      }
+
+      // Save progress
+      await supabase.from('users').update({ sync_progress: totalInserted }).eq('id', userId);
+
+      // Always delete the processed message from the queue
       if (msg.msg_id) {
         await supabase.rpc('delete_strava_sync_message', { msg_id: msg.msg_id });
         console.log(`Removed message ${msg.msg_id} from queue.`);
+      }
+
+      if (shouldEnqueueMore) {
+        console.log(`More pages left for user ${userId}. Re-enqueuing sync job.`);
+        await supabase.rpc('send_strava_sync_message', { user_id: userId });
+      } else {
+        await supabase.from('users').update({ 
+          sync_status: 'completed', 
+          last_sync_at: new Date().toISOString()
+        }).eq('id', userId);
+        console.log(`Fully synced user: ${userId}. Inserted ${totalInserted} activities.`);
       }
     }
 
@@ -170,7 +183,6 @@ Deno.serve(async (req) => {
 
   } catch (err: any) {
     console.error('Queue processing failed:', err);
-    // Returning a 500 will cause Supabase Queues / pgmq to retry the message
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 });
