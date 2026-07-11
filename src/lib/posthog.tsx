@@ -8,7 +8,8 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
   ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.posthog.com',
   defaults: '2026-01-30',
   capture_exceptions: true,
-  debug: import.meta.env.DEV,
+  debug: false, // Turned off to avoid console spam in dev since it's opted out
+  opt_out_capturing_by_default: import.meta.env.DEV, // Disable in localhost
 });
 
 function PageViewTracker() {

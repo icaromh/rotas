@@ -4,16 +4,25 @@ import { useTranslation } from 'react-i18next';
 import { InfoIcon } from './icons';
 import { Button } from './ui/Button';
 import { LanguageSelector } from './LanguageSelector';
+import { StravaUserMenu } from './StravaUserMenu';
 
 interface Props {
   onOpenAbout: () => void;
+  onStravaPathsFetched?: (paths: any) => void;
+  showStravaPaths?: boolean;
+  setShowStravaPaths?: (show: boolean) => void;
 }
 
-export const TopNav: React.FC<Props> = ({ onOpenAbout }) => {
+export const TopNav: React.FC<Props> = ({ 
+  onOpenAbout,
+  onStravaPathsFetched,
+  showStravaPaths = false,
+  setShowStravaPaths
+}) => {
   const { t } = useTranslation();
 
   return (
-    <nav className="h-16 bg-[#f4f1ea] border-b border-[#e5e0d4] flex items-center justify-between px-6 z-[1000] shrink-0 shadow-sm relative">
+    <nav className="h-16 bg-[#f4f1ea] border-b border-[#e5e0d4] flex items-center justify-between px-6 z-[9999] shrink-0 shadow-sm relative">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="Rotas Logo" className="h-8 w-auto drop-shadow-sm" />
@@ -25,6 +34,11 @@ export const TopNav: React.FC<Props> = ({ onOpenAbout }) => {
         </div>
       </div>
       <div className="flex items-center gap-4">
+        <StravaUserMenu 
+          onPathsFetched={onStravaPathsFetched}
+          showPaths={showStravaPaths}
+          setShowPaths={setShowStravaPaths}
+        />
         <LanguageSelector />
 
         <Button id="mobile-about-btn" onClick={onOpenAbout} variant="icon-secondary" size="icon-sm" className="md:hidden p-2">

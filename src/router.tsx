@@ -2,6 +2,7 @@ import { createRouter, createRoute, createRootRoute, Outlet } from '@tanstack/re
 import { PwaToast } from './components/PwaToast';
 import { Planner } from './pages/Planner';
 import { Preview } from './pages/Preview';
+import { AuthCallback } from './pages/AuthCallback';
 import { z } from 'zod';
 import { PostHogProvider } from './lib/posthog';
 
@@ -38,7 +39,13 @@ export const previewRoute = createRoute({
   component: Preview,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, previewRoute]);
+export const authCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/callback',
+  component: AuthCallback,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, previewRoute, authCallbackRoute]);
 
 export const router = createRouter({ routeTree });
 

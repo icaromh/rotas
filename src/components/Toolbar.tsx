@@ -11,7 +11,11 @@ interface Props {
   isDoneMode: boolean;
 }
 
-export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMode }) => {
+export const Toolbar: React.FC<Props> = ({ 
+  onOpenSettings, 
+  onGenerate,
+  isDoneMode,
+}) => {
   const sportMode = useAppStore(state => state.sportMode);
   const setSportMode = useAppStore(state => state.setSportMode);
   const { t } = useTranslation();
@@ -28,6 +32,7 @@ export const Toolbar: React.FC<Props> = ({ onOpenSettings, onGenerate, isDoneMod
         <div id="draw-tools-container" className="flex flex-col md:flex-row items-start gap-3"></div>
 
         <div className="flex flex-col md:flex-row items-center gap-3">
+          
           {/* Sport Dropdown */}
           <div className="flex relative bg-white rounded-full shadow-lg border border-gray-200 items-center justify-center h-11 w-11 md:w-auto md:pl-4 md:pr-3 hover:bg-gray-50 transition-colors cursor-pointer group">
             

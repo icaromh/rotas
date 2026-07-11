@@ -1,5 +1,55 @@
 # Changelog
 
+## [1.19.1] - 2026-07-08
+### Fixed
+- **Supabase Queues Webhook**: Wired up the `pgmq` queue to automatically trigger the `strava-sync` Edge Function using a native Postgres database webhook (`pg_net`), replacing the need for an external cron/polling worker.
+- **Queue Cleanup**: Updated the `strava-sync` Edge Function to explicitly delete messages from the `pgmq` queue upon successful execution, preventing infinite retries.
+- **Local Permissions**: Added a database migration granting `SELECT`, `INSERT`, and `UPDATE` privileges on `users` and `activities` tables to the `anon`, `authenticated`, and `service_role` to prevent `42501` permission errors during local development.
+- **Documentation**: Added instructions to `README.md` and `.agents/AGENTS.md` on using `npx supabase db reset` to resolve stuck local queues or stale database states.
+
+## [1.19.0] - 2026-07-08
+### Changed
+- **Architecture**:
+  - Migrated the entire Strava sync backend from Cloudflare Workers to **Supabase Edge Functions**.
+  - Migrated the background task architecture from Cloudflare Queues to Supabase native durable queues via the **pgmq** PostgreSQL extension.
+  - Replaced wrangler CLI with Supabase CLI for deployment and local development.
+  - Configured Vite Proxy to resolve API routes directly to the local Edge Functions environment.
+
+## [1.18.0] - 2026-07-08
+### Changed
+- **Serverless API Migration**:
+  - Migrated the entire Node.js Express backend to a global, edge-optimized Cloudflare Worker (`/api`).
+  - Rewrote API routing using the lightweight `Hono` web framework for maximum performance.
+  - Replaced in-memory background polling with enterprise-grade **Cloudflare Queues**, completely decoupling the heavy Strava synchronization process from the HTTP request cycle.
+  - Implemented intelligent Strava Rate Limiting: the Queue Consumer actively parses `X-RateLimit-Limit` and `X-RateLimit-Usage` headers, automatically backing off and re-queuing sync messages if the 15-minute or daily quota is nearing exhaustion.
+  - Status polling now accurately queries the Supabase `users` table as the single source of truth across the entire distributed Cloudflare network.
+  - Consolidated and organized all Supabase database migrations into a standard `supabase/migrations/` directory structure.
+
+## [1.17.0] - 2026-07-08
+- **Strava Sync Improvements**:
+  - Moved Strava synchronization to a non-blocking background job, keeping the HTTP requests responsive.
+  - Added real-time frontend UI polling to display live background sync status without blocking the UI.
+  - Implemented an intelligent cache using the latest `start_date` to only fetch new activities from Strava.
+- **Strava UI Refactoring**:
+  - Moved Strava connection and sync buttons to a dedicated user menu popover in the top navigation header, organized into logical sections.
+  - Added Strava profile picture fetching and display for authenticated users.
+  - Added a "Disconnect" button to easily log out and clear the local Strava session.
+  - Added dynamic Color Picker and Opacity Slider controls for the Strava path overlay.
+  - Disabled PostHog analytics capture when running in the local development environment.
+### Fixed
+- Map now respects the user's current view and zoom level when toggling Strava paths instead of zooming out globally.
+- Fixed an issue where the top navigation menu popovers were hidden behind the Leaflet map controls by adjusting the `z-index`.
+- Fixed visual pollution and opacity stacking of overlapping Strava paths by implementing a unified Canvas renderer overlay.
+
+## [1.16.0] - 2026-07-08
+### Added
+- **Strava Integration (POC)**:
+  - Added a Node.js Express backend (`/server`) for Strava OAuth and API integration.
+  - Setup PostGIS database schema in Supabase for storing Strava activities.
+  - Implemented Strava Sync to fetch and store covered paths as GeoJSON.
+  - Added UI in the planner to connect to Strava and toggle "Show My Paths".
+  - Rendered covered paths on the Leaflet map using GeoJSON layer.
+
 ## [1.15.0] - 2026-07-08
 ### Added
 - **PostHog analytics integration**:

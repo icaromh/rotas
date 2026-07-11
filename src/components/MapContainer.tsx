@@ -8,6 +8,7 @@ import osmtogeojson from 'osmtogeojson';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { fetchNeighborhoods } from '../api/overpass';
+import { useAppStore } from '../store/useAppStore';
 
 // Fix Leaflet's default icon paths for Vite
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -71,6 +72,8 @@ interface Props {
   onPreviewFinished: () => void;
   isSharedView: boolean;
   isDoneMode: boolean;
+  stravaPaths?: any;
+  showStravaPaths?: boolean;
 }
 
 export const MapContainer: React.FC<Props> = ({ 
@@ -81,7 +84,9 @@ export const MapContainer: React.FC<Props> = ({
   isPreviewing,
   onPreviewFinished,
   isSharedView,
-  isDoneMode
+  isDoneMode,
+  stravaPaths,
+  showStravaPaths
 }) => {
   const { t, i18n } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -91,12 +96,17 @@ export const MapContainer: React.FC<Props> = ({
   // AlertModal state — lifted above Leaflet event scope so it can trigger a React re-render
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  
+  const stravaOpacity = useAppStore(state => state.stravaOpacity);
+  const stravaColor = useAppStore(state => state.stravaColor);
 
   const neighborhoodsMutation = useMutation({ mutationFn: fetchNeighborhoods });
   const pathLayerRef = useRef<L.Polyline | null>(null);
   const animPolylineRef = useRef<L.Polyline | null>(null);
   const animMarkerRef = useRef<L.CircleMarker | null>(null);
   const animReqIdRef = useRef<number | null>(null);
+  const stravaLayerRef = useRef<L.GeoJSON | null>(null);
+  const stravaRendererRef = useRef<L.Canvas | null>(null);
 
   // Update Leaflet Draw Localization on language change
   useEffect(() => {
@@ -441,6 +451,58 @@ export const MapContainer: React.FC<Props> = ({
       }
     };
   }, [isPreviewing, currentPolylineData, onPreviewFinished]);
+
+  // Handle Strava Paths rendering
+  useEffect(() => {
+    if (!mapInstance.current) return;
+    const map = mapInstance.current;
+
+    // Remove old layer
+    if (stravaLayerRef.current) {
+      map.removeLayer(stravaLayerRef.current);
+      stravaLayerRef.current = null;
+    }
+
+    // Render new layer if we should show them and data exists
+    if (showStravaPaths && stravaPaths && stravaPaths.features) {
+      if (!stravaRendererRef.current) {
+        stravaRendererRef.current = L.canvas({ pane: 'overlayPane' });
+      }
+
+      stravaLayerRef.current = L.geoJSON(stravaPaths, {
+        renderer: stravaRendererRef.current,
+        style: {
+          color: stravaColor,
+          weight: 3,
+          opacity: 1, // We draw at full opacity to avoid overlapping line darkness
+          lineJoin: 'round'
+        }
+      } as any).addTo(map);
+
+      // Apply the user's selected opacity to the entire canvas container
+      const container = (stravaRendererRef.current as any)._container as HTMLElement;
+      if (container) {
+        container.style.opacity = stravaOpacity.toString();
+        // Use CSS mix-blend-mode for a cleaner look if desired, e.g. container.style.mixBlendMode = 'multiply';
+      }
+    }
+  }, [stravaPaths, showStravaPaths]); // intentional: don't re-render entire layer when only color/opacity changes
+
+  // Update Strava styles dynamically
+  useEffect(() => {
+    if (stravaLayerRef.current) {
+      stravaLayerRef.current.setStyle({
+        color: stravaColor,
+        opacity: 1 // Keep paths fully opaque
+      });
+    }
+    if (stravaRendererRef.current) {
+      const container = (stravaRendererRef.current as any)._container as HTMLElement;
+      if (container) {
+        container.style.opacity = stravaOpacity.toString();
+      }
+    }
+  }, [stravaColor, stravaOpacity]);
 
   return (
     <>
