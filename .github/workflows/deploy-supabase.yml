@@ -1,9 +1,11 @@
-name: Production Deploy
+name: Deploy Supabase
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'supabase/**'
 
 jobs:
   deploy-supabase:
@@ -30,26 +32,3 @@ jobs:
 
       - name: Deploy Edge Functions
         run: supabase functions deploy
-
-  deploy-cloudflare:
-    name: Deploy API Proxy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Install Proxy Dependencies
-        run: npm ci
-        working-directory: ./api-proxy
-
-      - name: Deploy Cloudflare Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: 'api-proxy'
