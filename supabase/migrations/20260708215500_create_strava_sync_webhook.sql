@@ -24,7 +24,7 @@ BEGIN
   PERFORM net.http_post(
     url := request_url,
     headers := '{"Content-Type": "application/json"}'::jsonb,
-    body := jsonb_build_object('msg_id', NEW.msg_id, 'userId', NEW.message->>'userId')
+    body := jsonb_build_object('msg_id', NEW.msg_id, 'userId', NEW.message->>'userId'), timeout_milliseconds := 30000
   );
   
   RETURN NEW;
