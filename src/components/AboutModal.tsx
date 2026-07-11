@@ -36,7 +36,7 @@ export const AboutModal: React.FC<Props> = ({ isOpen, onClose }) => {
         </div>
         <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center justify-center gap-2">
           Rotas
-          <span className="bg-[#4a6b46] text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold align-middle">Beta</span>
+          <span className="bg-[#4a6b46] text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold align-middle">{t('about.beta')}</span>
         </h2>
         <p className="text-gray-600 text-sm md:text-base leading-relaxed">
           {t('about.description')}

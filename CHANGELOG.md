@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.19.2] - 2026-07-11
+### Fixed
+- **i18n**: Revised the frontend codebase to extract and localize previously hardcoded strings.
+  - Added new translation namespaces (`strava`, `auth`, `common`, and extended `about`) to `en-US.json`, `pt-BR.json`, and `es-ES.json`.
+  - Replaced hardcoded text in `StravaUserMenu.tsx`, `AuthCallback.tsx`, `AboutModal.tsx`, and `AlertModal.tsx` with `react-i18next`'s `useTranslation` hook.
 ## [1.19.1] - 2026-07-08
 ### Fixed
 - **Supabase Queues Webhook**: Wired up the `pgmq` queue to automatically trigger the `strava-sync` Edge Function using a native Postgres database webhook (`pg_net`), replacing the need for an external cron/polling worker.

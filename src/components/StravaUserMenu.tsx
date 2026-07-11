@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from './ui/Button';
 import { RefreshIcon } from './icons';
 import { useAppStore } from '../store/useAppStore';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = false, setShowPaths }) => {
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
     if (!userId) return;
 
     setIsSyncing(true);
-    setSyncStatus('Starting sync...');
+    setSyncStatus(t('strava.startingSync'));
     
     try {
       const res = await fetch('/api/sync', {
@@ -64,19 +66,19 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
       });
       
       if (res.status === 202) {
-        setSyncStatus('Syncing... You can keep using the app.');
+        setSyncStatus(t('strava.syncKeepUsing'));
         pollSyncStatus(userId);
       } else if (res.status === 409) {
-        setSyncStatus('Sync already in progress.');
+        setSyncStatus(t('strava.syncInProgress'));
         pollSyncStatus(userId);
       } else {
         const data = await res.json();
-        setSyncStatus(`Sync failed: ${data.error}`);
+        setSyncStatus(t('strava.syncFailedError', { error: data.error }));
         setIsSyncing(false);
       }
     } catch (err) {
       console.error('Failed to start sync', err);
-      setSyncStatus('Sync failed to start.');
+      setSyncStatus(t('strava.syncFailedToStart'));
       setIsSyncing(false);
     }
   };
@@ -88,22 +90,22 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
         const data = await res.json();
         
         if (data.status === 'queued') {
-          setSyncStatus('In Queue...');
+          setSyncStatus(t('strava.inQueue'));
         } else if (data.status === 'syncing') {
-          setSyncStatus(`Syncing... (${data.inserted} inserted)`);
+          setSyncStatus(t('strava.syncingCount', { count: data.inserted }));
         } else if (data.status === 'rate_limited') {
           clearInterval(interval);
           const resetTime = new Date(data.rateLimitResetAt).toLocaleTimeString();
-          setSyncStatus(`Strava limit reached. Queued for ${resetTime}.`);
+          setSyncStatus(t('strava.limitReached', { time: resetTime }));
           setIsSyncing(false);
         } else if (data.status === 'completed') {
           clearInterval(interval);
-          setSyncStatus(`Complete! ${data.inserted} activities inserted.`);
+          setSyncStatus(t('strava.complete', { count: data.inserted }));
           setIsSyncing(false);
           setTimeout(() => setSyncStatus(null), 5000);
         } else if (data.status === 'error') {
           clearInterval(interval);
-          setSyncStatus(`Sync failed. ${data.error || ''}`);
+          setSyncStatus(data.error ? t('strava.syncFailedError', { error: data.error }) : t('strava.syncFailed'));
           setIsSyncing(false);
           setTimeout(() => setSyncStatus(null), 5000);
         } else if (data.status === 'idle') {
@@ -130,7 +132,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 transition outline-none overflow-hidden border border-gray-300 shrink-0"
-        title="Strava Account"
+        title={t('strava.account')}
       >
         {isAuthenticated && profileUrl ? (
           <img src={profileUrl} alt="Strava Profile" className="w-full h-full object-cover" />
@@ -145,22 +147,22 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
       {isOpen && (
         <div className="absolute top-full mt-2 right-0 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-[9999] flex flex-col gap-3">
           <div className="flex items-center gap-2 border-b border-gray-100 pb-2 mb-1">
-            <span className="font-semibold text-gray-700 text-sm">Strava Connection</span>
+            <span className="font-semibold text-gray-700 text-sm">{t('strava.connection')}</span>
           </div>
 
           {!isAuthenticated ? (
             <div className="flex flex-col gap-3">
               <Button onClick={handleConnect} variant="primary" size="sm" className="bg-[#fc4c02] text-white hover:bg-[#e34402] w-full justify-center">
-                Connect Strava
+                {t('strava.connect')}
               </Button>
             </div>
           ) : (
             <div className="flex flex-col gap-4 text-sm">
               {/* Map Settings Section */}
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Map Overlay</span>
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('strava.mapOverlay')}</span>
                 <label className="flex items-center justify-between cursor-pointer p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 transition-colors">
-                  <span className="font-medium text-gray-700 text-sm">Show My Paths</span>
+                  <span className="font-medium text-gray-700 text-sm">{t('strava.showMyPaths')}</span>
                 <div className="relative">
                   <input type="checkbox" className="sr-only" checked={showPaths} onChange={() => {
                     if (!showPaths) {
@@ -182,13 +184,13 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
               {showPaths && (
                 <div className="flex flex-col gap-2 p-2 bg-gray-50 border border-gray-200 rounded">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-600">Color</span>
+                    <span className="text-xs font-medium text-gray-600">{t('strava.color')}</span>
                     <div className="flex items-center gap-2">
                       {stravaColor !== '#fc4c02' && (
                         <button 
                           onClick={() => setStravaColor('#fc4c02')}
                           className="text-gray-400 hover:text-gray-600 transition-colors outline-none"
-                          title="Reset to Strava Orange"
+                          title={t('strava.resetColor')}
                         >
                           <RefreshIcon size={14} />
                         </button>
@@ -202,7 +204,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-gray-600">Opacity</span>
+                    <span className="text-xs font-medium text-gray-600">{t('strava.opacity')}</span>
                     <input 
                       type="range" 
                       min="0.1" 
@@ -219,9 +221,9 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
 
               {/* Data Sync Section */}
               <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Data Sync</span>
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('strava.dataSync')}</span>
                 <Button onClick={handleSync} disabled={isSyncing} variant="primary" size="sm" className="w-full justify-center bg-[#fc4c02] text-white hover:bg-[#e34402]">
-                  {isSyncing ? 'Syncing...' : 'Sync Now'}
+                  {isSyncing ? t('strava.syncing') : t('strava.syncNow')}
                 </Button>
                 {syncStatus && (
                   <div className="p-2 bg-gray-50 rounded text-xs text-center border border-gray-100 text-gray-600">
@@ -233,7 +235,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
               {/* Account Section */}
               <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
                 <Button onClick={handleLogout} variant="ghost" size="sm" className="w-full justify-center text-red-500 hover:text-red-600 hover:bg-red-50">
-                  Disconnect
+                  {t('strava.disconnect')}
                 </Button>
               </div>
             </div>

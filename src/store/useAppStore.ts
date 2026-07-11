@@ -7,6 +7,7 @@ const AppStateSchema = z.object({
   safetyPreference: z.enum(['any', 'safe', 'strict']),
   stravaOpacity: z.number().min(0).max(1),
   stravaColor: z.string(),
+  isFogMode: z.boolean(),
 });
 
 type AppState = z.infer<typeof AppStateSchema>;
@@ -17,6 +18,7 @@ interface AppStore extends AppState {
   setSafetyPreference: (pref: AppState['safetyPreference']) => void;
   setStravaOpacity: (opacity: number) => void;
   setStravaColor: (color: string) => void;
+  setIsFogMode: (isFogMode: boolean) => void;
 }
 
 export const useAppStore = create<AppStore>((set) => {
@@ -48,6 +50,7 @@ export const useAppStore = create<AppStore>((set) => {
     safetyPreference: initialSafety,
     stravaOpacity: initialStravaOpacity,
     stravaColor: initialStravaColor,
+    isFogMode: false,
 
     setSportMode: (mode) => set({ sportMode: mode }),
     
@@ -70,5 +73,7 @@ export const useAppStore = create<AppStore>((set) => {
       set({ stravaColor: color });
       try { localStorage.setItem('rotas_stravaColor', color); } catch(e) {}
     },
+
+    setIsFogMode: (isFogMode) => set({ isFogMode }),
   };
 });

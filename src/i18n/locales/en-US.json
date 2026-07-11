@@ -60,7 +60,8 @@
     "developedBy": "Developed by Icaro MH",
     "openSource": "Open source path planner.",
     "viewOnGithub": "View on GitHub",
-    "close": "Close"
+    "close": "Close",
+    "beta": "Beta"
   },
   "pwa": {
     "title": "Update Available",
@@ -96,5 +97,39 @@
     "areaLimitTitle": "Area limit exceeded",
     "polygonTooLarge": "The polygon covers {{areaKm2}} km², exceeding the {{maxArea}} km² limit. Please draw a smaller area.",
     "polygonEditedTooLarge": "The edited polygon exceeds the area limit. Selection cancelled."
+  },
+  "strava": {
+    "connection": "Strava Connection",
+    "connect": "Connect Strava",
+    "disconnect": "Disconnect",
+    "account": "Strava Account",
+    "mapOverlay": "Map Overlay",
+    "showMyPaths": "Show My Paths",
+    "color": "Color",
+    "opacity": "Opacity",
+    "resetColor": "Reset to Strava Orange",
+    "dataSync": "Data Sync",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing...",
+    "startingSync": "Starting sync...",
+    "syncInProgress": "Sync already in progress.",
+    "syncFailedError": "Sync failed: {{error}}",
+    "syncFailed": "Sync failed.",
+    "syncFailedToStart": "Sync failed to start.",
+    "syncKeepUsing": "Syncing... You can keep using the app.",
+    "inQueue": "In Queue...",
+    "limitReached": "Strava limit reached. Queued for {{time}}.",
+    "complete": "Complete! {{count}} activities inserted.",
+    "syncingCount": "Syncing... ({{count}} inserted)"
+  },
+  "auth": {
+    "title": "Strava Authentication",
+    "authenticating": "Authenticating with Strava...",
+    "errorNoCode": "Error: No authorization code found.",
+    "success": "Authentication successful! Redirecting...",
+    "error": "Error during authentication."
+  },
+  "common": {
+    "close": "Close"
   }
 }

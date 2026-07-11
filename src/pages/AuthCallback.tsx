@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import { Loader } from '../components/Loader';
 
 export const AuthCallback: React.FC = () => {
+    const { t } = useTranslation();
     const search: any = useSearch({ strict: false });
     const navigate = useNavigate();
-    const [status, setStatus] = useState('Authenticating with Strava...');
+    const [status, setStatus] = useState(t('auth.authenticating'));
 
     useEffect(() => {
         const code = search.code;
         if (!code) {
-            setStatus('Error: No authorization code found.');
+            setStatus(t('auth.errorNoCode'));
             setTimeout(() => navigate({ to: '/' }), 3000);
             return;
         }
@@ -28,19 +30,19 @@ export const AuthCallback: React.FC = () => {
             if (data.profileUrl) {
                 localStorage.setItem('strava_profile_url', data.profileUrl);
             }
-            setStatus('Authentication successful! Redirecting...');
+            setStatus(t('auth.success'));
             setTimeout(() => navigate({ to: '/' }), 1500);
         })
         .catch(err => {
             console.error(err);
-            setStatus('Error during authentication.');
+            setStatus(t('auth.error'));
             setTimeout(() => navigate({ to: '/' }), 3000);
         });
     }, [search.code, navigate]);
 
     return (
         <div className="flex flex-col items-center justify-center h-full w-full bg-gray-50">
-            <Loader isLoading={true} title="Strava Authentication" subtitle={status} />
+            <Loader isLoading={true} title={t('auth.title')} subtitle={status} />
         </div>
     );
 };
