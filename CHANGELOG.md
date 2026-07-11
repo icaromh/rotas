@@ -285,6 +285,10 @@
 - **Robust Background Sync**: Re-architected the Strava historical backfill using a serverless recursive background queuing pattern (`pgmq`). The Edge Function now downloads activities in chunks (max 2 pages per run) and automatically enqueues itself to fetch the next batch. This guarantees successful processing for users with 10,000+ activities without hitting the Supabase 60-second or `pg_net` 30-second timeouts.
 - **Edge API Proxy**: Deployed a dedicated Cloudflare Worker (`rotas.cc/api/*`) that intercepts and proxies all backend traffic to the Supabase Edge Functions. This ensures the frontend strictly uses the main domain for API calls, completely hiding the internal Supabase project configuration and bypassing any CORS or permission constraints.
 
+## v1.4.5
+- **Tool Conflict Resolution**: Fixed a UI conflict where the Neighborhood Magic Wand and the custom polygon drawing vector tool could be active simultaneously. Activating one tool now automatically disables the other.
+- **Dynamic Mobile Map Exploration**: Greatly improved the Magic Wand usability on mobile devices by making it automatically fetch and update neighborhoods continuously as the user pans or zooms around the map (`moveend` event), rather than requiring toggling the tool off and on for new areas. Removed blocking alerts for empty areas to ensure frictionless map navigation.
+
 ## v1.4.4
 - **Accurate Shared Route Distance**: Fixed a regression where shared URLs displayed approximately double the real distance. The root cause was recalculating distance from node-to-node straight lines (losing intermediate street geometry). The original distance computed by the worker is now embedded in the shared URL (`?distance=...`) and used directly, with a fallback to point-to-point calculation for legacy links.
 

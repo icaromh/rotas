@@ -224,19 +224,19 @@ export const MapContainer: React.FC<Props> = ({
 
         let activeNeighborhoodLayer: L.GeoJSON | null = null;
         let isLoadingNeighborhoods = false;
+        let isMagicWandActive = false;
 
-        magicWandBtn.onclick = async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          if (isLoadingNeighborhoods) return;
+        const disableMagicWand = () => {
+          isMagicWandActive = false;
+          magicWandBtn.style.backgroundColor = '';
           if (activeNeighborhoodLayer) {
             map.removeLayer(activeNeighborhoodLayer);
             activeNeighborhoodLayer = null;
-            magicWandBtn.style.backgroundColor = '';
-            return;
           }
+        };
 
+        const loadNeighborhoods = async () => {
+          if (isLoadingNeighborhoods || !isMagicWandActive) return;
           isLoadingNeighborhoods = true;
           setGlobalLoader(true, t('neighborhood.searching'), t('neighborhood.fetching'));
 
@@ -245,9 +245,16 @@ export const MapContainer: React.FC<Props> = ({
             const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
 
             const data = await neighborhoodsMutation.mutateAsync(bbox);
+            
+            if (activeNeighborhoodLayer) {
+              map.removeLayer(activeNeighborhoodLayer);
+              activeNeighborhoodLayer = null;
+            }
+
+            if (!isMagicWandActive) return; // In case it was disabled while fetching
+
             if (!data.elements || data.elements.length === 0) {
-              alert('No neighborhoods found in this area. Try moving or zooming out the map.');
-              return;
+              return; // Do nothing if no neighborhoods are found, allowing user to pan further
             }
 
             const geojson = osmtogeojson(data);
@@ -280,23 +287,50 @@ export const MapContainer: React.FC<Props> = ({
                   drawnItems.addLayer(newPolygon);
 
                   onPolygonDrawn(mappedBounds, name);
-
-                  map.removeLayer(activeNeighborhoodLayer!);
-                  activeNeighborhoodLayer = null;
-                  magicWandBtn.style.backgroundColor = '';
+                  disableMagicWand();
                 });
               }
             }).addTo(map);
-
-            magicWandBtn.style.backgroundColor = '#e5e7eb';
           } catch (error) {
             console.error(error);
-            alert('Failed to load neighborhoods from OpenStreetMap.');
           } finally {
             isLoadingNeighborhoods = false;
             setGlobalLoader(false);
           }
         };
+
+        map.on('moveend', () => {
+          if (isMagicWandActive) {
+            loadNeighborhoods();
+          }
+        });
+
+        magicWandBtn.onclick = async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (isMagicWandActive) {
+            disableMagicWand();
+          } else {
+            isMagicWandActive = true;
+            magicWandBtn.style.backgroundColor = '#e5e7eb';
+            
+            // Disable draw tool if it's active
+            // @ts-ignore
+            if (drawControl._toolbars && drawControl._toolbars.draw && drawControl._toolbars.draw._activeMode) {
+              // @ts-ignore
+              drawControl._toolbars.draw._activeMode.handler.disable();
+            }
+
+            await loadNeighborhoods();
+          }
+        };
+
+        map.on(L.Draw.Event.DRAWSTART, () => {
+          disableMagicWand();
+        });
+
+
       }
     }, 100);
 
