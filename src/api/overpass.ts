@@ -24,37 +24,71 @@ export interface OverpassResponse {
   [key: string]: unknown;
 }
 
+const FALLBACK_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
+
 /**
  * Sends an Overpass QL query through the proxy with a timeout and consistent
- * form-encoded body (`data=<query>`).
+ * form-encoded body (`data=<query>`). Falls back to public APIs if proxy fails.
  */
 async function queryOverpass(query: string): Promise<OverpassResponse> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-  let response: Response;
+  const fetchOptions = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'data=' + encodeURIComponent(query),
+    signal: controller.signal,
+  };
+
+  let response: Response | undefined;
+  
+  // 1. Tentar o Proxy
   try {
-    response = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'data=' + encodeURIComponent(query),
-      signal: controller.signal,
-    });
+    response = await fetch(PROXY_URL, fetchOptions);
   } catch (err: any) {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error('Overpass API request timed out after 60 s. Please try again.');
+    console.warn(`[API] Erro ao acessar proxy ${PROXY_URL}:`, err.message);
+  }
+
+  // 2. Se o proxy falhou na rede ou retornou erro (ex: DNS down), tenta os fallbacks
+  if (!response || !response.ok) {
+    if (response && response.status === 429) {
+      clearTimeout(timeoutId);
+      throw new Error('All Overpass API instances are rate-limiting right now. Please wait a minute and try again.');
     }
-    throw new Error(`Network error reaching Overpass proxy: ${err.message}`);
+    
+    console.warn(`[API] Iniciando fallback para endpoints públicos do Overpass...`);
+    for (const endpoint of FALLBACK_ENDPOINTS) {
+      try {
+        const fbResponse = await fetch(endpoint, fetchOptions);
+        if (fbResponse.ok) {
+          response = fbResponse;
+          console.log(`[API] Fallback bem sucedido com ${endpoint}`);
+          break;
+        } else {
+          console.warn(`[API] Fallback ${endpoint} retornou ${fbResponse.status}`);
+        }
+      } catch (fbErr: any) {
+        console.warn(`[API] Fallback ${endpoint} falhou:`, fbErr.message);
+      }
+    }
   }
 
   clearTimeout(timeoutId);
+
+  if (!response) {
+    throw new Error('Network error reaching Overpass proxy and all fallbacks failed.');
+  }
 
   if (!response.ok) {
     if (response.status === 429) {
       throw new Error('All Overpass API instances are rate-limiting right now. Please wait a minute and try again.');
     }
-    throw new Error(`Overpass proxy returned HTTP ${response.status}.`);
+    throw new Error(`Overpass proxy and fallbacks returned HTTP ${response.status}.`);
   }
 
   return response.json() as Promise<OverpassResponse>;
