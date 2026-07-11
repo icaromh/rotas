@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.20.0] - 2026-07-10
+## [1.23.0] - 2026-07-12
 ### Added
 - **Fog of World Visualization**:
   - Implemented a "Fog of War" rendering mode for synchronized Strava activities.
