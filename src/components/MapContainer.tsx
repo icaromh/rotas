@@ -254,32 +254,40 @@ export const MapContainer: React.FC<Props> = ({
             if (!isMagicWandActive) return; // In case it was disabled while fetching
 
             if (!data.elements || data.elements.length === 0) {
-              return; // Do nothing if no neighborhoods are found, allowing user to pan further
+              alert(t('neighborhood.notFound') || 'No neighborhoods found in this area. Try moving or zooming out the map.');
+              return; 
             }
 
             const geojson = osmtogeojson(data);
+            const markers: L.Marker[] = [];
+            
             activeNeighborhoodLayer = L.geoJSON(geojson, {
               style: { color: '#10b981', weight: 2, fillColor: '#10b981', fillOpacity: 0.2, dashArray: '5, 5' },
               filter: (feature) => feature.geometry.type !== 'Point' && feature.geometry.type !== 'MultiPoint',
+              interactive: !isMobile, // Disable polygon interaction on mobile to fix touch/drag issues
               onEachFeature: (feature, layer) => {
                 const name = feature?.properties?.name || feature?.properties?.tags?.name || feature?.properties?.['name:en'] || null;
-                if (name) {
+                
+                if (name && !isMobile) {
                   layer.bindTooltip(name, { className: 'custom-black-tooltip', sticky: true, direction: 'top', offset: [0, -10] });
                 }
+                
                 layer.on('mouseover', function () {
-                  if (layer instanceof L.Path) layer.setStyle({ fillOpacity: 0.5, weight: 3 });
+                  if (layer instanceof L.Path && !isMobile) layer.setStyle({ fillOpacity: 0.5, weight: 3 });
                 });
+                
                 layer.on('mouseout', function () {
-                  activeNeighborhoodLayer!.resetStyle(layer as L.Path);
+                  if (!isMobile) activeNeighborhoodLayer!.resetStyle(layer as L.Path);
                 });
-                layer.on('click', function () {
+                
+                const selectNeighborhood = () => {
                   drawnItems.clearLayers();
                   const clickedLayer = layer as any;
                   clickedLayer.setStyle({ color: '#1f2937', weight: 2, dashArray: '5, 5', fillOpacity: 0.2 });
 
                   let latlngs: any[] = clickedLayer.getLatLngs();
                   while (latlngs.length > 0 && Array.isArray(latlngs[0])) {
-                    latlngs = latlngs.reduce((prev, current) => (prev.length > current.length) ? prev : current);
+                    latlngs = latlngs.reduce((prev: any, current: any) => (prev.length > current.length) ? prev : current);
                   }
 
                   const mappedBounds = latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng }));
@@ -288,9 +296,30 @@ export const MapContainer: React.FC<Props> = ({
 
                   onPolygonDrawn(mappedBounds, name);
                   disableMagicWand();
-                });
+                };
+
+                if (!isMobile) {
+                  layer.on('click', selectNeighborhood);
+                }
+
+                if (name && (layer as any).getBounds) {
+                  const center = (layer as any).getBounds().getCenter();
+                  const nameMarker = L.marker(center, {
+                    icon: L.divIcon({
+                      className: 'bg-transparent border-0',
+                      html: `<div style="transform: translate(-50%, -50%);" class="bg-gray-900 text-white text-[11px] md:text-xs font-bold px-2 py-1 md:px-3 md:py-1.5 rounded-md shadow-md whitespace-nowrap cursor-pointer pointer-events-auto hover:bg-gray-700 transition-colors">${name}</div>`,
+                      iconSize: [0, 0]
+                    }),
+                    interactive: true
+                  });
+                  nameMarker.on('click', selectNeighborhood);
+                  markers.push(nameMarker);
+                }
               }
             }).addTo(map);
+
+            // Add markers to the layer group
+            markers.forEach(m => activeNeighborhoodLayer!.addLayer(m));
           } catch (error) {
             console.error(error);
           } finally {
@@ -299,11 +328,7 @@ export const MapContainer: React.FC<Props> = ({
           }
         };
 
-        map.on('moveend', () => {
-          if (isMagicWandActive) {
-            loadNeighborhoods();
-          }
-        });
+
 
         magicWandBtn.onclick = async (e) => {
           e.preventDefault();

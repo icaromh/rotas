@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.22.4] - 2026-07-11
+### Changed
+- **Magic Wand Navigation**: Reverted the `moveend` auto-fetch behavior. The Magic Wand no longer spams the Overpass API during map navigation.
+- **Mobile Map Usability**: Disabled polygon interactivity on mobile devices to prevent accidental neighborhood selection when trying to pan the map. Added a new permanently visible, centered marker with the neighborhood name that serves as the interactive selection target on mobile and touch devices.
+
 ## [1.19.3] - 2026-07-11
 ### Removed
 - **Features**: Removed experimental `fogMode` state from `useAppStore.ts` as the test will not be moved forward.
@@ -257,10 +262,6 @@
 - **Shared View Layout Fix**: Fixed the Preview and GPX buttons alignment in shared view so that they sit side-by-side on the same row.
 - **Shared View Estimated Time**: Render the estimated time dynamically in the shared view by calculating it from the shared distance and mode parameters using fixed constants.
 
-## v1.4.5
-- **Shared View UI Overhaul**: The sidebar in shared route view now shows the "Explore Every Inch" header at all times. Action buttons (Preview, GPX) are pinned to the bottom of the sidebar as a fixed footer alongside the "Viewing an external route" notice. In shared view, Preview and GPX appear side-by-side in a single row. The sidebar now has fully rounded corners on desktop via `overflow-hidden` clipping child elements. **New Plan** in shared view redirects to `/` to start fresh, instead of producing a broken in-place reset with stale UI.
-- **Speed/Pace Input Removed**: The speed and pace inputs have been replaced with fixed constants (`SPEED_BIKE = 17 km/h`, `PACE_WALK = 10 min/km`), simplifying the UI.
-
 ## v1.10.1
 - **TypeScript Configuration**: Enabled `"strict": true` (which includes `"strictNullChecks"`) in `tsconfig.json` to satisfy TanStack Router's requirement for correct route parameter and search type inference, resolving the compiler error in `src/router.tsx`.
 
@@ -284,10 +285,6 @@
 ## v1.21.0
 - **Robust Background Sync**: Re-architected the Strava historical backfill using a serverless recursive background queuing pattern (`pgmq`). The Edge Function now downloads activities in chunks (max 2 pages per run) and automatically enqueues itself to fetch the next batch. This guarantees successful processing for users with 10,000+ activities without hitting the Supabase 60-second or `pg_net` 30-second timeouts.
 - **Edge API Proxy**: Deployed a dedicated Cloudflare Worker (`rotas.cc/api/*`) that intercepts and proxies all backend traffic to the Supabase Edge Functions. This ensures the frontend strictly uses the main domain for API calls, completely hiding the internal Supabase project configuration and bypassing any CORS or permission constraints.
-
-## v1.4.5
-- **Tool Conflict Resolution**: Fixed a UI conflict where the Neighborhood Magic Wand and the custom polygon drawing vector tool could be active simultaneously. Activating one tool now automatically disables the other.
-- **Dynamic Mobile Map Exploration**: Greatly improved the Magic Wand usability on mobile devices by making it automatically fetch and update neighborhoods continuously as the user pans or zooms around the map (`moveend` event), rather than requiring toggling the tool off and on for new areas. Removed blocking alerts for empty areas to ensure frictionless map navigation.
 
 ## v1.4.4
 - **Accurate Shared Route Distance**: Fixed a regression where shared URLs displayed approximately double the real distance. The root cause was recalculating distance from node-to-node straight lines (losing intermediate street geometry). The original distance computed by the worker is now embedded in the shared URL (`?distance=...`) and used directly, with a fallback to point-to-point calculation for legacy links.
