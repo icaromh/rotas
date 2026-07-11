@@ -304,16 +304,21 @@ export const MapContainer: React.FC<Props> = ({
 
                 if (name && (layer as any).getBounds) {
                   const center = (layer as any).getBounds().getCenter();
-                  const nameMarker = L.marker(center, {
-                    icon: L.divIcon({
-                      className: 'bg-transparent border-0',
-                      html: `<div style="transform: translate(-50%, -50%);" class="bg-gray-900 text-white text-[11px] md:text-xs font-bold px-2 py-1 md:px-3 md:py-1.5 rounded-md shadow-md whitespace-nowrap cursor-pointer pointer-events-auto hover:bg-gray-700 transition-colors">${name}</div>`,
-                      iconSize: [0, 0]
-                    }),
-                    interactive: true
-                  });
-                  nameMarker.on('click', selectNeighborhood);
-                  markers.push(nameMarker);
+                  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+                  
+                  // For touch devices (mobile), add a permanent marker instead of relying on hover tooltips
+                  if (isTouch || isMobile) {
+                    const nameMarker = L.marker(center, {
+                      icon: L.divIcon({
+                        className: 'bg-transparent border-0',
+                        html: `<div style="transform: translate(-50%, -50%); background-color: #111827; color: #ffffff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); pointer-events: auto; text-align: center;">${name}</div>`,
+                        iconSize: [0, 0]
+                      }),
+                      interactive: true
+                    });
+                    nameMarker.on('click', selectNeighborhood);
+                    markers.push(nameMarker);
+                  }
                 }
               }
             }).addTo(map);
