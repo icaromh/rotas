@@ -102,8 +102,10 @@ export async function fetchNeighborhoods(bbox: string): Promise<OverpassResponse
   const query = `
     [out:json][timeout:25];
     (
-      relation["admin_level"~"9|10"](${bbox});
-      relation["place"~"neighbourhood|suburb"](${bbox});
+      way["admin_level"~"9|10|11"](${bbox});
+      relation["admin_level"~"9|10|11"](${bbox});
+      way["place"~"neighbourhood|suburb|quarter"](${bbox});
+      relation["place"~"neighbourhood|suburb|quarter"](${bbox});
     );
     out geom;
   `;

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.22.9] - 2026-07-11
+### Changed
+- **Overpass Query Expansion**: Expanded the Magic Wand API query to include `way` geometries (in addition to `relation`) and added more granular tagging scopes (`admin_level=11` and `place=quarter`). This allows the app to fetch and render neighborhoods in regions where mapping practices are less rigid or highly sub-divided.
+
 ## [1.22.8] - 2026-07-11
 ### Removed
 - **Magic Wand Max Area Filter**: Removed the maximum area filter (`MAX_AREA_KM2`) that was dropping large polygons. The spatial containment filter (macro-region filter) is now solely responsible for keeping the map clean.
