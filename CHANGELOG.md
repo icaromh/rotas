@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.22.8] - 2026-07-11
+### Removed
+- **Magic Wand Max Area Filter**: Removed the maximum area filter (`MAX_AREA_KM2`) that was dropping large polygons. The spatial containment filter (macro-region filter) is now solely responsible for keeping the map clean.
+
 ## [1.22.7] - 2026-07-11
 ### Changed
 - **Smart Neighborhood Filtering**: The Magic Wand tool now actively filters out macro-regions and massive overlapping polygons (like whole cities or large districts) if there are smaller, more granular neighborhoods available within the same area. This prevents visual clutter and ensures users only interact with walkable/rideable neighborhood units.

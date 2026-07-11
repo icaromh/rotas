@@ -277,16 +277,12 @@ export const MapContainer: React.FC<Props> = ({
               }
               const areaKm2 = L.GeometryUtil.geodesicArea(latlngs) / 1_000_000;
               
-              if (areaKm2 > MAX_AREA_KM2) {
-                layersToRemove.push(layer);
-              } else {
-                layersInfo.push({
-                  layer,
-                  area: areaKm2,
-                  bounds: layer.getBounds(),
-                  center: layer.getBounds().getCenter()
-                });
-              }
+              layersInfo.push({
+                layer,
+                area: areaKm2,
+                bounds: layer.getBounds(),
+                center: layer.getBounds().getCenter()
+              });
             });
 
             // Filter out overlapping conglomerates
