@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.22.6] - 2026-07-11
+### Fixed
+- **Mobile Map Usability**: Added `width: fit-content` to the permanent mobile neighborhood markers to prevent the text container from collapsing.
+
 ## [1.22.4] - 2026-07-11
 ### Changed
 - **Magic Wand Navigation**: Reverted the `moveend` auto-fetch behavior. The Magic Wand no longer spams the Overpass API during map navigation.

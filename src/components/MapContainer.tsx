@@ -311,7 +311,7 @@ export const MapContainer: React.FC<Props> = ({
                     const nameMarker = L.marker(center, {
                       icon: L.divIcon({
                         className: 'bg-transparent border-0',
-                        html: `<div style="transform: translate(-50%, -50%); background-color: #111827; color: #ffffff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); pointer-events: auto; text-align: center;">${name}</div>`,
+                        html: `<div style="transform: translate(-50%, -50%); width: fit-content; background-color: #111827; color: #ffffff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); pointer-events: auto; text-align: center;">${name}</div>`,
                         iconSize: [0, 0]
                       }),
                       interactive: true
