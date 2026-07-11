@@ -270,6 +270,9 @@
 - **View Split**: Decoupled the creation workflow (`/`) from the route preview mode (`/preview`) to drastically reduce component complexity and heavy rendering logic when loading shared links.
 - **Enhanced Type Safety**: Added Zod schema validation directly into the router for strict URL query parameter parsing and safety.
 
+## v1.22.0
+- **Automated CI/CD Pipeline**: Added GitHub Actions workflow (`production.yml`) to automatically deploy Supabase migrations, Edge Functions, and the Cloudflare API Proxy whenever code is merged into the `main` branch. This eliminates manual infrastructure deployment steps and ensures production always reflects the codebase.
+
 ## v1.21.0
 - **Robust Background Sync**: Re-architected the Strava historical backfill using a serverless recursive background queuing pattern (`pgmq`). The Edge Function now downloads activities in chunks (max 2 pages per run) and automatically enqueues itself to fetch the next batch. This guarantees successful processing for users with 10,000+ activities without hitting the Supabase 60-second or `pg_net` 30-second timeouts.
 - **Edge API Proxy**: Deployed a dedicated Cloudflare Worker (`rotas.cc/api/*`) that intercepts and proxies all backend traffic to the Supabase Edge Functions. This ensures the frontend strictly uses the main domain for API calls, completely hiding the internal Supabase project configuration and bypassing any CORS or permission constraints.
