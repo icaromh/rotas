@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.19.3] - 2026-07-11
+### Removed
+- **Features**: Removed experimental `fogMode` state from `useAppStore.ts` as the test will not be moved forward.
 ## [1.19.2] - 2026-07-11
 ### Fixed
 - **i18n**: Revised the frontend codebase to extract and localize previously hardcoded strings.
