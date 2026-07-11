@@ -60,7 +60,8 @@
     "developedBy": "Desarrollado por Icaro MH",
     "openSource": "Planificador de rutas de código abierto.",
     "viewOnGithub": "Ver en GitHub",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "beta": "Beta"
   },
   "pwa": {
     "title": "Actualización Disponible",
@@ -96,5 +97,39 @@
     "areaLimitTitle": "Límite de área",
     "polygonTooLarge": "El polígono cubre {{areaKm2}} km², superando el límite de {{maxArea}} km². Por favor, dibuja un área más pequeña.",
     "polygonEditedTooLarge": "El polígono editado supera el límite de área. Selección cancelada."
+  },
+  "strava": {
+    "connection": "Conexión Strava",
+    "connect": "Conectar Strava",
+    "disconnect": "Desconectar",
+    "account": "Cuenta Strava",
+    "mapOverlay": "Superposición en el Mapa",
+    "showMyPaths": "Mostrar Mis Rutas",
+    "color": "Color",
+    "opacity": "Opacidad",
+    "resetColor": "Restaurar Naranja Strava",
+    "dataSync": "Sincronización",
+    "syncNow": "Sincronizar Ahora",
+    "syncing": "Sincronizando...",
+    "startingSync": "Iniciando sincronización...",
+    "syncInProgress": "Sincronización ya en curso.",
+    "syncFailedError": "Fallo en la sincronización: {{error}}",
+    "syncFailed": "Fallo en la sincronización.",
+    "syncFailedToStart": "Fallo al iniciar sincronización.",
+    "syncKeepUsing": "Sincronizando... Puedes seguir usando la app.",
+    "inQueue": "En cola...",
+    "limitReached": "Límite de Strava alcanzado. En cola para las {{time}}.",
+    "complete": "¡Completado! {{count}} actividades insertadas.",
+    "syncingCount": "Sincronizando... ({{count}} insertadas)"
+  },
+  "auth": {
+    "title": "Autenticación Strava",
+    "authenticating": "Autenticando con Strava...",
+    "errorNoCode": "Error: Ningún código de autorización encontrado.",
+    "success": "¡Autenticación exitosa! Redirigiendo...",
+    "error": "Error durante la autenticación."
+  },
+  "common": {
+    "close": "Cerrar"
   }
 }

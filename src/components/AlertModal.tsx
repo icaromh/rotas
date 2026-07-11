@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface Props {
 export const AlertModal: React.FC<Props> = ({ isOpen, message, onClose, title }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -99,7 +101,7 @@ export const AlertModal: React.FC<Props> = ({ isOpen, message, onClose, title })
           {/* Close X button */}
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-gray-300"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">

@@ -7,6 +7,7 @@ const AppStateSchema = z.object({
   safetyPreference: z.enum(['any', 'safe', 'strict']),
   stravaOpacity: z.number().min(0).max(1),
   stravaColor: z.string(),
+  isFogMode: z.boolean(),
 });
 
 type AppState = z.infer<typeof AppStateSchema>;
