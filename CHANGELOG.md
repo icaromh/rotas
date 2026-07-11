@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.22.10] - 2026-07-11
+### Removed
+- **Geographical Overlap Filter**: Removed the spatial containment filter that was dropping macro-regions. The map will now display all results returned by the Overpass query exactly as they are mapped in OSM.
+
 ## [1.22.9] - 2026-07-11
 ### Changed
 - **Overpass Query Expansion**: Expanded the Magic Wand API query to include `way` geometries (in addition to `relation`) and added more granular tagging scopes (`admin_level=11` and `place=quarter`). This allows the app to fetch and render neighborhoods in regions where mapping practices are less rigid or highly sub-divided.

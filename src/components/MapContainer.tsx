@@ -267,40 +267,12 @@ export const MapContainer: React.FC<Props> = ({
               interactive: !isMobile, // Disable polygon interaction on mobile to fix touch/drag issues
             });
 
-            const layersToRemove: any[] = [];
-            const layersInfo: any[] = [];
-
             activeNeighborhoodLayer.eachLayer((layer: any) => {
               let latlngs = layer.getLatLngs();
               while (latlngs.length > 0 && Array.isArray(latlngs[0])) {
                 latlngs = latlngs.reduce((prev: any, current: any) => (prev.length > current.length) ? prev : current);
               }
-              const areaKm2 = L.GeometryUtil.geodesicArea(latlngs) / 1_000_000;
-              
-              layersInfo.push({
-                layer,
-                area: areaKm2,
-                bounds: layer.getBounds(),
-                center: layer.getBounds().getCenter()
-              });
             });
-
-            // Filter out overlapping conglomerates
-            layersInfo.forEach(infoA => {
-              const hasChild = layersInfo.some(infoB => {
-                if (infoA === infoB) return false;
-                // B must be significantly smaller (e.g. less than 80% of A's size)
-                if (infoB.area > infoA.area * 0.8) return false;
-                // If A's bounds contain B's center, we assume B is a sub-neighborhood of A
-                if (infoA.bounds.contains(infoB.center)) return true;
-                return false;
-              });
-              if (hasChild) {
-                layersToRemove.push(infoA.layer);
-              }
-            });
-
-            layersToRemove.forEach(layer => activeNeighborhoodLayer!.removeLayer(layer));
 
             if (activeNeighborhoodLayer.getLayers().length === 0) {
               // We filtered everything out (or there was nothing)
