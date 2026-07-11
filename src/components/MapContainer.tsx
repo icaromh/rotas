@@ -265,63 +265,112 @@ export const MapContainer: React.FC<Props> = ({
               style: { color: '#10b981', weight: 2, fillColor: '#10b981', fillOpacity: 0.2, dashArray: '5, 5' },
               filter: (feature) => feature.geometry.type !== 'Point' && feature.geometry.type !== 'MultiPoint',
               interactive: !isMobile, // Disable polygon interaction on mobile to fix touch/drag issues
-              onEachFeature: (feature, layer) => {
-                const name = feature?.properties?.name || feature?.properties?.tags?.name || feature?.properties?.['name:en'] || null;
-                
-                if (name && !isMobile) {
-                  layer.bindTooltip(name, { className: 'custom-black-tooltip', sticky: true, direction: 'top', offset: [0, -10] });
-                }
-                
-                layer.on('mouseover', function () {
-                  if (layer instanceof L.Path && !isMobile) layer.setStyle({ fillOpacity: 0.5, weight: 3 });
+            });
+
+            const layersToRemove: any[] = [];
+            const layersInfo: any[] = [];
+
+            activeNeighborhoodLayer.eachLayer((layer: any) => {
+              let latlngs = layer.getLatLngs();
+              while (latlngs.length > 0 && Array.isArray(latlngs[0])) {
+                latlngs = latlngs.reduce((prev: any, current: any) => (prev.length > current.length) ? prev : current);
+              }
+              const areaKm2 = L.GeometryUtil.geodesicArea(latlngs) / 1_000_000;
+              
+              if (areaKm2 > MAX_AREA_KM2) {
+                layersToRemove.push(layer);
+              } else {
+                layersInfo.push({
+                  layer,
+                  area: areaKm2,
+                  bounds: layer.getBounds(),
+                  center: layer.getBounds().getCenter()
                 });
-                
-                layer.on('mouseout', function () {
-                  if (!isMobile) activeNeighborhoodLayer!.resetStyle(layer as L.Path);
-                });
-                
-                const selectNeighborhood = () => {
-                  drawnItems.clearLayers();
-                  const clickedLayer = layer as any;
-                  clickedLayer.setStyle({ color: '#1f2937', weight: 2, dashArray: '5, 5', fillOpacity: 0.2 });
+              }
+            });
 
-                  let latlngs: any[] = clickedLayer.getLatLngs();
-                  while (latlngs.length > 0 && Array.isArray(latlngs[0])) {
-                    latlngs = latlngs.reduce((prev: any, current: any) => (prev.length > current.length) ? prev : current);
-                  }
+            // Filter out overlapping conglomerates
+            layersInfo.forEach(infoA => {
+              const hasChild = layersInfo.some(infoB => {
+                if (infoA === infoB) return false;
+                // B must be significantly smaller (e.g. less than 80% of A's size)
+                if (infoB.area > infoA.area * 0.8) return false;
+                // If A's bounds contain B's center, we assume B is a sub-neighborhood of A
+                if (infoA.bounds.contains(infoB.center)) return true;
+                return false;
+              });
+              if (hasChild) {
+                layersToRemove.push(infoA.layer);
+              }
+            });
 
-                  const mappedBounds = latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng }));
-                  const newPolygon = L.polygon(latlngs, clickedLayer.options);
-                  drawnItems.addLayer(newPolygon);
+            layersToRemove.forEach(layer => activeNeighborhoodLayer!.removeLayer(layer));
 
-                  onPolygonDrawn(mappedBounds, name);
-                  disableMagicWand();
-                };
+            if (activeNeighborhoodLayer.getLayers().length === 0) {
+              // We filtered everything out (or there was nothing)
+              alert(t('neighborhood.notFound') || 'No neighborhoods found in this area. Try moving or zooming out the map.');
+              isMagicWandActive = false;
+              magicWandBtn.style.backgroundColor = '';
+              return;
+            }
 
-                if (!isMobile) {
-                  layer.on('click', selectNeighborhood);
+            activeNeighborhoodLayer.addTo(map);
+
+            activeNeighborhoodLayer.eachLayer((layer: any) => {
+              const feature = layer.feature;
+              const name = feature?.properties?.name || feature?.properties?.tags?.name || feature?.properties?.['name:en'] || null;
+              
+              if (name && !isMobile) {
+                layer.bindTooltip(name, { className: 'custom-black-tooltip', sticky: true, direction: 'top', offset: [0, -10] });
+              }
+              
+              layer.on('mouseover', function () {
+                if (!isMobile) layer.setStyle({ fillOpacity: 0.5, weight: 3 });
+              });
+              
+              layer.on('mouseout', function () {
+                if (!isMobile) activeNeighborhoodLayer!.resetStyle(layer as L.Path);
+              });
+              
+              const selectNeighborhood = () => {
+                drawnItems.clearLayers();
+                layer.setStyle({ color: '#1f2937', weight: 2, dashArray: '5, 5', fillOpacity: 0.2 });
+
+                let latlngs: any[] = layer.getLatLngs();
+                while (latlngs.length > 0 && Array.isArray(latlngs[0])) {
+                  latlngs = latlngs.reduce((prev: any, current: any) => (prev.length > current.length) ? prev : current);
                 }
 
-                if (name && (layer as any).getBounds) {
-                  const center = (layer as any).getBounds().getCenter();
-                  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-                  
-                  // For touch devices (mobile), add a permanent marker instead of relying on hover tooltips
-                  if (isTouch || isMobile) {
-                    const nameMarker = L.marker(center, {
-                      icon: L.divIcon({
-                        className: 'bg-transparent border-0',
-                        html: `<div style="transform: translate(-50%, -50%); width: fit-content; background-color: #111827; color: #ffffff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); pointer-events: auto; text-align: center;">${name}</div>`,
-                        iconSize: [0, 0]
-                      }),
-                      interactive: true
-                    });
-                    nameMarker.on('click', selectNeighborhood);
-                    markers.push(nameMarker);
-                  }
+                const mappedBounds = latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng }));
+                const newPolygon = L.polygon(latlngs, layer.options);
+                drawnItems.addLayer(newPolygon);
+
+                onPolygonDrawn(mappedBounds, name);
+                disableMagicWand();
+              };
+
+              if (!isMobile) {
+                layer.on('click', selectNeighborhood);
+              }
+
+              if (name && layer.getBounds) {
+                const center = layer.getBounds().getCenter();
+                const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+                
+                if (isTouch || isMobile) {
+                  const nameMarker = L.marker(center, {
+                    icon: L.divIcon({
+                      className: 'bg-transparent border-0',
+                      html: `<div style="transform: translate(-50%, -50%); width: fit-content; background-color: #111827; color: #ffffff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); pointer-events: auto; text-align: center;">${name}</div>`,
+                      iconSize: [0, 0]
+                    }),
+                    interactive: true
+                  });
+                  nameMarker.on('click', selectNeighborhood);
+                  markers.push(nameMarker);
                 }
               }
-            }).addTo(map);
+            });
 
             // Add markers to the layer group
             markers.forEach(m => activeNeighborhoodLayer!.addLayer(m));

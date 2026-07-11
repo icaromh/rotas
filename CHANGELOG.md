@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.22.7] - 2026-07-11
+### Changed
+- **Smart Neighborhood Filtering**: The Magic Wand tool now actively filters out macro-regions and massive overlapping polygons (like whole cities or large districts) if there are smaller, more granular neighborhoods available within the same area. This prevents visual clutter and ensures users only interact with walkable/rideable neighborhood units.
+
 ## [1.22.6] - 2026-07-11
 ### Fixed
 - **Mobile Map Usability**: Added `width: fit-content` to the permanent mobile neighborhood markers to prevent the text container from collapsing.
