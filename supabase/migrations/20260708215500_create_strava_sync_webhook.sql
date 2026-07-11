@@ -11,7 +11,7 @@ DECLARE
   request_url text;
 BEGIN
   -- Try to read the production webhook URL from Supabase Vault secrets
-  SELECT secret INTO request_url
+  SELECT decrypted_secret INTO request_url
   FROM vault.decrypted_secrets 
   WHERE name = 'STRAVA_SYNC_WEBHOOK_URL' 
   LIMIT 1;
