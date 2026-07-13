@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.23.1] - 2026-07-13
+### Changed
+- **Internal**: Translated `AGENTS.md` to English and added a strict English language requirement for AI agents.
+
 ## [1.19.3] - 2026-07-11
 ### Removed
 - **Features**: Removed experimental `fogMode` state from `useAppStore.ts` as the test will not be moved forward.
