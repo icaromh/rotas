@@ -14,7 +14,10 @@
     "deploy:proxy": "wrangler deploy -c proxy/wrangler.toml",
     "deploy:functions": "supabase functions deploy",
     "db:push": "supabase db push",
-    "db:migrate": "supabase migration up"
+    "db:migrate": "supabase migration up",
+    "db:start": "supabase db start",
+    "db:stop": "supabase db stop",
+    "db:reset": "supabase db reset"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
