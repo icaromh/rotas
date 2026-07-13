@@ -64,7 +64,14 @@ async function queryOverpass(query: string): Promise<OverpassResponse> {
 // Public API
 // ---------------------------------------------------------------------------
 
+const neighborhoodCache = new Map<string, OverpassResponse>();
+
 export async function fetchNeighborhoods(bbox: string): Promise<OverpassResponse> {
+  if (neighborhoodCache.has(bbox)) {
+    console.log(`[API] Using cached neighborhoods for bbox: ${bbox}`);
+    return neighborhoodCache.get(bbox)!;
+  }
+
   const query = `
     [out:json][timeout:25];
     (
@@ -74,7 +81,11 @@ export async function fetchNeighborhoods(bbox: string): Promise<OverpassResponse
     out geom;
   `;
 
-  return queryOverpass(query);
+  const response = await queryOverpass(query);
+  
+  // Cache the response to avoid hitting the API if the user toggles the wand without moving the map
+  neighborhoodCache.set(bbox, response);
+  return response;
 }
 
 export async function fetchRoadNetwork(

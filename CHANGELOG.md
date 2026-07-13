@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.22.12] - 2026-07-13
+### Changed
+- **Overpass API Caching**: Implemented a local in-memory cache for neighborhood requests. If the map bounds (bbox) haven't changed, toggling the Magic Wand off and on will instantly reuse the cached data without triggering a new network request to the Overpass API.
+
 ## [1.22.11] - 2026-07-13
 ### Fixed
 - **UI Tool Conflict**: Resolved a visual and functional conflict between the "Magic Wand" neighborhood selector and the "Draw a Vector" polygon tool. Activating the Magic Wand now automatically disables the draw vector mode, and vice-versa.
