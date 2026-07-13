@@ -1,6 +1,10 @@
 # Changelog
 
-## [1.19.3] - 2026-07-11
+## [1.22.11] - 2026-07-13
+### Fixed
+- **UI Tool Conflict**: Resolved a visual and functional conflict between the "Magic Wand" neighborhood selector and the "Draw a Vector" polygon tool. Activating the Magic Wand now automatically disables the draw vector mode, and vice-versa.
+
+## [1.22.10] - 2026-07-11
 ### Removed
 - **Features**: Removed experimental `fogMode` state from `useAppStore.ts` as the test will not be moved forward.
 ## [1.19.2] - 2026-07-11

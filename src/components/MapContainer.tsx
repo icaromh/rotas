@@ -229,6 +229,17 @@ export const MapContainer: React.FC<Props> = ({
           e.preventDefault();
           e.stopPropagation();
 
+          // Disable any active leaflet-draw tools to prevent conflict
+          try {
+            if ((drawControl as any)._toolbars) {
+              Object.keys((drawControl as any)._toolbars).forEach(key => {
+                (drawControl as any)._toolbars[key].disable();
+              });
+            }
+          } catch (err) {
+            console.error(err);
+          }
+
           if (isLoadingNeighborhoods) return;
           if (activeNeighborhoodLayer) {
             map.removeLayer(activeNeighborhoodLayer);
@@ -297,6 +308,15 @@ export const MapContainer: React.FC<Props> = ({
             setGlobalLoader(false);
           }
         };
+
+        // When the user starts drawing a polygon with Leaflet Draw, turn off the Magic Wand
+        map.on(L.Draw.Event.DRAWSTART, () => {
+          if (activeNeighborhoodLayer) {
+            map.removeLayer(activeNeighborhoodLayer);
+            activeNeighborhoodLayer = null;
+            magicWandBtn.style.backgroundColor = '';
+          }
+        });
       }
     }, 100);
 
