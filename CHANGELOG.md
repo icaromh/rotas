@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.24.0] - 2026-07-17
+### Added
+- **Walk Boundaries**: Added a new "Boundary Preference" setting for walking mode (`walkBoundary`). Walkers can now choose to strictly stick to the drawn bounds, preventing the route from wandering outside the polygon to reach the next intersection.
+
 ## [1.23.1] - 2026-07-13
 ### Changed
 - **Internal**: Translated `AGENTS.md` to English and added a strict English language requirement for AI agents.

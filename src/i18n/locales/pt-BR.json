@@ -47,6 +47,12 @@
       "balanced": "Mais Segura (Evitar avenidas)",
       "any": "Qualquer Rua (Padrão)"
     },
+    "walkBoundary": {
+      "title": "Limites de Caminhada",
+      "help": "Escolha se a rota pode sair um pouco do polígono para alcançar a próxima interseção.",
+      "strict": "Manter estritamente no limite (pode gerar retornos/balões)",
+      "any": "Permitir alcançar a próxima interseção (Padrão)"
+    },
     "sport": {
       "title": "Esporte",
       "cycling": "Ciclismo",

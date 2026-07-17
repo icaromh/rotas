@@ -80,7 +80,7 @@ export const PreferencesModal: React.FC<Props> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {sportMode !== 'walk' && (
+          {sportMode !== 'walk' ? (
             <div id="safety-preference-container" className="flex flex-col gap-2">
               <label className="text-sm font-bold text-gray-800">{t('preferences.safety.title')}</label>
               <p className="text-xs text-gray-500 leading-relaxed mb-1">{t('preferences.safety.help')}</p>
@@ -94,6 +94,23 @@ export const PreferencesModal: React.FC<Props> = ({ isOpen, onClose }) => {
                   <option value="any">{t('preferences.safety.any')}</option>
                   <option value="safe">{t('preferences.safety.balanced')}</option>
                   <option value="strict">{t('preferences.safety.strict')}</option>
+                </select>
+                <ChevronDownIcon className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          ) : (
+            <div id="walk-boundary-container" className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-gray-800">{t('preferences.walkBoundary.title')}</label>
+              <p className="text-xs text-gray-500 leading-relaxed mb-1">{t('preferences.walkBoundary.help')}</p>
+              <div className="relative bg-gray-50 rounded-lg border border-gray-200">
+                <select 
+                  id="walk-boundary-select"
+                  value={safetyPreference === 'safe' ? 'any' : safetyPreference}
+                  onChange={(e) => setSafetyPreference(e.target.value as any)}
+                  className="appearance-none bg-transparent w-full text-sm font-medium text-gray-800 py-2.5 pl-3 pr-8 cursor-pointer outline-none"
+                >
+                  <option value="any">{t('preferences.walkBoundary.any')}</option>
+                  <option value="strict">{t('preferences.walkBoundary.strict')}</option>
                 </select>
                 <ChevronDownIcon className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>

@@ -306,10 +306,17 @@ export function buildBaseData(overpassData: any, mode: string, polygon: {lat: nu
         const midLat = (posU.lat + posV.lat) / 2;
         const midLng = (posU.lon + posV.lon) / 2;
         
-        // Verifica se o meio, início ou fim da rua está dentro ou MUITO perto do polígono (gordura configurada)
-        const isTarget = isPointInOrNearPolygon({lat: midLat, lng: midLng}, polygon, bufferDegrees)
-                      || isPointInOrNearPolygon({lat: posU.lat, lng: posU.lon}, polygon, bufferDegrees)
-                      || isPointInOrNearPolygon({lat: posV.lat, lng: posV.lon}, polygon, bufferDegrees);
+        const inMid = isPointInOrNearPolygon({lat: midLat, lng: midLng}, polygon, bufferDegrees);
+        const inU = isPointInOrNearPolygon({lat: posU.lat, lng: posU.lon}, polygon, bufferDegrees);
+        const inV = isPointInOrNearPolygon({lat: posV.lat, lng: posV.lon}, polygon, bufferDegrees);
+
+        let isTarget = false;
+        if (mode === 'walk' && safety === 'strict') {
+          // Both nodes must be inside or near the polygon
+          isTarget = inU && inV;
+        } else {
+          isTarget = inMid || inU || inV;
+        }
 
         baseEdges.push({
           u: String(u),
