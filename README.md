@@ -140,6 +140,13 @@ src/
 
 ### Environment Setup
 
+Rotas requires a Strava API application to handle user authentication and route synchronization. To bring your own Strava API key:
+
+1. Log in to your Strava account and go to the [API Settings page](https://www.strava.com/settings/api).
+2. Create a new API Application.
+3. Set the **Authorization Callback Domain** to `localhost` (for local development) or your production domain.
+4. Locate your **Client ID** and **Client Secret**.
+
 Create a `.env` file in the `supabase/` directory and populate it with your Strava API credentials:
 
 ```bash
