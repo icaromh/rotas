@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.24.3] - 2026-07-17
+### Fixed
+- **Map**: Fixed an issue where the generated route was partially obscured by the bottom popover/sidebar on both mobile and desktop views by dynamically adjusting Leaflet's `fitBounds` padding based on window width.
 ## [1.23.2] - 2026-07-17
 ### Added
 - **Documentation**: Added instructions to `README.md` on how to bring your own Strava API key for local development.
