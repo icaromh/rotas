@@ -212,7 +212,7 @@ export const MapContainer: React.FC<Props> = ({
         // Magic Wand
         const magicWandControl = L.DomUtil.create('div', 'leaflet-control leaflet-draw');
         const magicWandToolbar = L.DomUtil.create('div', 'leaflet-draw-toolbar leaflet-bar', magicWandControl);
-        const magicWandBtn = L.DomUtil.create('a', 'leaflet-draw-draw-polygon', magicWandToolbar);
+        const magicWandBtn = L.DomUtil.create('a', 'magic-wand-btn', magicWandToolbar);
         magicWandBtn.href = '#';
         magicWandBtn.title = 'Magic Wand: Select Neighborhood';
         magicWandBtn.style.backgroundImage = 'none';
@@ -225,6 +225,17 @@ export const MapContainer: React.FC<Props> = ({
         let activeNeighborhoodLayer: L.GeoJSON | null = null;
         let isLoadingNeighborhoods = false;
 
+        // Cancel Draw Polygon if it is active
+        const cancelDraw = () => {
+          const cancelBtn = document.querySelector('.leaflet-draw-actions a[title="' + t('draw.cancel') + '"]') as HTMLElement;
+          if (cancelBtn) {
+            cancelBtn.click();
+          } else {
+            // Fallback: trigger Escape key to cancel Leaflet Draw
+            window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape' }));
+          }
+        };
+
         magicWandBtn.onclick = async (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -236,6 +247,8 @@ export const MapContainer: React.FC<Props> = ({
             magicWandBtn.style.backgroundColor = '';
             return;
           }
+
+          cancelDraw(); // Stop drawing when magic wand is activated
 
           isLoadingNeighborhoods = true;
           setGlobalLoader(true, t('neighborhood.searching'), t('neighborhood.fetching'));
@@ -289,6 +302,12 @@ export const MapContainer: React.FC<Props> = ({
             }).addTo(map);
 
             magicWandBtn.style.backgroundColor = '#e5e7eb';
+
+            // Also zoom out a bit so it's easier to navigate the loaded neighborhoods on mobile
+            if (activeNeighborhoodLayer.getBounds().isValid()) {
+              map.fitBounds(activeNeighborhoodLayer.getBounds(), { padding: [10, 10] });
+            }
+
           } catch (error) {
             console.error(error);
             alert('Failed to load neighborhoods from OpenStreetMap.');
@@ -297,6 +316,15 @@ export const MapContainer: React.FC<Props> = ({
             setGlobalLoader(false);
           }
         };
+
+        // If the user starts drawing manually, disable the Magic Wand selection
+        map.on(L.Draw.Event.DRAWSTART, () => {
+          if (activeNeighborhoodLayer) {
+            map.removeLayer(activeNeighborhoodLayer);
+            activeNeighborhoodLayer = null;
+            magicWandBtn.style.backgroundColor = '';
+          }
+        });
       }
     }, 100);
 
