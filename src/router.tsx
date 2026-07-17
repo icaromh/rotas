@@ -3,6 +3,7 @@ import { PwaToast } from './components/PwaToast';
 import { Planner } from './pages/Planner';
 import { Preview } from './pages/Preview';
 import { AuthCallback } from './pages/AuthCallback';
+import { Changelog } from './pages/Changelog';
 import { z } from 'zod';
 import { PostHogProvider } from './lib/posthog';
 
@@ -45,7 +46,13 @@ export const authCallbackRoute = createRoute({
   component: AuthCallback,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, previewRoute, authCallbackRoute]);
+export const changelogRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/changelog',
+  component: Changelog,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, previewRoute, authCallbackRoute, changelogRoute]);
 
 export const router = createRouter({ routeTree });
 

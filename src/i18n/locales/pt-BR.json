@@ -1,7 +1,8 @@
 {
   "nav": {
     "planner": "Rotas",
-    "about": "Sobre"
+    "about": "Sobre",
+    "changelog": "Novidades"
   },
   "sidebar": {
     "title": "Explore Cada Centímetro",
@@ -131,5 +132,11 @@
   },
   "common": {
     "close": "Fechar"
+  },
+  "changelog": {
+    "title": "Novidades",
+    "next": "Próxima página",
+    "previous": "Página anterior",
+    "noMoreReleases": "Sem mais atualizações."
   }
 }
