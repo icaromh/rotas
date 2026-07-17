@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.23.2] - 2026-07-17
+### Added
+- **Documentation**: Added instructions to `README.md` on how to bring your own Strava API key for local development.
+
 ## [1.23.1] - 2026-07-13
 ### Changed
 - **Internal**: Translated `AGENTS.md` to English and added a strict English language requirement for AI agents.
