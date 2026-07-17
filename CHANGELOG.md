@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.24.0] - 2026-07-17
+### Added
+- **Feature**: Added a dedicated Changelog page with Markdown rendering and pagination to display recent updates natively within the application.
+- **i18n**: Added changelog translation keys across `en-US`, `pt-BR`, and `es-ES`.
+
 ## [1.23.1] - 2026-07-13
 ### Changed
 - **Internal**: Translated `AGENTS.md` to English and added a strict English language requirement for AI agents.

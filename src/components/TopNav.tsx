@@ -30,6 +30,7 @@ export const TopNav: React.FC<Props> = ({
         </div>
         <div className="hidden md:flex gap-5 text-sm font-bold text-gray-700 mt-1">
           <Link to="/" className="hover:text-[#4a6b46] transition-colors">{t('nav.planner')}</Link>
+          <Link to="/changelog" className="hover:text-[#4a6b46] transition-colors">{t('nav.changelog')}</Link>
           <Button id="about-btn" variant="ghost-text" size="none" onClick={onOpenAbout}>{t('nav.about')}</Button>
         </div>
       </div>

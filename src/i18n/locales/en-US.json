@@ -1,7 +1,8 @@
 {
   "nav": {
     "planner": "Planner",
-    "about": "About"
+    "about": "About",
+    "changelog": "Changelog"
   },
   "sidebar": {
     "title": "Explore Every Inch",
@@ -131,5 +132,11 @@
   },
   "common": {
     "close": "Close"
+  },
+  "changelog": {
+    "title": "Changelog",
+    "next": "Next",
+    "previous": "Previous",
+    "noMoreReleases": "No more releases."
   }
 }
