@@ -145,30 +145,8 @@ export const MapContainer: React.FC<Props> = ({
       maxZoom: 20
     }).addTo(map);
 
-    // Locate Control
-    const LocateControl = L.Control.extend({
-      options: { position: isMobile ? 'topright' : 'bottomright' },
-      onAdd: function () {
-        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-        container.style.backgroundColor = 'white';
-        container.style.width = '34px';
-        container.style.height = '34px';
-        container.style.cursor = 'pointer';
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.justifyContent = 'center';
-        container.title = 'Minha Localização (GPS)';
-
-        container.innerHTML = `<img src="/icons/gps-locate.svg" width="16" height="16" alt="Locate me" />`;
-
-        container.onclick = function (e: Event) {
-          e.stopPropagation();
-          map.locate({ setView: true, maxZoom: 16 });
-        }
-        return container;
-      }
-    });
-    map.addControl(new LocateControl());
+    // Automatically prompt geolocation on mount
+    map.locate({ setView: true, maxZoom: 16 });
 
     let userMarker: L.CircleMarker | null = null;
     map.on('locationfound', (e: L.LocationEvent) => {
@@ -507,6 +485,19 @@ export const MapContainer: React.FC<Props> = ({
   return (
     <>
       <div className="absolute inset-0 z-0 pointer-events-auto" ref={mapRef} id="map-container" />
+      
+      {/* Custom Geolocation Button */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] sm:bottom-6 sm:left-auto sm:right-6 sm:translate-x-0">
+        <button
+          onClick={() => {
+            mapInstance.current?.locate({ setView: true, maxZoom: 16 });
+          }}
+          className="bg-white text-gray-800 font-medium py-2 px-4 rounded-full shadow-lg hover:bg-gray-50 flex items-center gap-2 border border-gray-200 transition-all active:scale-95"
+        >
+          <img src="/icons/gps-locate.svg" width="16" height="16" alt="Locate me" />
+          {t('map.myLocation')}
+        </button>
+      </div>
       <AlertModal
         isOpen={isAlertOpen}
         title={t('map.areaLimitTitle')}

@@ -96,7 +96,8 @@
   "map": {
     "areaLimitTitle": "Area limit exceeded",
     "polygonTooLarge": "The polygon covers {{areaKm2}} km², exceeding the {{maxArea}} km² limit. Please draw a smaller area.",
-    "polygonEditedTooLarge": "The edited polygon exceeds the area limit. Selection cancelled."
+    "polygonEditedTooLarge": "The edited polygon exceeds the area limit. Selection cancelled.",
+    "myLocation": "My Location"
   },
   "strava": {
     "connection": "Strava Connection",
