@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.24.0] - 2026-07-17
+### Refactored
+- **Architecture**: Moved the Overpass QL query construction from the frontend to the backend (`proxy` worker) creating a semantic GET-based API (`/api/neighborhoods` and `/api/roads`). This enables the frontend to leverage the Cache Storage API for caching Overpass responses, improving offline capabilities and performance. Additionally, exposed an OpenAPI schema for the new endpoints.
+
 ## [1.23.1] - 2026-07-13
 ### Changed
 - **Internal**: Translated `AGENTS.md` to English and added a strict English language requirement for AI agents.

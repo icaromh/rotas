@@ -5,13 +5,8 @@
  *  - CORS headers
  *  - Fallback across multiple public Overpass instances
  *  - 429 / 5xx retry logic
- *
- * The proxy itself forwards to (in order):
- *   1. https://overpass-api.de (FOSSGIS — main instance)
- *   2. https://maps.mail.ru/osm/tools/overpass (VK Maps — no rate limit)
- *   3. https://overpass.private.coffee (Private.coffee — no rate limit)
  */
-const PROXY_URL = 'https://api.rotas.cc/proxy';
+const API_BASE_URL = 'https://api.rotas.cc/api';
 
 const TIMEOUT_MS = 60_000;
 
@@ -25,19 +20,17 @@ export interface OverpassResponse {
 }
 
 /**
- * Sends an Overpass QL query through the proxy with a timeout and consistent
- * form-encoded body (`data=<query>`).
+ * Fetches data from the proxy using GET.
  */
-async function queryOverpass(query: string): Promise<OverpassResponse> {
+async function fetchGetApi(url: string): Promise<OverpassResponse> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   let response: Response;
   try {
-    response = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'data=' + encodeURIComponent(query),
+    response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
       signal: controller.signal,
     });
   } catch (err: any) {
@@ -65,16 +58,8 @@ async function queryOverpass(query: string): Promise<OverpassResponse> {
 // ---------------------------------------------------------------------------
 
 export async function fetchNeighborhoods(bbox: string): Promise<OverpassResponse> {
-  const query = `
-    [out:json][timeout:25];
-    (
-      relation["admin_level"~"9|10"](${bbox});
-      relation["place"~"neighbourhood|suburb"](${bbox});
-    );
-    out geom;
-  `;
-
-  return queryOverpass(query);
+  const url = `${API_BASE_URL}/neighborhoods?bbox=${encodeURIComponent(bbox)}`;
+  return fetchGetApi(url);
 }
 
 export async function fetchRoadNetwork(
@@ -102,61 +87,10 @@ export async function fetchRoadNetwork(
 
   const bbox = `${minLat},${minLng},${maxLat},${maxLng}`;
 
-  const query = buildRoadQuery(bbox, mode, safety);
-  console.log('[API] Overpass query:', query);
+  const url = `${API_BASE_URL}/roads?bbox=${encodeURIComponent(bbox)}&mode=${encodeURIComponent(mode)}&safety=${encodeURIComponent(safety)}`;
+  console.log('[API] Requesting:', url);
 
-  const data = await queryOverpass(query);
+  const data = await fetchGetApi(url);
   console.log(`[API] Received ${(data as any).elements?.length ?? 0} elements from Overpass.`);
   return data;
-}
-
-// ---------------------------------------------------------------------------
-// Query builders
-// ---------------------------------------------------------------------------
-
-function buildRoadQuery(bbox: string, mode: 'bike' | 'walk', safety: string): string {
-  if (mode === 'bike') {
-    if (safety === 'safe') {
-      return `
-        [out:json][timeout:25];
-        (
-          way["highway"~"^(secondary|tertiary|unclassified|residential|living_street|pedestrian|cycleway)$"](${bbox});
-          way["cycleway"](${bbox});
-          way["highway"="primary"]["cycleway"](${bbox});
-        );
-        out body;
-        >;
-        out skel qt;
-      `;
-    }
-
-    if (safety === 'strict') {
-      return `
-        [out:json][timeout:25];
-        (
-          way["highway"="cycleway"](${bbox});
-          way["cycleway"](${bbox});
-          way["bicycle_road"="yes"](${bbox});
-        );
-        out body;
-        >;
-        out skel qt;
-      `;
-    }
-  }
-
-  // Default: walk or bike/any
-  const wayFilter = mode === 'bike'
-    ? `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian|cycleway)$"]`
-    : `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"]`;
-
-  return `
-    [out:json][timeout:25];
-    (
-      way${wayFilter}(${bbox});
-    );
-    out body;
-    >;
-    out skel qt;
-  `;
 }

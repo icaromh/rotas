@@ -49,6 +49,99 @@ function shouldFallback(status: number): boolean {
   return status === 406 || status === 429 || status >= 500;
 }
 
+function buildRoadQuery(bbox: string, mode: string, safety: string): string {
+  if (mode === 'bike') {
+    if (safety === 'safe') {
+      return `
+        [out:json][timeout:25];
+        (
+          way["highway"~"^(secondary|tertiary|unclassified|residential|living_street|pedestrian|cycleway)$"](${bbox});
+          way["cycleway"](${bbox});
+          way["highway"="primary"]["cycleway"](${bbox});
+        );
+        out body;
+        >;
+        out skel qt;
+      `;
+    }
+
+    if (safety === 'strict') {
+      return `
+        [out:json][timeout:25];
+        (
+          way["highway"="cycleway"](${bbox});
+          way["cycleway"](${bbox});
+          way["bicycle_road"="yes"](${bbox});
+        );
+        out body;
+        >;
+        out skel qt;
+      `;
+    }
+  }
+
+  // Default: walk or bike/any
+  const wayFilter = mode === 'bike'
+    ? `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian|cycleway)$"]`
+    : `["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|pedestrian)$"]`;
+
+  return `
+    [out:json][timeout:25];
+    (
+      way${wayFilter}((${bbox}));
+    );
+    out body;
+    >;
+    out skel qt;
+  `.replace(/\(\(/g, '(').replace(/\)\)/g, ')'); 
+  // ensure we just have one pair of parentheses around bbox as in old query
+}
+
+function buildNeighborhoodsQuery(bbox: string): string {
+  return `
+    [out:json][timeout:25];
+    (
+      relation["admin_level"~"9|10"](${bbox});
+      relation["place"~"neighbourhood|suburb"](${bbox});
+    );
+    out geom;
+  `;
+}
+
+const openApiSchema = {
+  openapi: "3.0.0",
+  info: {
+    title: "Rotas Overpass API",
+    version: "1.0.0"
+  },
+  paths: {
+    "/api/neighborhoods": {
+      get: {
+        summary: "Get neighborhoods in bounding box",
+        parameters: [
+          { name: "bbox", in: "query", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          "200": { description: "Overpass API JSON response" }
+        }
+      }
+    },
+    "/api/roads": {
+      get: {
+        summary: "Get road network in bounding box",
+        parameters: [
+          { name: "bbox", in: "query", required: true, schema: { type: "string" } },
+          { name: "mode", in: "query", schema: { type: "string", enum: ["walk", "bike"] } },
+          { name: "safety", in: "query", schema: { type: "string", enum: ["any", "safe", "strict"] } }
+        ],
+        responses: {
+          "200": { description: "Overpass API JSON response" }
+        }
+      }
+    }
+  }
+};
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const origin = request.headers.get('Origin');
@@ -59,7 +152,7 @@ export default {
 
     const corsHeaders = {
       'Access-Control-Allow-Origin': origin || '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
 
@@ -67,13 +160,47 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    if (request.method !== 'POST') {
-      return new Response('Method not allowed. Use POST.', { status: 405, headers: corsHeaders });
+    const url = new URL(request.url);
+
+    if (url.pathname === '/api/openapi.json' && request.method === 'GET') {
+      return new Response(JSON.stringify(openApiSchema), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    let overpassQuery = '';
+    let isGetApi = false;
+
+    if (request.method === 'GET') {
+      if (url.pathname === '/api/neighborhoods') {
+        const bbox = url.searchParams.get('bbox');
+        if (!bbox) return new Response('Missing bbox parameter', { status: 400, headers: corsHeaders });
+        overpassQuery = buildNeighborhoodsQuery(bbox);
+        isGetApi = true;
+      } else if (url.pathname === '/api/roads') {
+        const bbox = url.searchParams.get('bbox');
+        const mode = url.searchParams.get('mode') || 'walk';
+        const safety = url.searchParams.get('safety') || 'any';
+        if (!bbox) return new Response('Missing bbox parameter', { status: 400, headers: corsHeaders });
+        overpassQuery = buildRoadQuery(bbox, mode, safety);
+        isGetApi = true;
+      }
+    }
+
+    if (!isGetApi && request.method !== 'POST') {
+      return new Response('Method not allowed.', { status: 405, headers: corsHeaders });
     }
 
     try {
-      const bodyText = await request.text();
-      const contentType = request.headers.get('Content-Type') || 'application/x-www-form-urlencoded';
+      let bodyText = '';
+      let contentType = 'application/x-www-form-urlencoded';
+
+      if (isGetApi) {
+        bodyText = 'data=' + encodeURIComponent(overpassQuery);
+      } else {
+        bodyText = await request.text();
+        contentType = request.headers.get('Content-Type') || 'application/x-www-form-urlencoded';
+      }
 
       let lastResponse: Response | null = null;
 
@@ -84,7 +211,6 @@ export default {
             headers: {
               'Content-Type': contentType,
               'Accept': '*/*',
-              // Identify the app as required by OSM usage policy
               'User-Agent': 'RotasOptimizer/1.0 (https://rotas.cc/)',
               'Referer': 'https://rotas.cc/',
             },
@@ -92,7 +218,6 @@ export default {
           });
 
           if (!shouldFallback(overpassResponse.status)) {
-            // 2xx success OR a definitive client error (400, 403, etc.) — return as-is
             const responseBody = await overpassResponse.text();
             return new Response(responseBody, {
               status: overpassResponse.status,
@@ -106,12 +231,10 @@ export default {
           console.warn(`[proxy] ${endpoint} returned ${overpassResponse.status} — trying next endpoint`);
           lastResponse = overpassResponse;
         } catch (err) {
-          // Network-level failure (DNS, connection refused, etc.)
           console.error(`[proxy] fetch error for ${endpoint}:`, err);
         }
       }
 
-      // All endpoints exhausted — return the last known response (or 502)
       if (lastResponse) {
         const responseBody = await lastResponse.text();
         return new Response(responseBody, {
