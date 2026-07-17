@@ -47,6 +47,12 @@
       "balanced": "Más Segura (Evitar avenidas)",
       "any": "Cualquier Calle (Predeterminado)"
     },
+    "walkBoundary": {
+      "title": "Límites de Caminata",
+      "help": "Elige si la ruta puede salir un poco del polígono para alcanzar la próxima intersección.",
+      "strict": "Mantener estrictamente en el límite (puede generar retornos)",
+      "any": "Permitir alcanzar la próxima intersección (Predeterminado)"
+    },
     "sport": {
       "title": "Deporte",
       "cycling": "Ciclismo",

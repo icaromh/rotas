@@ -47,6 +47,12 @@
       "balanced": "Safer (Avoid busy avenues)",
       "any": "Any Roads (Default)"
     },
+    "walkBoundary": {
+      "title": "Boundary Preference",
+      "help": "Choose whether to allow the route to go slightly outside the polygon to reach the next intersection.",
+      "strict": "Strictly stick to bounds (may cause U-turns)",
+      "any": "Allow reaching next intersection (Default)"
+    },
     "sport": {
       "title": "Sport",
       "cycling": "Cycling",
