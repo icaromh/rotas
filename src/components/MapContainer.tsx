@@ -368,9 +368,23 @@ export const MapContainer: React.FC<Props> = ({
         pathLayerRef.current.setStyle({ color: '#10b981', weight: 6 }); // Green for shared
       }
 
-      map.fitBounds(pathLayerRef.current.getBounds(), { padding: [50, 50] });
+      let paddingTopLeft: [number, number] = [50, 50];
+      let paddingBottomRight: [number, number] = [50, 50];
+
+      if (isDoneMode || isSharedView) {
+        if (window.innerWidth < 768) {
+          paddingBottomRight = [50, 350];
+        } else {
+          paddingTopLeft = [370, 50];
+        }
+      }
+
+      map.fitBounds(pathLayerRef.current.getBounds(), { 
+        paddingTopLeft, 
+        paddingBottomRight 
+      });
     }
-  }, [currentPolylineData, isSharedView]);
+  }, [currentPolylineData, isSharedView, isDoneMode]);
 
   // Handle Done mode logic (clearing map)
   useEffect(() => {

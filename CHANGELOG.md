@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.23.2] - 2026-07-17
+### Fixed
+- **Map**: Fixed an issue where the generated route was partially obscured by the bottom popover/sidebar on both mobile and desktop views by dynamically adjusting Leaflet's `fitBounds` padding based on window width.
+
 ## [1.23.1] - 2026-07-13
 ### Changed
 - **Internal**: Translated `AGENTS.md` to English and added a strict English language requirement for AI agents.
