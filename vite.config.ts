@@ -38,6 +38,20 @@ export default defineConfig(({ mode }) => {
               }
             },
             {
+              urlPattern: /^https:\/\/api\.rotas\.cc\/api\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'overpass-api',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 24 * 7 // 7 Days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            },
+            {
               urlPattern: /.*/i,
               handler: 'StaleWhileRevalidate',
               options: {
