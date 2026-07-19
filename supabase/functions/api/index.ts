@@ -40,7 +40,9 @@ const authMiddleware = async (c: any, next: any) => {
 
 // 1. Initiate Strava Auth
 app.get('/api/auth/strava', (c) => {
-  const redirectUri = encodeURIComponent(STRAVA_REDIRECT_URI);
+  const origin = c.req.query('origin');
+  const baseUri = origin ? `${origin}/auth/callback` : STRAVA_REDIRECT_URI;
+  const redirectUri = encodeURIComponent(baseUri);
   const scope = 'read,activity:read_all';
   const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${redirectUri}&scope=${scope}&approval_prompt=force`;
   return c.json({ url: stravaAuthUrl });
@@ -167,6 +169,107 @@ app.get('/api/paths', async (c) => {
   };
 
   return c.json(geoJson);
+});
+
+// 6. Save a Route
+app.post('/api/routes', authMiddleware, async (c) => {
+  const authenticatedUserId = c.get('userId');
+  const { userId, title, trajectory, duration, distance, isPublic } = await c.req.json();
+  if (!userId || !title || !trajectory) return c.json({ error: 'Missing required fields' }, 400);
+  if (userId !== authenticatedUserId) return c.json({ error: 'Unauthorized user action' }, 403);
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  
+  const { data, error } = await supabase
+    .from('saved_routes')
+    .insert({
+      user_id: userId,
+      title,
+      trajectory,
+      duration,
+      distance,
+      is_public: isPublic || false
+    })
+    .select('id')
+    .single();
+
+  if (error) return c.json({ error: error.message }, 500);
+
+  return c.json(data, 201);
+});
+
+// 7. Get My Routes (without heavy trajectory)
+app.get('/api/routes/me', authMiddleware, async (c) => {
+  const authenticatedUserId = c.get('userId');
+  const userId = c.req.query('userId');
+  if (!userId) return c.json({ error: 'User ID required' }, 400);
+  if (userId !== authenticatedUserId) return c.json({ error: 'Unauthorized user action' }, 403);
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  
+  const { data, error } = await supabase
+    .from('saved_routes')
+    .select('id, title, duration, distance, is_public, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) return c.json({ error: error.message }, 500);
+
+  return c.json(data);
+});
+
+// 8. Toggle Privacy
+app.patch('/api/routes/:id/privacy', authMiddleware, async (c) => {
+  const authenticatedUserId = c.get('userId');
+  const id = c.req.param('id');
+  const { userId, isPublic } = await c.req.json();
+  if (!userId) return c.json({ error: 'User ID required' }, 400);
+  if (userId !== authenticatedUserId) return c.json({ error: 'Unauthorized user action' }, 403);
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  
+  // Verify ownership
+  const { data: route, error: fetchError } = await supabase
+    .from('saved_routes')
+    .select('user_id')
+    .eq('id', id)
+    .single();
+    
+  if (fetchError || !route) return c.json({ error: 'Route not found' }, 404);
+  if (route.user_id !== userId) return c.json({ error: 'Forbidden' }, 403);
+
+  const { error: updateError } = await supabase
+    .from('saved_routes')
+    .update({ is_public: isPublic })
+    .eq('id', id);
+
+  if (updateError) return c.json({ error: updateError.message }, 500);
+
+  return c.json({ success: true });
+});
+
+// 9. Get specific Route
+app.get('/api/routes/:id', async (c) => {
+  const id = c.req.param('id');
+  // Attempt to decode userId if token is provided, but don't strictly require it
+  let userId = c.req.query('userId');
+  
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  
+  const { data, error } = await supabase
+    .from('saved_routes')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) return c.json({ error: 'Route not found' }, 404);
+
+  // Check privacy
+  if (!data.is_public && data.user_id !== userId) {
+    return c.json({ error: 'Forbidden' }, 403);
+  }
+
+  return c.json(data);
 });
 
 Deno.serve(app.fetch);
