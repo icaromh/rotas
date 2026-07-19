@@ -1,11 +1,16 @@
 # Changelog
 
-## [1.23.4] - 2026-07-17
+## [1.24.5] - 2026-07-19
+### Fixed
+- **Authentication**: Fixed an issue where the Strava login flow would always redirect back to `localhost` even in production. The authentication API now dynamically parses the origin of the requesting frontend to accurately construct the redirect callback URL (e.g., `rotas.cc`).
+
+## [1.24.4] - 2026-07-17
 ### Fixed
 - **UI Conflict**: Resolved a visual and state conflict between the "Magic Wand" neighborhood selector and the Leaflet Draw Polygon tool (closes #19).
   - Changed the CSS class of the Magic Wand button to prevent it from inheriting the Draw Polygon background icon, resolving the visual overlap.
   - Added programmatic cancellation to ensure that activating the Magic Wand cancels any active Draw session, and vice-versa, preventing dual interaction modes.
 - **Mobile Navigation**: Added an auto-fit bounds (`fitBounds`) adjustment with padding when the Magic Wand loads neighborhoods. This automatically frames the fetched neighborhoods perfectly on screen, making it much easier for mobile users to navigate and select an area without difficult touch panning.
+
 ## [1.24.3] - 2026-07-17
 ### Fixed
 - **Map**: Fixed an issue where the generated route was partially obscured by the bottom popover/sidebar on both mobile and desktop views by dynamically adjusting Leaflet's `fitBounds` padding based on window width.

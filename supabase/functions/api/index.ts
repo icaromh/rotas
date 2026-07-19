@@ -13,7 +13,9 @@ const STRAVA_REDIRECT_URI = Deno.env.get('STRAVA_REDIRECT_URI') || 'http://local
 
 // 1. Initiate Strava Auth
 app.get('/api/auth/strava', (c) => {
-  const redirectUri = encodeURIComponent(STRAVA_REDIRECT_URI);
+  const origin = c.req.query('origin');
+  const baseUri = origin ? `${origin}/auth/callback` : STRAVA_REDIRECT_URI;
+  const redirectUri = encodeURIComponent(baseUri);
   const scope = 'read,activity:read_all';
   const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${redirectUri}&scope=${scope}&approval_prompt=force`;
   return c.json({ url: stravaAuthUrl });
