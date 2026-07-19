@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.24.5] - 2026-07-19
+### Changed
+- **Dependencies**: Configured the project to strictly use `pnpm` (version 11+) instead of `npm`. Added `.npmrc` with `engine-strict=true` and updated `engines` field in `package.json` to reject `npm install`.
+- **Dependencies**: Created GitHub issue #41 to plan the normalization of PNPM in the monorepo and implement Max Age (5 days) security checks for dependencies.
+
 ## [1.23.4] - 2026-07-17
 ### Fixed
 - **UI Conflict**: Resolved a visual and state conflict between the "Magic Wand" neighborhood selector and the Leaflet Draw Polygon tool (closes #19).
