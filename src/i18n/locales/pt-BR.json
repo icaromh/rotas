@@ -129,6 +129,18 @@
     "success": "Autenticação bem-sucedida! Redirecionando...",
     "error": "Erro durante a autenticação."
   },
+  "routes": {
+    "saveRoute": "Salvar Rota",
+    "myRoutes": "Minhas Rotas",
+    "titlePlaceholder": "Título da Rota",
+    "public": "Público",
+    "private": "Privado",
+    "notFound": "Rota não encontrada ou privada.",
+    "saveSuccess": "Rota salva com sucesso!",
+    "saveError": "Erro ao salvar a rota.",
+    "privacyUpdated": "Privacidade atualizada!",
+    "privacyError": "Erro ao atualizar a privacidade."
+  },
   "common": {
     "close": "Fechar"
   }
