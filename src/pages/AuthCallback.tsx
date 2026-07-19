@@ -27,6 +27,9 @@ export const AuthCallback: React.FC = () => {
             if (data.error) throw new Error(data.error);
             // Save user ID and profile picture to localStorage
             localStorage.setItem('strava_user_id', data.userId);
+            if (data.supabaseToken) {
+                localStorage.setItem('supabaseToken', data.supabaseToken);
+            }
             if (data.profileUrl) {
                 localStorage.setItem('strava_profile_url', data.profileUrl);
             }

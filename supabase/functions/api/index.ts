@@ -1,6 +1,7 @@
 import { Hono } from 'npm:hono';
 import { cors } from 'npm:hono/cors';
 import { createClient } from 'npm:@supabase/supabase-js';
+import { SignJWT, jwtVerify } from 'npm:jose';
 
 const app = new Hono();
 app.use('*', cors());
@@ -10,6 +11,32 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '
 const STRAVA_CLIENT_ID = Deno.env.get('STRAVA_CLIENT_ID') || '';
 const STRAVA_CLIENT_SECRET = Deno.env.get('STRAVA_CLIENT_SECRET') || '';
 const STRAVA_REDIRECT_URI = Deno.env.get('STRAVA_REDIRECT_URI') || 'http://localhost:5173/auth/callback';
+const JWT_SECRET_STRING = Deno.env.get('SUPABASE_JWT_SECRET') || 'super-secret-jwt-token-with-at-least-32-characters-long';
+
+const signSupabaseToken = async (userId: string) => {
+  const secret = new TextEncoder().encode(JWT_SECRET_STRING);
+  return new SignJWT({ sub: userId, role: 'authenticated', aud: 'authenticated' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('30d')
+    .sign(secret);
+};
+
+const authMiddleware = async (c: any, next: any) => {
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ error: 'Missing or invalid Authorization header' }, 401);
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const secret = new TextEncoder().encode(JWT_SECRET_STRING);
+    const { payload } = await jwtVerify(token, secret);
+    c.set('userId', payload.sub);
+    await next();
+  } catch (error) {
+    return c.json({ error: 'Invalid or expired token' }, 401);
+  }
+};
 
 // 1. Initiate Strava Auth
 app.get('/api/auth/strava', (c) => {
@@ -58,8 +85,11 @@ app.post('/api/auth/callback', async (c) => {
 
     if (error) throw error;
 
+    const supabaseToken = await signSupabaseToken(data.id);
+
     return c.json({
       userId: data.id,
+      supabaseToken,
       accessToken: tokenData.access_token,
       profileUrl
     });
@@ -71,9 +101,13 @@ app.post('/api/auth/callback', async (c) => {
 });
 
 // 3. Initiate Sync (Producer)
-app.post('/api/sync', async (c) => {
+app.post('/api/sync', authMiddleware, async (c) => {
+  const authenticatedUserId = c.get('userId');
   const { userId } = await c.req.json();
-  if (!userId) return c.json({ error: 'Missing credentials' }, 400);
+  
+  if (userId !== authenticatedUserId) {
+    return c.json({ error: 'Unauthorized user action' }, 403);
+  }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -90,9 +124,13 @@ app.post('/api/sync', async (c) => {
 });
 
 // 4. Check Sync Status
-app.get('/api/sync/status', async (c) => {
+app.get('/api/sync/status', authMiddleware, async (c) => {
+  const authenticatedUserId = c.get('userId');
   const userId = c.req.query('userId');
-  if (!userId) return c.json({ error: 'User ID required' }, 400);
+  
+  if (userId !== authenticatedUserId) {
+    return c.json({ error: 'Unauthorized user action' }, 403);
+  }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data, error } = await supabase
@@ -112,6 +150,8 @@ app.get('/api/sync/status', async (c) => {
 
 // 5. Get Paths
 app.get('/api/paths', async (c) => {
+  // Assuming paths are public or we enforce auth here if needed. 
+  // Let's keep it as is if it was public, or we can secure it.
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data, error } = await supabase.from('activities').select('id, name, path');
   
@@ -119,7 +159,7 @@ app.get('/api/paths', async (c) => {
 
   const geoJson = {
     type: 'FeatureCollection',
-    features: data.map(activity => ({
+    features: data.map((activity: any) => ({
       type: 'Feature',
       geometry: activity.path,
       properties: { id: activity.id, name: activity.name }

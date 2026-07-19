@@ -53,6 +53,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
 
   const handleSync = async () => {
     const userId = localStorage.getItem('strava_user_id');
+    const token = localStorage.getItem('supabaseToken');
     if (!userId) return;
 
     setIsSyncing(true);
@@ -61,16 +62,19 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
     try {
       const res = await fetch('/api/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ userId })
       });
       
       if (res.status === 202) {
         setSyncStatus(t('strava.syncKeepUsing'));
-        pollSyncStatus(userId);
+        pollSyncStatus(userId, token || '');
       } else if (res.status === 409) {
         setSyncStatus(t('strava.syncInProgress'));
-        pollSyncStatus(userId);
+        pollSyncStatus(userId, token || '');
       } else {
         const data = await res.json();
         setSyncStatus(t('strava.syncFailedError', { error: data.error }));
@@ -83,10 +87,14 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
     }
   };
 
-  const pollSyncStatus = (userId: string) => {
+  const pollSyncStatus = (userId: string, token: string) => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/sync/status?userId=${userId}`);
+        const res = await fetch(`/api/sync/status?userId=${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await res.json();
         
         if (data.status === 'queued') {
@@ -121,6 +129,7 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
 
   const handleLogout = () => {
     localStorage.removeItem('strava_user_id');
+    localStorage.removeItem('supabaseToken');
     localStorage.removeItem('strava_profile_url');
     setIsAuthenticated(false);
     setProfileUrl(null);
