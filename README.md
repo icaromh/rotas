@@ -134,7 +134,7 @@ src/
 
 ### Prerequisites
 - Node.js ≥ 18
-- npm ≥ 9
+- pnpm ≥ 11
 - **Docker Desktop** (required for local Supabase)
 - **Supabase CLI** (installed automatically via npx)
 
@@ -163,17 +163,17 @@ git clone https://github.com/icaromh/rotas.git
 cd rotas
 
 # 2. Install dependencies
-npm install
+pnpm install
 
 # 3. Start local Supabase (Database, Auth, Edge Functions & Queues)
 # Note: Ensure Docker is running before executing this
 npx supabase start
 
 # 4. Apply database migrations (including pgmq extension for queues)
-npm run db:push
+pnpm run db:push
 
 # 5. Start the Vite dev server
-npm run dev
+pnpm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
@@ -189,12 +189,12 @@ npx supabase db reset
 ### Other scripts
 
 ```bash
-npm run build              # Production build (TypeScript + Vite)
-npm test                   # Unit tests (Vitest)
-npm run test:e2e           # E2E flow tests (Playwright)
-npm run test:e2e:visual    # Visual regression tests
-npm run deploy:proxy       # Deploy the Cloudflare Worker proxy
-npm run deploy:functions   # Deploy Supabase Edge Functions to production
+pnpm run build             # Production build (TypeScript + Vite)
+pnpm test                  # Unit tests (Vitest)
+pnpm run test:e2e          # E2E flow tests (Playwright)
+pnpm run test:e2e:visual   # Visual regression tests
+pnpm run deploy:proxy      # Deploy the Cloudflare Worker proxy
+pnpm run deploy:functions  # Deploy Supabase Edge Functions to production
 ```
 
 ---
@@ -204,7 +204,7 @@ npm run deploy:functions   # Deploy Supabase Edge Functions to production
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
 1. Fork the repo and create a feature branch (`git checkout -b feat/my-feature`)
-2. Follow the existing code style and run `npm test` before submitting
+2. Follow the existing code style and run `pnpm test` before submitting
 3. Keep string literals out of components — use `react-i18next` keys and update all three locale files (`en-US`, `pt-BR`, `es-ES`)
 4. Update `CHANGELOG.md` with a summary of your changes
 

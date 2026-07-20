@@ -42,7 +42,8 @@ export const StravaUserMenu: React.FC<Props> = ({ onPathsFetched, showPaths = fa
 
   const handleConnect = async () => {
     try {
-      const res = await fetch('/api/auth/strava');
+      const origin = window.location.origin;
+      const res = await fetch(`/api/auth/strava?origin=${encodeURIComponent(origin)}`);
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch (err) {

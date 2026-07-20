@@ -129,6 +129,18 @@
     "success": "Authentication successful! Redirecting...",
     "error": "Error during authentication."
   },
+  "routes": {
+    "saveRoute": "Save Route",
+    "myRoutes": "My Routes",
+    "titlePlaceholder": "Route Title",
+    "public": "Public",
+    "private": "Private",
+    "notFound": "Route not found or private.",
+    "saveSuccess": "Route saved successfully!",
+    "saveError": "Error saving route.",
+    "privacyUpdated": "Privacy updated!",
+    "privacyError": "Error updating privacy."
+  },
   "common": {
     "close": "Close"
   }

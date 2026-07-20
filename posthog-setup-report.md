@@ -26,8 +26,8 @@ We've built some insights and a dashboard for you to keep an eye on user behavio
 
 ## Verify before merging
 
-- [ ] Run a full production build (`npm run build`) and fix any lint or type errors introduced by the generated code.
-- [ ] Run the test suite (`npm test`) — call sites that were rewritten or instrumented may need updated mocks or fixtures.
+- [ ] Run a full production build (`pnpm run build`) and fix any lint or type errors introduced by the generated code.
+- [ ] Run the test suite (`pnpm test`) — call sites that were rewritten or instrumented may need updated mocks or fixtures.
 - [ ] Add `VITE_PUBLIC_POSTHOG_KEY` and `VITE_PUBLIC_POSTHOG_HOST` to `.env.example` and any bootstrap scripts so collaborators know what to set.
 - [ ] Wire source-map upload (`posthog-cli sourcemap` or your bundler's upload step) into CI so production stack traces de-minify.
 
