@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.24.8] - 2026-07-20
+### Fixed
+- **Deploy**: Added `packageManager` field (`pnpm@11.15.1`) to `package.json` to instruct Vercel (via Corepack) to use the correct `pnpm` version, preventing deployment build failures caused by version mismatches with the `engines` field.
 ## [1.24.7] - 2026-07-20
 ### Changed
 - **Dependencies**: Configured the project to strictly use `pnpm` (version 11+) instead of `npm`. Added `.npmrc` with `engine-strict=true` and updated `engines` field in `package.json` to reject `npm install`.
