@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.24.6",
   "type": "module",
+  "engines": {
+    "pnpm": ">=11",
+    "npm": "Please use pnpm instead of npm."
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

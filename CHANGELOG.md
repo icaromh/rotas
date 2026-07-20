@@ -1,6 +1,11 @@
 # Changelog
 
-## [1.24.5] - 2026-07-19
+## [1.24.7] - 2026-07-20
+### Changed
+- **Dependencies**: Configured the project to strictly use `pnpm` (version 11+) instead of `npm`. Added `.npmrc` with `engine-strict=true` and updated `engines` field in `package.json` to reject `npm install`.
+- **Dependencies**: Created GitHub issue #41 to plan the normalization of PNPM in the monorepo and implement Max Age (5 days) security checks for dependencies.
+
+## [1.24.6] - 2026-07-19
 ### Fixed
 - **Authentication**: Fixed an issue where the Strava login flow would always redirect back to `localhost` even in production. The authentication API now dynamically parses the origin of the requesting frontend to accurately construct the redirect callback URL (e.g., `rotas.cc`).
 
