@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.24.9] - 2026-09-08
+### Fixed
+- **Map**: Added CARTO Basemaps API key parameter to raster tile layer URL (`MapContainer.tsx`) to eliminate the "API key required" watermark. Supported custom `VITE_CARTO_API_KEY` environment variable with fallback to default project key.
+
 ## [1.24.8] - 2026-07-20
 ### Fixed
 - **Deploy**: Added `packageManager` field (`pnpm@11.15.1`) to `package.json` to instruct Vercel (via Corepack) to use the correct `pnpm` version, preventing deployment build failures caused by version mismatches with the `engines` field.
