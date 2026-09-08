@@ -7,7 +7,7 @@ for (const locale of LOCALES) {
 
     test.beforeEach(async ({ page }) => {
       // Intercept and mock tile requests with a solid gray PNG
-      await page.route('**/*.basemaps.cartocdn.com/rastertiles/voyager/**/*.png', async route => {
+      await page.route('**/*.basemaps.cartocdn.com/rastertiles/voyager/**/*.png*', async route => {
         await route.fulfill({
           contentType: 'image/png',
           body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mM88x8AAp0BzdNIl+IAAAAASUVORK5CYII=', 'base64')

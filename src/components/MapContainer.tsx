@@ -137,9 +137,10 @@ export const MapContainer: React.FC<Props> = ({
     (window as any).map = map;
     (window as any).L = L;
 
-    L.control.zoom({ position: isMobile ? 'topright' : 'bottomright' }).addTo(map);
+    const cartoApiKey = import.meta.env.VITE_CARTO_API_KEY || import.meta.env.VITE_PUBLIC_CARTO_API_KEY || 'cb1_31fh_1_c6e72b990e4cfdf7146f4a12';
+    const tileUrl = `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png${cartoApiKey ? `?key=${cartoApiKey}` : ''}`;
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    L.tileLayer(tileUrl, {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
       subdomains: 'abcd',
       maxZoom: 20

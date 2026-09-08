@@ -14,6 +14,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '../i18n/config';
 import { AlertModal } from './AlertModal';
 
 // jsdom does not implement HTMLDialogElement.showModal / close natively.
