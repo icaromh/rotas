@@ -9,6 +9,7 @@
  */
 const PROXY_URL = import.meta.env.VITE_OVERPASS_PROXY_URL || '/api/overpass';
 const ROADS_API_URL = import.meta.env.VITE_ROADS_API_URL || '/api/roads';
+const NEIGHBORHOODS_API_URL = import.meta.env.VITE_NEIGHBORHOODS_API_URL || '/api/neighborhoods';
 
 const TIMEOUT_MS = 60_000;
 
@@ -61,7 +62,47 @@ async function queryOverpass(query: string): Promise<OverpassResponse> {
 // Public API
 // ---------------------------------------------------------------------------
 
-export async function fetchNeighborhoods(bbox: string): Promise<OverpassResponse> {
+export interface NeighborhoodGeoJsonResponse {
+  type: 'FeatureCollection';
+  features: any[];
+  source?: string;
+  release?: string;
+}
+
+export async function fetchNeighborhoods(
+  bbox: string
+): Promise<NeighborhoodGeoJsonResponse | OverpassResponse> {
+  const parts = bbox.split(',').map(Number);
+
+  // Primary: Overture Maps Divisions PMTiles via Cloudflare Worker (/api/neighborhoods)
+  if (parts.length === 4 && parts.every(Number.isFinite)) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30_000);
+      const res = await fetch(NEIGHBORHOODS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bbox: parts }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = (await res.json()) as NeighborhoodGeoJsonResponse;
+        if (data.type === 'FeatureCollection' && Array.isArray(data.features) && data.features.length > 0) {
+          console.log(
+            `[API] Received ${data.features.length} neighborhoods from Overture Maps (${res.headers.get('X-Rotas-Neighborhood-Source') || 'overture'}).`
+          );
+          return data;
+        }
+      }
+      console.warn(`[API] /api/neighborhoods returned HTTP ${res.status} or empty — falling back to Overpass.`);
+    } catch (err: any) {
+      console.warn(`[API] /api/neighborhoods failed (${err.message}) — falling back to Overpass.`);
+    }
+  }
+
+  // Fallback: Overpass API proxy
   const query = `
     [out:json][timeout:25];
     (

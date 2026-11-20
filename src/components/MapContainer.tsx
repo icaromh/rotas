@@ -259,12 +259,16 @@ export const MapContainer: React.FC<Props> = ({
             const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
 
             const data = await neighborhoodsMutation.mutateAsync(bbox);
-            if (!data.elements || data.elements.length === 0) {
+            const geojson: any =
+              data && typeof data === 'object' && 'type' in data && data.type === 'FeatureCollection'
+                ? data
+                : osmtogeojson(data);
+
+            if (!Array.isArray(geojson?.features) || geojson.features.length === 0) {
               alert('No neighborhoods found in this area. Try moving or zooming out the map.');
               return;
             }
 
-            const geojson = osmtogeojson(data);
             activeNeighborhoodLayer = L.geoJSON(geojson, {
               style: { color: '#10b981', weight: 2, fillColor: '#10b981', fillOpacity: 0.2, dashArray: '5, 5' },
               filter: (feature) => feature.geometry.type !== 'Point' && feature.geometry.type !== 'MultiPoint',

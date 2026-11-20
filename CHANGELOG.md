@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.2.0] - 2026-11-20
+### Added
+- **Neighborhood Search (Overture Maps Divisions PMTiles)**: Added `POST /api/neighborhoods` (`worker/overture.ts`) reading official Overture Maps `divisions.pmtiles` (`division_area` layer) with area filtering (`0.05–25 km²`) and 30-day Cloudflare edge caching.
+- **Magic Wand Upgrade**: Updated `fetchNeighborhoods` (`src/api/overpass.ts`) and `MapContainer.tsx` to use `/api/neighborhoods` (Overture Maps GeoJSON directly) as the primary source with automatic Overpass fallback.
+
 ## [2.1.0] - 2026-11-20
 ### Added
 - **Road Network Engine (Overture Maps PMTiles)**: Added `POST /api/roads` (`worker/overture.ts`) to fetch and decode road networks directly from official Overture Maps `transportation.pmtiles` on Amazon S3 via HTTP Range requests, dynamically resolving the latest monthly release from Overture's STAC catalog and caching responses at the Cloudflare edge for 7 days.

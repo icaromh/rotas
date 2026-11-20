@@ -8,8 +8,12 @@ const OVERTURE_TILES_BASE = 'https://overturemaps-extras-us-west-2.s3.us-west-2.
 
 const RELEASE_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const ROAD_GRAPH_CACHE_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
+const NEIGHBORHOOD_CACHE_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 const TARGET_ZOOM = 14;
+const DIVISIONS_ZOOM = 12;
 const MAX_TILES_PER_REQUEST = 16;
+const MIN_NEIGHBORHOOD_AREA_KM2 = 0.05;
+const MAX_NEIGHBORHOOD_AREA_KM2 = 25;
 
 let cachedRelease: { version: string; expiresAt: number } | null = null;
 const pmtilesInstances = new Map<string, PMTiles>();
@@ -225,8 +229,8 @@ export function parseOnewayDirection(
   return 'both';
 }
 
-function getPMTilesClient(release: string): PMTiles {
-  const url = `${OVERTURE_TILES_BASE}/${release}/transportation.pmtiles`;
+function getPMTilesClient(release: string, theme: 'transportation' | 'divisions' = 'transportation'): PMTiles {
+  const url = `${OVERTURE_TILES_BASE}/${release}/${theme}.pmtiles`;
   let client = pmtilesInstances.get(url);
   if (!client) {
     client = new PMTiles(url);
@@ -464,6 +468,254 @@ export async function handleRoadsRequest(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[overture] Road graph request failed:', message);
+    return Response.json({ error: message }, { status: 502 });
+  }
+}
+
+const NEIGHBORHOOD_SUBTYPES = new Set([
+  'neighborhood',
+  'microhood',
+  'macrohood',
+  'borough',
+]);
+
+/**
+ * Computes approximate area in km² of a GeoJSON coordinate ring using equirectangular projection.
+ */
+export function ringAreaKm2(ring: number[][]): number {
+  if (ring.length < 3) return 0;
+  let avgLat = 0;
+  for (const pt of ring) avgLat += pt[1];
+  avgLat /= ring.length;
+
+  const kmPerDegLat = 111.32;
+  const kmPerDegLng = 111.32 * Math.cos((avgLat * Math.PI) / 180);
+
+  let area = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const x1 = ring[j][0] * kmPerDegLng;
+    const y1 = ring[j][1] * kmPerDegLat;
+    const x2 = ring[i][0] * kmPerDegLng;
+    const y2 = ring[i][1] * kmPerDegLat;
+    area += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(area) / 2;
+}
+
+export function polygonAreaKm2(geometry: { type: string; coordinates: any }): number {
+  if (geometry.type === 'Polygon' && Array.isArray(geometry.coordinates?.[0])) {
+    return ringAreaKm2(geometry.coordinates[0]);
+  }
+  if (geometry.type === 'MultiPolygon' && Array.isArray(geometry.coordinates)) {
+    let total = 0;
+    for (const poly of geometry.coordinates) {
+      if (Array.isArray(poly?.[0])) total += ringAreaKm2(poly[0]);
+    }
+    return total;
+  }
+  return 0;
+}
+
+function geometryIntersectsBbox(
+  geometry: { type: string; coordinates: any },
+  bbox: [number, number, number, number]
+): boolean {
+  const [minLat, minLng, maxLat, maxLng] = bbox;
+  const rings: number[][][] =
+    geometry.type === 'Polygon'
+      ? [geometry.coordinates[0]]
+      : geometry.type === 'MultiPolygon'
+        ? geometry.coordinates.map((p: any) => p[0])
+        : [];
+
+  for (const ring of rings) {
+    if (!Array.isArray(ring)) continue;
+    let gMinLat = 90, gMaxLat = -90, gMinLng = 180, gMaxLng = -180;
+    for (const [lng, lat] of ring) {
+      if (lat < gMinLat) gMinLat = lat;
+      if (lat > gMaxLat) gMaxLat = lat;
+      if (lng < gMinLng) gMinLng = lng;
+      if (lng > gMaxLng) gMaxLng = lng;
+    }
+    if (gMaxLat >= minLat && gMinLat <= maxLat && gMaxLng >= minLng && gMinLng <= maxLng) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Fetches neighborhood polygon boundaries from Overture Maps `divisions.pmtiles`
+ * and returns a GeoJSON FeatureCollection filtered to walkable/rideable neighborhood sizes.
+ */
+export async function fetchNeighborhoodsFromOverture(
+  bbox: [number, number, number, number]
+): Promise<{
+  type: 'FeatureCollection';
+  features: any[];
+  source: 'overture';
+  release: string;
+}> {
+  const tiles = bboxToTiles(bbox, DIVISIONS_ZOOM);
+  if (tiles.length === 0 || tiles.length > MAX_TILES_PER_REQUEST) {
+    throw new Error(
+      `Requested viewport spans ${tiles.length} division tiles (limit: ${MAX_TILES_PER_REQUEST}). Please zoom in.`
+    );
+  }
+
+  const release = await getLatestOvertureRelease();
+  const pm = getPMTilesClient(release, 'divisions');
+
+  const fetched = await Promise.all(
+    tiles.map(async (t) => {
+      const result = await pm.getZxy(t.z, t.x, t.y);
+      return result?.data ? { ...t, data: result.data } : null;
+    })
+  );
+
+  const byId = new Map<string, { feature: any; areaKm2: number }>();
+
+  for (const tile of fetched) {
+    if (!tile) continue;
+    const vt = new VectorTile(new PbfReader(new Uint8Array(tile.data)));
+    const areaLayer = vt.layers.division_area;
+    if (!areaLayer) continue;
+
+    for (let i = 0; i < areaLayer.length; i++) {
+      const feature = areaLayer.feature(i);
+      const props = feature.properties as Record<string, unknown>;
+      const subtype = String(props.subtype || '');
+      if (!NEIGHBORHOOD_SUBTYPES.has(subtype)) continue;
+
+      const geojson = feature.toGeoJSON(tile.x, tile.y, tile.z);
+      if (geojson.geometry.type !== 'Polygon' && geojson.geometry.type !== 'MultiPolygon') {
+        continue;
+      }
+
+      if (!geometryIntersectsBbox(geojson.geometry, bbox)) continue;
+
+      const areaKm2 = polygonAreaKm2(geojson.geometry);
+      if (areaKm2 < MIN_NEIGHBORHOOD_AREA_KM2 || areaKm2 > MAX_NEIGHBORHOOD_AREA_KM2) {
+        continue;
+      }
+
+      const id = String(props.division_id || props.id || `${subtype}-${i}`);
+      const name = String(props['@name'] || props.name || '').trim();
+      if (!name) continue;
+
+      const existing = byId.get(id);
+      if (!existing || areaKm2 > existing.areaKm2) {
+        byId.set(id, {
+          areaKm2,
+          feature: {
+            type: 'Feature',
+            id,
+            geometry: geojson.geometry,
+            properties: {
+              id,
+              name,
+              subtype,
+              areaKm2: Math.round(areaKm2 * 100) / 100,
+            },
+          },
+        });
+      }
+    }
+  }
+
+  return {
+    type: 'FeatureCollection',
+    features: Array.from(byId.values()).map((entry) => entry.feature),
+    source: 'overture',
+    release,
+  };
+}
+
+/**
+ * HTTP handler for POST /api/neighborhoods with 30-day Cloudflare Cache API caching.
+ */
+export async function handleNeighborhoodsRequest(
+  request: Request,
+  ctx: ExecutionContext
+): Promise<Response> {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': request.headers.get('Origin') || '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
+  if (request.method !== 'POST') {
+    return Response.json({ error: 'Method not allowed. Use POST.' }, { status: 405 });
+  }
+
+  try {
+    const body = (await request.json()) as { bbox?: unknown };
+    if (
+      !Array.isArray(body.bbox) ||
+      body.bbox.length !== 4 ||
+      body.bbox.some((v) => typeof v !== 'number' || !Number.isFinite(v))
+    ) {
+      return Response.json(
+        { error: 'Invalid bbox. Expected [minLat, minLng, maxLat, maxLng].' },
+        { status: 400 }
+      );
+    }
+
+    const quantizedBbox = (body.bbox as number[]).map((v) => Math.round(v * 1e3) / 1e3) as [
+      number,
+      number,
+      number,
+      number,
+    ];
+
+    const cacheKey = new Request(
+      `https://rotas-neighborhoods-cache.internal/v1/${quantizedBbox.join(',')}`,
+      { method: 'GET' }
+    );
+
+    const cache = typeof caches !== 'undefined' ? caches.default : undefined;
+    if (cache) {
+      const cached = await cache.match(cacheKey);
+      if (cached) {
+        const headers = new Headers(cached.headers);
+        headers.set('X-Rotas-Cache', 'HIT');
+        return new Response(cached.body, { status: 200, headers });
+      }
+    }
+
+    const collection = await fetchNeighborhoodsFromOverture(quantizedBbox);
+    const payload = JSON.stringify(collection);
+    const headers = {
+      'Content-Type': 'application/json',
+      'Cache-Control': `public, max-age=${NEIGHBORHOOD_CACHE_TTL_SECONDS}`,
+      'X-Rotas-Cache': 'MISS',
+      'X-Rotas-Neighborhood-Source': `overture:${collection.release}`,
+    };
+
+    if (cache) {
+      ctx.waitUntil(
+        cache.put(
+          cacheKey,
+          new Response(payload, {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': `public, max-age=${NEIGHBORHOOD_CACHE_TTL_SECONDS}`,
+              'X-Rotas-Neighborhood-Source': `overture:${collection.release}`,
+            },
+          })
+        )
+      );
+    }
+
+    return new Response(payload, { status: 200, headers });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[overture] Neighborhoods request failed:', message);
     return Response.json({ error: message }, { status: 502 });
   }
 }

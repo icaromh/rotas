@@ -3,6 +3,7 @@ import {
   lonLatToTile,
   matchesRoadFilter,
   parseOnewayDirection,
+  polygonAreaKm2,
 } from '../worker/overture';
 
 describe('worker/overture helpers', () => {
@@ -63,6 +64,26 @@ describe('worker/overture helpers', () => {
         { access_type: 'allowed', when: { mode: ['bicycle'] } },
       ]);
       expect(parseOnewayDirection(raw, 'bike')).toBe('both');
+    });
+  });
+
+  describe('polygonAreaKm2', () => {
+    it('computes approximate area for a ~1km x 1km square near Barcelona', () => {
+      // ~0.009 deg lat ≈ 1 km, ~0.012 deg lng at 41.39°N ≈ 1 km
+      const area = polygonAreaKm2({
+        type: 'Polygon',
+        coordinates: [
+          [
+            [2.16, 41.38],
+            [2.172, 41.38],
+            [2.172, 41.389],
+            [2.16, 41.389],
+            [2.16, 41.38],
+          ],
+        ],
+      });
+      expect(area).toBeGreaterThan(0.8);
+      expect(area).toBeLessThan(1.2);
     });
   });
 });

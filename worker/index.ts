@@ -1,5 +1,5 @@
 import { handleOverpassRequest } from './overpass';
-import { handleRoadsRequest } from './overture';
+import { handleNeighborhoodsRequest, handleRoadsRequest } from './overture';
 
 export interface Env {
   ASSETS: Fetcher;
@@ -15,6 +15,10 @@ export default {
 
     if (url.pathname === '/api/roads') {
       return handleRoadsRequest(request, ctx);
+    }
+
+    if (url.pathname === '/api/neighborhoods') {
+      return handleNeighborhoodsRequest(request, ctx);
     }
 
     if (url.pathname === '/api/overpass' || url.pathname === '/proxy') {
