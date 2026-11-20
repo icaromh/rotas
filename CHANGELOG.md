@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.0] - 2026-11-20
+### Added
+- **Road Network Engine (Overture Maps PMTiles)**: Added `POST /api/roads` (`worker/overture.ts`) to fetch and decode road networks directly from official Overture Maps `transportation.pmtiles` on Amazon S3 via HTTP Range requests, dynamically resolving the latest monthly release from Overture's STAC catalog and caching responses at the Cloudflare edge for 7 days.
+- **Automatic Fallback**: Updated `src/api/overpass.ts` to use `/api/roads` (Overture Maps) as the primary road network source, with automatic fallback to `/api/overpass` if needed.
+- **Tests**: Added unit tests for `worker/overture.ts` (`tests/overture.test.ts`).
+
 ## [2.0.0] - 2026-11-20
 ### Changed
 - **Architecture (Local-First + Single Cloudflare Worker)**: Consolidated the frontend SPA and Overpass proxy into a single Vite + Cloudflare Workers with Static Assets project (`@cloudflare/vite-plugin` + `wrangler.jsonc`), replacing the previous multi-platform setup (Vercel + 2 separate Cloudflare Workers + Supabase), and added `rotas.icaromh.com` as a Cloudflare Workers Custom Domain mirror alongside `rotas.cc`.

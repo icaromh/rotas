@@ -49,8 +49,8 @@ It's built for runners, cyclists, and anyone who wants to systematically explore
 User draws polygon
        │
        ▼
-Overpass API (via Cloudflare Worker proxy)
-  fetches OSM road network
+Overture Maps PMTiles (via Cloudflare Worker `/api/roads`, Overpass fallback)
+  extracts road network graph (nodes, ways, one-way rules)
        │
        ▼
 Web Worker  ──► Tarjan SCC (iterative)     builds connected graph

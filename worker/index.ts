@@ -1,4 +1,5 @@
 import { handleOverpassRequest } from './overpass';
+import { handleRoadsRequest } from './overture';
 
 export interface Env {
   ASSETS: Fetcher;
@@ -10,6 +11,10 @@ export default {
 
     if (url.pathname === '/api/health') {
       return Response.json({ status: 'ok', runtime: 'cloudflare-workers' });
+    }
+
+    if (url.pathname === '/api/roads') {
+      return handleRoadsRequest(request, ctx);
     }
 
     if (url.pathname === '/api/overpass' || url.pathname === '/proxy') {

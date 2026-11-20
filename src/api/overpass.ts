@@ -8,6 +8,7 @@
  *  - 406 / 408 / 429 / 5xx retry logic
  */
 const PROXY_URL = import.meta.env.VITE_OVERPASS_PROXY_URL || '/api/overpass';
+const ROADS_API_URL = import.meta.env.VITE_ROADS_API_URL || '/api/roads';
 
 const TIMEOUT_MS = 60_000;
 
@@ -96,10 +97,38 @@ export async function fetchRoadNetwork(
   minLng -= fetchBufferDegrees;
   maxLng += fetchBufferDegrees;
 
-  const bbox = `${minLat},${minLng},${maxLat},${maxLng}`;
+  const bboxTuple: [number, number, number, number] = [minLat, minLng, maxLat, maxLng];
 
+  // Primary: Overture Maps PMTiles via Cloudflare Worker (/api/roads) — fast, reliable, no rate limits
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
+    const res = await fetch(ROADS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bbox: bboxTuple, mode, safety }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = (await res.json()) as OverpassResponse;
+      if (Array.isArray(data.elements) && data.elements.length > 0) {
+        console.log(
+          `[API] Received ${data.elements.length} elements from Overture Maps (${res.headers.get('X-Rotas-Road-Source') || 'overture'}).`
+        );
+        return data;
+      }
+    }
+    console.warn(`[API] /api/roads returned HTTP ${res.status} or empty graph — falling back to Overpass.`);
+  } catch (err: any) {
+    console.warn(`[API] /api/roads failed (${err.message}) — falling back to Overpass.`);
+  }
+
+  // Fallback: Overpass API proxy
+  const bbox = `${minLat},${minLng},${maxLat},${maxLng}`;
   const query = buildRoadQuery(bbox, mode, safety);
-  console.log('[API] Overpass query:', query);
+  console.log('[API] Overpass fallback query:', query);
 
   const data = await queryOverpass(query);
   console.log(`[API] Received ${(data as any).elements?.length ?? 0} elements from Overpass.`);
