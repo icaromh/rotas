@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.2.1] - 2026-11-20
+### Fixed
+- **PostHog Analytics**: Guarded `posthog.init()` in `src/lib/posthog.tsx` when `VITE_PUBLIC_POSTHOG_KEY` is missing, fixed `ui_host` to `https://eu.posthog.com`, passed `VITE_PUBLIC_POSTHOG_KEY` and `VITE_PUBLIC_POSTHOG_HOST` into the GitHub Actions production build (`.github/workflows/deploy.yml`), and added `.env.example`.
+
 ## [2.2.0] - 2026-11-20
 ### Added
 - **Neighborhood Search (Overture Maps Divisions PMTiles)**: Added `POST /api/neighborhoods` (`worker/overture.ts`) reading official Overture Maps `divisions.pmtiles` (`division_area` layer) with area filtering (`0.05–25 km²`) and 30-day Cloudflare edge caching.
