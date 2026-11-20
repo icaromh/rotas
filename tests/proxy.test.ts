@@ -1,89 +1,71 @@
-/**
- * Unit tests for the Cloudflare Worker proxy (proxy/src/index.ts).
- *
- * The `isAllowedOrigin` function is not exported from the worker module because
- * Cloudflare Workers only expose the `default` export. We therefore replicate the
- * exact same logic here so that the tests remain fast (no worker runtime needed)
- * and stay in sync with any future changes to the allow-list.
- *
- * If the logic in `proxy/src/index.ts` ever changes, update the mirror below too.
- */
+import {
+  getCacheTtlSeconds,
+  isAllowedOrigin,
+  NEIGHBORHOOD_CACHE_TTL_SECONDS,
+  normalizeOverpassQuery,
+  ROAD_NETWORK_CACHE_TTL_SECONDS,
+  shouldFallback,
+} from '../worker/overpass';
 
-// ---------------------------------------------------------------------------
-// Mirror of the allow-list and helper — keep in sync with proxy/src/index.ts
-// ---------------------------------------------------------------------------
-
-const ALLOWED_ORIGINS = [
-  'https://rotas-dusky.vercel.app',
-  'https://rotas.cc',
-  'https://www.rotas.cc',
-];
-
-function isAllowedOrigin(origin: string | null): boolean {
-  if (!origin) return false;
-
-  // Allow localhost (any port)
-  if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-    return true;
-  }
-
-  return ALLOWED_ORIGINS.includes(origin);
-}
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-describe('isAllowedOrigin', () => {
-  describe('production domains', () => {
-    it('allows https://rotas.cc', () => {
+describe('worker/overpass helpers', () => {
+  describe('isAllowedOrigin', () => {
+    it('allows production domains', () => {
       expect(isAllowedOrigin('https://rotas.cc')).toBe(true);
-    });
-
-    it('allows https://www.rotas.cc', () => {
       expect(isAllowedOrigin('https://www.rotas.cc')).toBe(true);
+      expect(isAllowedOrigin('https://rotas.icaromh.com')).toBe(true);
     });
 
-    it('allows the Vercel preview URL (https://rotas-dusky.vercel.app)', () => {
-      expect(isAllowedOrigin('https://rotas-dusky.vercel.app')).toBe(true);
+    it('allows same-origin requests dynamically', () => {
+      expect(isAllowedOrigin('https://preview.rotas.workers.dev', 'https://preview.rotas.workers.dev/api/overpass')).toBe(true);
     });
-  });
 
-  describe('localhost origins', () => {
-    it('allows http://localhost:5173 (Vite default port)', () => {
+    it('allows localhost origins', () => {
       expect(isAllowedOrigin('http://localhost:5173')).toBe(true);
-    });
-
-    it('allows http://localhost:3000', () => {
       expect(isAllowedOrigin('http://localhost:3000')).toBe(true);
-    });
-
-    it('allows http://127.0.0.1:8080', () => {
       expect(isAllowedOrigin('http://127.0.0.1:8080')).toBe(true);
     });
-  });
 
-  describe('disallowed origins', () => {
-    it('blocks https://evil.com', () => {
+    it('blocks disallowed origins', () => {
       expect(isAllowedOrigin('https://evil.com')).toBe(false);
-    });
-
-    it('blocks an origin that only contains a substring of an allowed origin', () => {
       expect(isAllowedOrigin('https://notrotas.cc')).toBe(false);
-    });
-
-    it('blocks http:// (non-https) variants of production domains', () => {
       expect(isAllowedOrigin('http://rotas.cc')).toBe(false);
     });
+
+    it('allows requests without an Origin header (same-origin / non-browser)', () => {
+      expect(isAllowedOrigin(null)).toBe(true);
+    });
   });
 
-  describe('edge cases', () => {
-    it('returns false for null', () => {
-      expect(isAllowedOrigin(null)).toBe(false);
+  describe('shouldFallback', () => {
+    it('triggers fallback on 406, 408, 429, and 5xx', () => {
+      expect(shouldFallback(406)).toBe(true);
+      expect(shouldFallback(408)).toBe(true);
+      expect(shouldFallback(429)).toBe(true);
+      expect(shouldFallback(500)).toBe(true);
+      expect(shouldFallback(504)).toBe(true);
     });
 
-    it('returns false for an empty string', () => {
-      expect(isAllowedOrigin('')).toBe(false);
+    it('does not fallback on 200 or 400', () => {
+      expect(shouldFallback(200)).toBe(false);
+      expect(shouldFallback(400)).toBe(false);
+      expect(shouldFallback(403)).toBe(false);
+    });
+  });
+
+  describe('normalizeOverpassQuery & getCacheTtlSeconds', () => {
+    it('collapses whitespace for deterministic cache keys', () => {
+      expect(normalizeOverpassQuery('data=\n  [out:json];\n  way(1,2,3,4);\n')).toBe(
+        'data= [out:json]; way(1,2,3,4);'
+      );
+    });
+
+    it('uses 7-day TTL for neighborhood queries and 24-hour TTL for road networks', () => {
+      expect(getCacheTtlSeconds('data=relation["admin_level"~"9|10"](1,2,3,4);')).toBe(
+        NEIGHBORHOOD_CACHE_TTL_SECONDS
+      );
+      expect(getCacheTtlSeconds('data=way["highway"](1,2,3,4);')).toBe(
+        ROAD_NETWORK_CACHE_TTL_SECONDS
+      );
     });
   });
 });

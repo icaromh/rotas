@@ -1,28 +1,27 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import type { UserConfig } from 'vitest/config';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import react from '@vitejs/plugin-react';
+import { cloudflare } from '@cloudflare/vite-plugin';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+  const isTest = mode === 'test' || Boolean(process.env.VITEST);
 
   return {
-    server: {
-      proxy: {
-        '/api': {
-          target: 'http://127.0.0.1:54321/functions/v1',
-          changeOrigin: true
-        }
-      }
-    },
     plugins: [
       react(),
       tailwindcss(),
+      ...(!isTest ? [cloudflare()] : []),
       VitePWA({
         registerType: 'prompt',
         workbox: {
+          navigateFallbackDenylist: [/^\/api\//],
           runtimeCaching: [
+            {
+              urlPattern: /\/api\//i,
+              handler: 'NetworkOnly',
+            },
             {
               urlPattern: /^https:\/\/[a-d]\.basemaps\.cartocdn\.com\/.*/i,
               handler: 'CacheFirst',
@@ -30,32 +29,29 @@ export default defineConfig(({ mode }) => {
                 cacheName: 'osm-tiles',
                 expiration: {
                   maxEntries: 1000,
-                  maxAgeSeconds: 60 * 60 * 24 * 30 // 30 Days
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
                 },
                 cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
+                  statuses: [0, 200],
+                },
+              },
             },
             {
-              urlPattern: /.*/i,
+              urlPattern: /\.(?:js|css|svg|png|woff2?)$/i,
               handler: 'StaleWhileRevalidate',
               options: {
                 cacheName: 'assets',
                 expiration: {
                   maxEntries: 100,
-                  maxAgeSeconds: 60 * 60 * 24 * 7 // 7 Days
-                }
-              }
-            }
-          ]
-        }
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 Days
+                },
+              },
+            },
+          ],
+        },
       }),
     ],
     test: {
-      // Use Vitest workspace projects to support both Node and jsdom environments.
-      // Project 1: Node environment for pure-logic unit tests (optimizer, gpx, etc.)
-      // Project 2: jsdom environment for React component tests under src/
       projects: [
         {
           test: {

@@ -1,17 +1,13 @@
 /**
  * Overpass API client.
  *
- * All requests are routed through the Cloudflare Worker proxy which handles:
- *  - CORS headers
- *  - Fallback across multiple public Overpass instances
- *  - 429 / 5xx retry logic
- *
- * The proxy itself forwards to (in order):
- *   1. https://overpass-api.de (FOSSGIS — main instance)
- *   2. https://maps.mail.ru/osm/tools/overpass (VK Maps — no rate limit)
- *   3. https://overpass.private.coffee (Private.coffee — no rate limit)
+ * All requests are routed through the same-origin Cloudflare Worker endpoint
+ * (`/api/overpass`) which handles:
+ *  - Per-endpoint timeouts and fallback across multiple public Overpass instances
+ *  - Edge caching via Cloudflare Cache API
+ *  - 406 / 408 / 429 / 5xx retry logic
  */
-const PROXY_URL = 'https://api.rotas.cc/proxy';
+const PROXY_URL = import.meta.env.VITE_OVERPASS_PROXY_URL || '/api/overpass';
 
 const TIMEOUT_MS = 60_000;
 

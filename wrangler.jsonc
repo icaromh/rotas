@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rotas",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-11-20",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS"
+  },
+  "routes": [
+    { "pattern": "rotas.cc/*", "zone_name": "rotas.cc" },
+    { "pattern": "www.rotas.cc/*", "zone_name": "rotas.cc" },
+    { "pattern": "rotas.icaromh.com", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

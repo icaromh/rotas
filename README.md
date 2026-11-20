@@ -102,12 +102,11 @@ React UI renders polyline + sidebar stats
 ### Infrastructure
 | Tool | Role |
 |---|---|
-| **Supabase Edge Functions** | Stateless API and OAuth handling |
-| **Supabase Postgres + pgmq** | Durable background task queues for heavy Strava synchronisation |
-| **Cloudflare Worker** | CORS proxy + multi-endpoint fallback for Overpass (`rotas-overpass-proxy`) |
-| **Vercel** | Frontend Hosting |
+| **Cloudflare Workers + Static Assets** | Single deployment serving both the React SPA and `/api/overpass` |
+| **Cloudflare Cache API** | Edge caching + per-endpoint timeouts & fallback for Overpass |
+| **IndexedDB** | Local-first browser storage for imported GPX / TCX / GeoJSON / Strava ZIP activities |
 | **Playwright** | E2E tests + visual regression |
-| **Vitest** | Unit tests |
+| **Vitest** | Unit & component tests |
 | **vite-plugin-pwa / Workbox** | Service worker & offline support |
 
 ---
@@ -133,27 +132,10 @@ src/
 ## Getting Started
 
 ### Prerequisites
-- Node.js ≥ 18
+- Node.js ≥ 20
 - pnpm ≥ 11
-- **Docker Desktop** (required for local Supabase)
-- **Supabase CLI** (installed automatically via npx)
 
-### Environment Setup
-
-Rotas requires a Strava API application to handle user authentication and route synchronization. To bring your own Strava API key:
-
-1. Log in to your Strava account and go to the [API Settings page](https://www.strava.com/settings/api).
-2. Create a new API Application.
-3. Set the **Authorization Callback Domain** to `localhost` (for local development) or your production domain.
-4. Locate your **Client ID** and **Client Secret**.
-
-Create a `.env` file in the `supabase/` directory and populate it with your Strava API credentials:
-
-```bash
-STRAVA_CLIENT_ID="your_strava_client_id"
-STRAVA_CLIENT_SECRET="your_strava_client_secret"
-STRAVA_REDIRECT_URI="http://localhost:5173/auth/callback"
-```
+No Docker, no database, and no external API keys are required to run Rotas locally.
 
 ### Local Development
 
@@ -165,36 +147,32 @@ cd rotas
 # 2. Install dependencies
 pnpm install
 
-# 3. Start local Supabase (Database, Auth, Edge Functions & Queues)
-# Note: Ensure Docker is running before executing this
-npx supabase start
-
-# 4. Apply database migrations (including pgmq extension for queues)
-pnpm run db:push
-
-# 5. Start the Vite dev server
+# 3. Start Vite + Cloudflare Worker locally (single process)
 pnpm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open [http://localhost:5173](http://localhost:5173) in your browser. Both the frontend and `/api/overpass` run locally via `@cloudflare/vite-plugin`.
 
-> **Note on Edge Functions:** The API and background queues (like Strava sync) run on Supabase Edge Functions. The local Supabase stack automatically serves these at `http://127.0.0.1:54321/functions/v1/`, and Vite automatically proxies `/api` requests to them.
+### Deployment
 
-### Troubleshooting Local Database
-If your local background queues (pgmq) get stuck or you experience permission denied errors on local tables after writing new migrations, resetting the local database will often clear out the stale state and re-apply all roles/triggers:
 ```bash
-npx supabase db reset
+# Dry-run build & Worker packaging check
+pnpm run deploy:dry-run
+
+# Deploy frontend + Worker to Cloudflare Workers
+pnpm run deploy
 ```
+
+Pushing to `main` also triggers `.github/workflows/deploy.yml`, which runs tests, builds, and deploys automatically (requires `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` GitHub secrets).
 
 ### Other scripts
 
 ```bash
-pnpm run build             # Production build (TypeScript + Vite)
-pnpm test                  # Unit tests (Vitest)
+pnpm run typecheck         # Type-check frontend + Worker
+pnpm run build             # Type-check + production build
+pnpm run test:run          # Unit & component tests (Vitest)
 pnpm run test:e2e          # E2E flow tests (Playwright)
 pnpm run test:e2e:visual   # Visual regression tests
-pnpm run deploy:proxy      # Deploy the Cloudflare Worker proxy
-pnpm run deploy:functions  # Deploy Supabase Edge Functions to production
 ```
 
 ---

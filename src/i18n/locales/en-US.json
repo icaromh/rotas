@@ -98,48 +98,22 @@
     "polygonTooLarge": "The polygon covers {{areaKm2}} km², exceeding the {{maxArea}} km² limit. Please draw a smaller area.",
     "polygonEditedTooLarge": "The edited polygon exceeds the area limit. Selection cancelled."
   },
-  "strava": {
-    "connection": "Strava Connection",
-    "connect": "Connect Strava",
-    "disconnect": "Disconnect",
-    "account": "Strava Account",
+  "activities": {
+    "title": "My Activities",
+    "description": "Import GPX, TCX, GeoJSON, or a Strava export ZIP to overlay past rides and runs. Everything stays locally in your browser.",
+    "importButton": "Import GPX / TCX / ZIP",
+    "importing": "Importing...",
+    "importSuccess": "Imported {{count}} activities.",
+    "importError": "Failed to import file. Please check the format.",
+    "noTracksFound": "No GPS tracks found in the selected file(s).",
+    "storedCount": "{{count}} saved",
     "mapOverlay": "Map Overlay",
     "showMyPaths": "Show My Paths",
     "color": "Color",
     "opacity": "Opacity",
-    "resetColor": "Reset to Strava Orange",
-    "dataSync": "Data Sync",
-    "syncNow": "Sync Now",
-    "syncing": "Syncing...",
-    "startingSync": "Starting sync...",
-    "syncInProgress": "Sync already in progress.",
-    "syncFailedError": "Sync failed: {{error}}",
-    "syncFailed": "Sync failed.",
-    "syncFailedToStart": "Sync failed to start.",
-    "syncKeepUsing": "Syncing... You can keep using the app.",
-    "inQueue": "In Queue...",
-    "limitReached": "Strava limit reached. Queued for {{time}}.",
-    "complete": "Complete! {{count}} activities inserted.",
-    "syncingCount": "Syncing... ({{count}} inserted)"
-  },
-  "auth": {
-    "title": "Strava Authentication",
-    "authenticating": "Authenticating with Strava...",
-    "errorNoCode": "Error: No authorization code found.",
-    "success": "Authentication successful! Redirecting...",
-    "error": "Error during authentication."
-  },
-  "routes": {
-    "saveRoute": "Save Route",
-    "myRoutes": "My Routes",
-    "titlePlaceholder": "Route Title",
-    "public": "Public",
-    "private": "Private",
-    "notFound": "Route not found or private.",
-    "saveSuccess": "Route saved successfully!",
-    "saveError": "Error saving route.",
-    "privacyUpdated": "Privacy updated!",
-    "privacyError": "Error updating privacy."
+    "resetColor": "Reset Color",
+    "clearAll": "Clear Imported Activities",
+    "cleared": "All imported activities cleared."
   },
   "common": {
     "close": "Close"

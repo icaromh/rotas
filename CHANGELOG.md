@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0] - 2026-11-20
+### Changed
+- **Architecture (Local-First + Single Cloudflare Worker)**: Consolidated the frontend SPA and Overpass proxy into a single Vite + Cloudflare Workers with Static Assets project (`@cloudflare/vite-plugin` + `wrangler.jsonc`), replacing the previous multi-platform setup (Vercel + 2 separate Cloudflare Workers + Supabase), and added `rotas.icaromh.com` as a Cloudflare Workers Custom Domain mirror alongside `rotas.cc`.
+- **Overpass Proxy**: Moved the Overpass proxy into `worker/overpass.ts` served at same-origin `/api/overpass`, adding per-endpoint 15s timeouts, automatic multi-instance fallback, and Cloudflare Cache API edge caching (24h for road networks, 7d for neighborhood boundaries).
+- **CI/CD**: Replaced separate Supabase and API proxy workflows with a single `.github/workflows/deploy.yml` that runs tests, builds, and deploys to Cloudflare Workers.
+
+### Added
+- **Local Activity Overlay**: Replaced the paid Strava OAuth/Postgres sync with a 100% browser-local activity overlay (`ActivityOverlayMenu.tsx`, `activityParser.ts`, `activityStorage.ts`) supporting `.gpx`, `.tcx`, `.geojson`, and Strava bulk export `.zip` archives persisted in IndexedDB.
+- **Tests**: Added unit tests for `activityParser.ts` and updated `tests/proxy.test.ts` to test `worker/overpass.ts` directly.
+
+### Removed
+- **Infrastructure**: Removed `supabase/` (Postgres, `pgmq`, Edge Functions, Docker requirement), `api-proxy/`, `proxy/`, dead `src/api/routes.ts`, `src/pages/AuthCallback.tsx`, and `StravaUserMenu.tsx`.
+
+### Fixed
+- **PWA Caching**: Excluded `/api/*` from Workbox `StaleWhileRevalidate` caching (`NetworkOnly` + `navigateFallbackDenylist`) to prevent stale API responses.
+
 ## [1.24.9] - 2026-09-08
 ### Fixed
 - **Map**: Added CARTO Basemaps API key parameter to raster tile layer URL (`MapContainer.tsx`) to eliminate the "API key required" watermark. Supported custom `VITE_CARTO_API_KEY` environment variable with fallback to default project key.

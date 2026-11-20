@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { InfoIcon } from './icons';
 import { Button } from './ui/Button';
 import { LanguageSelector } from './LanguageSelector';
-import { StravaUserMenu } from './StravaUserMenu';
+import { ActivityOverlayMenu } from './ActivityOverlayMenu';
 
 interface Props {
   onOpenAbout: () => void;
@@ -34,7 +34,7 @@ export const TopNav: React.FC<Props> = ({
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <StravaUserMenu 
+        <ActivityOverlayMenu 
           onPathsFetched={onStravaPathsFetched}
           showPaths={showStravaPaths}
           setShowPaths={setShowStravaPaths}

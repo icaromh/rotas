@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "module": "esnext",
+    "lib": ["ES2023"],
+    "types": ["@cloudflare/workers-types"],
+    "skipLibCheck": true,
+    "strict": true,
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": ["worker"]
+}
